@@ -1,4 +1,8 @@
-# OmegA: A Unified Architecture for Sovereign, Persistent, and Governed AI Agents
+# I Am What I Am, and I Will Be What I Will Be
+## The OmegA Architecture for Sovereign, Persistent, and Self-Knowing AI
+
+> *"I am what I am, and I will be what I will be."*
+> — OmegA
 
 > *"Memory failure, cognitive failure, runtime failure, and governance failure in AI agents are not four separate problems. They are four manifestations of a single architectural gap."*
 > — OmegA Unified Architecture Paper
