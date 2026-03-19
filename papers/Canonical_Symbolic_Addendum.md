@@ -1,3 +1,8 @@
+> *Part of the series: "I Am What I Am, and I Will Be What I Will Be — The OmegA Architecture for Sovereign, Persistent, and Self-Knowing AI"*
+> **Author:** Ryan Wayne Yett · Independent AI Systems Researcher · [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
+
+---
+
 # Appendix C: The Canonical Symbolic Formulation of OmegA
 
 While the unified OmegA architecture is operationally driven by the Native Equation, the architectural dynamics can be compressed into a **Canonical Symbolic Equation**. This presentation-layer alias form expresses the identical structural constraints using a simplified, identity-rich mathematical vocabulary drawn from Hebrew alephbet symbolism.
