@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use or build on this work, please cite it as below."
+authors:
+  - family-names: Yett
+    given-names: Ryan Wayne
+    orcid: ""
+title: "OmegA: A Unified Architecture for Sovereign, Persistent, and Governed AI Agents"
+version: 1.0.0
+date-released: 2026-03-18
+url: "https://github.com/Mega-Therion/OmegA-Architecture"
+type: software
+license: MIT
+abstract: >
+  OmegA is a four-layer integrated architecture for building sovereign, persistent,
+  and governed AI agents. It combines MYELIN (path-dependent graph memory),
+  ADCCL (anti-drift cognitive control loop), AEON (cognitive operating system),
+  and AEGIS (model-agnostic governance shell) into a formally specified system
+  with defined cross-layer interfaces and a unified system state vector.
+keywords:
+  - sovereign AI
+  - persistent agents
+  - cognitive architecture
+  - memory substrate
+  - anti-hallucination
+  - agent governance
+  - identity continuity
+  - unified agent framework
