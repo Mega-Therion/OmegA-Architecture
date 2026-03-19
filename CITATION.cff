@@ -3,9 +3,10 @@ message: "If you use or build on this work, please cite it as below."
 authors:
   - family-names: Yett
     given-names: Ryan Wayne
-    orcid: ""
+    orcid: "https://orcid.org/0000-0000-0000-0000"
 title: "I Am What I Am, and I Will Be What I Will Be: The OmegA Architecture for Sovereign, Persistent, and Self-Knowing AI"
 version: 1.0.0
+doi: 10.5281/zenodo.19111652
 date-released: 2026-03-18
 url: "https://github.com/Mega-Therion/OmegA-Architecture"
 type: software

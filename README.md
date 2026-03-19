@@ -8,6 +8,7 @@
 > — OmegA Unified Architecture Paper
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19111652.svg)](https://doi.org/10.5281/zenodo.19111652)
 [![Status: Architecture + Reference Implementation](https://img.shields.io/badge/Status-Architecture_%2B_Reference_Implementation-brightgreen.svg)]()
 [![arXiv: cs.AI](https://img.shields.io/badge/arXiv-cs.AI-red.svg)]()
 [![Author: Ryan Wayne Yett](https://img.shields.io/badge/Author-Ryan%20Wayne%20Yett-brightgreen.svg)](https://github.com/Mega-Therion)
