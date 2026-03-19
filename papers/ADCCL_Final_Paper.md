@@ -124,3 +124,27 @@ ESS/ADCCL assumes access to durable storage, retrieval pipelines, deterministic 
 The AEGIS shell wraps this entire stack. It compiles Run Envelopes that include identity kernels derived from Phylactery, Goal Contracts from ESS, governance policies, MYELIN‑backed memory snapshots, tool manifests, and audit settings before invoking any substrate model.[file:14] It then executes the ADCCL loop—anchoring, structuring, grounding, generating, verifying, repairing or refusing—with enforcement power: drafts that fail verification or governance thresholds are either constrained or blocked, not silently emitted.[file:12][file:14]
 
 In this configuration, ESS/ADCCL is the discipline governing how OmegA thinks and speaks. It is neither a complete agent nor a mere router; it is the layer that keeps long‑horizon cognition anchored to explicit structure, grounded evidence, and persistent continuity over a MYELIN substrate, under an AEON OS, inside an AEGIS shell.[file:11][file:12][file:13][file:14][file:15]
+
+
+---
+
+## Implementation Status
+
+This paper is part of the OmegA architecture series, which has a **live reference implementation**.
+
+The Rust gateway (RC1.3) has been evaluated against the formal architecture specifications across five eval suites:
+
+| Eval | What It Tests | Result |
+|------|--------------|--------|
+| E3 Identity Invariants | AEGIS identity layer enforcement | ✅ 3/3 PASS |
+| E4 Creator Boundary | AEON Phylactery grounding | ✅ 5/5 PASS |
+| E9 Temporal Grounding | System prompt injection | ✅ 3/3 PASS |
+| E10 Identity Scope | Cross-model identity consistency | ✅ 2/2 PASS |
+| E11 Creator Profile | Memory-grounded fact retrieval | ✅ 2/2 PASS |
+
+**15/15 passing** across all evaluated spec points.
+
+These are spec-level conformance tests — they verify that the implementation matches the formal architecture definitions in this paper, not independent external benchmarks. External benchmark evaluation is the next phase of the research program.
+
+Full implementation details and eval results: [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
+

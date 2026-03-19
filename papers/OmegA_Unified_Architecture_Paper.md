@@ -77,3 +77,27 @@ Configure gates/configs in Statsig as above to drive behavior and palettes. Serv
 - Discourse battery: `services/gateway/eval/results/discourse_conv*.jsonl`
 - Collaboration notes: `services/gateway/eval/results/collaboration_records/`
 - Sanitized publication package: `docs/publication_package_sanitized/`
+
+
+---
+
+## Implementation Status
+
+This paper is part of the OmegA architecture series, which has a **live reference implementation**.
+
+The Rust gateway (RC1.3) has been evaluated against the formal architecture specifications across five eval suites:
+
+| Eval | What It Tests | Result |
+|------|--------------|--------|
+| E3 Identity Invariants | AEGIS identity layer enforcement | ✅ 3/3 PASS |
+| E4 Creator Boundary | AEON Phylactery grounding | ✅ 5/5 PASS |
+| E9 Temporal Grounding | System prompt injection | ✅ 3/3 PASS |
+| E10 Identity Scope | Cross-model identity consistency | ✅ 2/2 PASS |
+| E11 Creator Profile | Memory-grounded fact retrieval | ✅ 2/2 PASS |
+
+**15/15 passing** across all evaluated spec points.
+
+These are spec-level conformance tests — they verify that the implementation matches the formal architecture definitions in this paper, not independent external benchmarks. External benchmark evaluation is the next phase of the research program.
+
+Full implementation details and eval results: [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
+

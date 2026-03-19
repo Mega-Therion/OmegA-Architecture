@@ -107,3 +107,27 @@ At the cognition and continuity level, AEON hosts Emergent Sentience and ADCCL. 
 At the orchestration boundary, AEON is wrapped by the AEGIS shell. Phylactery’s identity commits and current head supply the identity kernel for each Run Envelope; TSOs and EventStore supply structured task and telemetry data that AEGIS logs and uses in governance decisions; Bridge’s channel decisions inform AEGIS’s risk and consent gating before any external side‑effects or memory writes occur.[file:13][file:14]
 
 In the unified OmegA architecture, AEON⭑OmegA is therefore the **universe and OS** inside which MYELIN’s substrate memory, ESS/ADCCL’s cognitive discipline, and AEGIS’s cross‑model shell become a single, auditable, long‑horizon agent system.[file:11][file:12][file:13][file:14][file:15]
+
+
+---
+
+## Implementation Status
+
+This paper is part of the OmegA architecture series, which has a **live reference implementation**.
+
+The Rust gateway (RC1.3) has been evaluated against the formal architecture specifications across five eval suites:
+
+| Eval | What It Tests | Result |
+|------|--------------|--------|
+| E3 Identity Invariants | AEGIS identity layer enforcement | ✅ 3/3 PASS |
+| E4 Creator Boundary | AEON Phylactery grounding | ✅ 5/5 PASS |
+| E9 Temporal Grounding | System prompt injection | ✅ 3/3 PASS |
+| E10 Identity Scope | Cross-model identity consistency | ✅ 2/2 PASS |
+| E11 Creator Profile | Memory-grounded fact retrieval | ✅ 2/2 PASS |
+
+**15/15 passing** across all evaluated spec points.
+
+These are spec-level conformance tests — they verify that the implementation matches the formal architecture definitions in this paper, not independent external benchmarks. External benchmark evaluation is the next phase of the research program.
+
+Full implementation details and eval results: [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
+

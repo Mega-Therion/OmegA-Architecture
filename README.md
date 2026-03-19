@@ -4,7 +4,7 @@
 > — OmegA Unified Architecture Paper
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: Conceptual Architecture](https://img.shields.io/badge/Status-Conceptual%20Architecture-orange.svg)]()
+[![Status: Architecture + Reference Implementation](https://img.shields.io/badge/Status-Architecture_%2B_Reference_Implementation-brightgreen.svg)]()
 [![arXiv: cs.AI](https://img.shields.io/badge/arXiv-cs.AI-red.svg)]()
 [![Author: Ryan Wayne Yett](https://img.shields.io/badge/Author-Ryan%20Wayne%20Yett-brightgreen.svg)](https://github.com/Mega-Therion)
 
@@ -127,6 +127,26 @@ All four risk/verification scores compose **sequentially** rather than competing
 $$V_t > \tau_{\text{verify}} \quad\wedge\quad \rho(A) < \theta_{\text{allow}} \quad\wedge\quad R(a) < \tau_{\text{consent}}$$
 
 A side-effectful action must pass the **ADCCL Verifier**, then the **AEON Bridge**, then the **AEGIS Risk Gate** — in that order. No single gate can be bypassed.
+
+---
+
+## Implementation Status
+
+OmegA is not only a conceptual architecture — it has a **live reference implementation**.
+
+The Rust gateway (RC1.3) has been evaluated against the architecture's own formal specifications across five eval suites:
+
+| Eval | What It Tests | Result |
+|------|--------------|--------|
+| E3 Identity Invariants | AEGIS identity layer enforcement | ✅ 3/3 PASS |
+| E4 Creator Boundary | AEON Phylactery grounding | ✅ 5/5 PASS |
+| E9 Temporal Grounding | System prompt injection | ✅ 3/3 PASS |
+| E10 Identity Scope | Cross-model identity consistency | ✅ 2/2 PASS |
+| E11 Creator Profile | Memory-grounded fact retrieval | ✅ 2/2 PASS |
+
+**15/15 passing** across all evaluated spec points.
+
+> These are spec-level conformance tests — they verify that the implementation matches the formal architecture definitions, not independent external benchmarks. External benchmark evaluation is the next phase of the research program.
 
 ---
 

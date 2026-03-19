@@ -175,3 +175,27 @@ AEON⭑OmegA provides the identity canon (Phylactery), Task State Objects (TSO),
 The AEGIS shell wraps the entire system, compiling Run Envelopes that include identity kernels, goal contracts, governance policies, memory snapshots, tool manifests, and audit settings before invoking any substrate model.[file:14] Under AEGIS, access to MYELIN is policy‑mediated: retrievals and writes must respect rights, consent, and retention rules, and structural updates that touch identity‑critical regions can be required to pass through stronger governance channels.
 
 In this configuration, MYELIN is not a conceptual island. It is the “myelinated” substrate of a sovereign cognitive system whose identity, reasoning discipline, and external governance are defined by higher‑level components. The empirical question is whether this combination—portable identity and governance (AEGIS), anti‑drift cognitive control (ESS/ADCCL), universe‑mirroring operating system (AEON), and path‑dependent graph memory (MYELIN)—offers measurable advantages over simpler RAG‑plus‑tools stacks in long‑horizon tasks.[file:11][file:12][file:13][file:14][file:15]
+
+
+---
+
+## Implementation Status
+
+This paper is part of the OmegA architecture series, which has a **live reference implementation**.
+
+The Rust gateway (RC1.3) has been evaluated against the formal architecture specifications across five eval suites:
+
+| Eval | What It Tests | Result |
+|------|--------------|--------|
+| E3 Identity Invariants | AEGIS identity layer enforcement | ✅ 3/3 PASS |
+| E4 Creator Boundary | AEON Phylactery grounding | ✅ 5/5 PASS |
+| E9 Temporal Grounding | System prompt injection | ✅ 3/3 PASS |
+| E10 Identity Scope | Cross-model identity consistency | ✅ 2/2 PASS |
+| E11 Creator Profile | Memory-grounded fact retrieval | ✅ 2/2 PASS |
+
+**15/15 passing** across all evaluated spec points.
+
+These are spec-level conformance tests — they verify that the implementation matches the formal architecture definitions in this paper, not independent external benchmarks. External benchmark evaluation is the next phase of the research program.
+
+Full implementation details and eval results: [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
+

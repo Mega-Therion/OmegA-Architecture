@@ -84,3 +84,27 @@ In a canonical OmegA configuration, MYELIN provides a path‑dependent graph mem
 AEGIS uses these layers when compiling each Run Envelope. The identity kernel is derived from Phylactery and continuity metadata; the goal contract comes from ESS’s Goal Contract builder and AEON’s TSO; the governance policy is configured by operators in light of AEON and ESS metrics; the memory snapshot is assembled from approved MYELIN slices and external stores; the tool manifest includes deterministic compute backends and retrieval adapters; and audit settings determine how AEON’s EventStore and Binder outputs are persisted.[file:11][file:12][file:13][file:14]
 
 During a vessel session, AEGIS executes the ADCCL loop under governance: planning uses TSOs and Goal Contracts; grounding uses MYELIN‑backed retrieval and deterministic tools; generation uses substrate models only through adapters; verification uses ESS/AEON metrics; and high‑impact actions or memory writes are gated by AEGIS’s risk/consent scoring and provider‑compliance rules.[file:12][file:13][file:14] In this way, AEGIS turns the OmegA stack from a set of design documents into an operational doctrine that can withstand model churn, provider changes, and external scrutiny.[file:11][file:12][file:13][file:14][file:15]
+
+
+---
+
+## Implementation Status
+
+This paper is part of the OmegA architecture series, which has a **live reference implementation**.
+
+The Rust gateway (RC1.3) has been evaluated against the formal architecture specifications across five eval suites:
+
+| Eval | What It Tests | Result |
+|------|--------------|--------|
+| E3 Identity Invariants | AEGIS identity layer enforcement | ✅ 3/3 PASS |
+| E4 Creator Boundary | AEON Phylactery grounding | ✅ 5/5 PASS |
+| E9 Temporal Grounding | System prompt injection | ✅ 3/3 PASS |
+| E10 Identity Scope | Cross-model identity consistency | ✅ 2/2 PASS |
+| E11 Creator Profile | Memory-grounded fact retrieval | ✅ 2/2 PASS |
+
+**15/15 passing** across all evaluated spec points.
+
+These are spec-level conformance tests — they verify that the implementation matches the formal architecture definitions in this paper, not independent external benchmarks. External benchmark evaluation is the next phase of the research program.
+
+Full implementation details and eval results: [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
+
