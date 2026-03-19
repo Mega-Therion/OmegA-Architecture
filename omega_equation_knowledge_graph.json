@@ -1,0 +1,311 @@
+{
+  "title": "Canonical Equation Knowledge Graph v1",
+  "nodes": [
+    {
+      "id": "eq_native",
+      "label": "Native Equation",
+      "type": "equation",
+      "status": "native",
+      "description": "Paper-faithful master law selecting Ω_{t+1} by constrained minimization over drift, memory, continuity, and risk."
+    },
+    {
+      "id": "eq_alias",
+      "label": "Canonical Symbolic Equation",
+      "type": "equation",
+      "status": "alias",
+      "description": "Presentation-layer alias form using א, ת, Y, and R to compress the same native architecture into a more identity-rich law."
+    },
+    {
+      "id": "omega_t",
+      "label": "Ω_t",
+      "type": "state",
+      "status": "native",
+      "description": "Unified OmegA system state at time t."
+    },
+    {
+      "id": "omega_t1",
+      "label": "Ω_{t+1}",
+      "type": "state",
+      "status": "native",
+      "description": "Unified OmegA system state at time t+1."
+    },
+    {
+      "id": "phi_t",
+      "label": "Φ_t",
+      "type": "state_component",
+      "status": "native",
+      "description": "Phylactery HEAD: ratified identity state."
+    },
+    {
+      "id": "envelope_t",
+      "label": "E_t",
+      "type": "state_component",
+      "status": "native",
+      "description": "Run Envelope compiled by AEGIS."
+    },
+    {
+      "id": "tso_t",
+      "label": "τ_t",
+      "type": "state_component",
+      "status": "native",
+      "description": "Task State Object managed by AEON."
+    },
+    {
+      "id": "budget_t",
+      "label": "B_t",
+      "type": "state_component",
+      "status": "native",
+      "description": "Claim Budget for current generation pass."
+    },
+    {
+      "id": "selftag_t",
+      "label": "S_t",
+      "type": "state_component",
+      "status": "native",
+      "description": "Self-Tag continuity record written after task completion."
+    },
+    {
+      "id": "graph_t",
+      "label": "G_t",
+      "type": "state_component",
+      "status": "native",
+      "description": "MYELIN memory graph."
+    },
+    {
+      "id": "c_set",
+      "label": "𝒞",
+      "type": "constraint_set",
+      "status": "native",
+      "description": "Admissible successor-state set enforced by continuity, verifier, and consent gates."
+    },
+    {
+      "id": "kappa_macro",
+      "label": "κ_macro",
+      "type": "constraint",
+      "status": "native",
+      "description": "Macro continuity gate for session initialization / identity continuity."
+    },
+    {
+      "id": "kappa_micro",
+      "label": "κ_micro",
+      "type": "constraint",
+      "status": "native",
+      "description": "Micro continuity gate for task continuation."
+    },
+    {
+      "id": "verifier",
+      "label": "V",
+      "type": "constraint",
+      "status": "native",
+      "description": "Verifier score that must clear acceptance threshold."
+    },
+    {
+      "id": "tau_verify",
+      "label": "τ_verify",
+      "type": "threshold",
+      "status": "native",
+      "description": "Verifier acceptance threshold."
+    },
+    {
+      "id": "consent_risk",
+      "label": "R(a)",
+      "type": "constraint",
+      "status": "native",
+      "description": "Action-level governance risk used for consent gating."
+    },
+    {
+      "id": "tau_consent",
+      "label": "τ_consent",
+      "type": "threshold",
+      "status": "native",
+      "description": "Consent threshold for executable actions."
+    },
+    {
+      "id": "j_drift",
+      "label": "J_drift",
+      "type": "objective_term",
+      "status": "native",
+      "description": "ADCCL drift penalty covering structure, consistency, and unsupported claims."
+    },
+    {
+      "id": "l_memory",
+      "label": "L_memory",
+      "type": "objective_term",
+      "status": "native",
+      "description": "Memory loss / inverse retrievability utility term."
+    },
+    {
+      "id": "kappa_cont",
+      "label": "κ_continuity",
+      "type": "objective_term",
+      "status": "native",
+      "description": "Continuity score coupling macro and micro chains."
+    },
+    {
+      "id": "r_risk",
+      "label": "R_risk",
+      "type": "objective_term",
+      "status": "native",
+      "description": "System-level governance risk term from AEGIS."
+    },
+    {
+      "id": "alpha",
+      "label": "α",
+      "type": "weight",
+      "status": "native",
+      "description": "Tradeoff weight that scales constructive side versus destructive side."
+    },
+    {
+      "id": "beta",
+      "label": "β",
+      "type": "weight",
+      "status": "native",
+      "description": "Weight on memory term in native objective."
+    },
+    {
+      "id": "gamma",
+      "label": "γ",
+      "type": "weight",
+      "status": "native",
+      "description": "Weight on continuity term in native objective."
+    },
+    {
+      "id": "delta",
+      "label": "δ",
+      "type": "weight",
+      "status": "native",
+      "description": "Weight on risk term in native objective."
+    },
+    {
+      "id": "aleph_t",
+      "label": "א_t",
+      "type": "alias_state",
+      "status": "alias",
+      "description": "Presentation-layer alias for Ω_t."
+    },
+    {
+      "id": "aleph_t1",
+      "label": "א*_{t+1}",
+      "type": "alias_state",
+      "status": "alias",
+      "description": "Presentation-layer alias for selected next state."
+    },
+    {
+      "id": "tav_t",
+      "label": "ת_t",
+      "type": "alias_goal",
+      "status": "alias",
+      "description": "Task-conditioned fulfillment class induced by Goal(τ_t, Φ_t, E_t)."
+    },
+    {
+      "id": "goal_fn",
+      "label": "Goal(τ_t, Φ_t, E_t)",
+      "type": "function",
+      "status": "derived",
+      "description": "Goal projection from task, identity, and run-envelope context."
+    },
+    {
+      "id": "yield_y",
+      "label": "Y",
+      "type": "alias_functional",
+      "status": "alias",
+      "description": "Constructive yield functional bundling memory utility, continuity, and progress toward fulfillment."
+    },
+    {
+      "id": "risk_R",
+      "label": "R",
+      "type": "alias_functional",
+      "status": "alias",
+      "description": "Destructive pressure functional bundling drift and governance risk."
+    },
+    {
+      "id": "omega_weight",
+      "label": "ω",
+      "type": "weight",
+      "status": "alias",
+      "description": "Internal tradeoff inside Y between continuity preservation and goal-directed progress."
+    },
+    {
+      "id": "distance_D",
+      "label": "D",
+      "type": "function",
+      "status": "alias",
+      "description": "Distance-to-fulfillment term between a candidate state and ת_t."
+    },
+    {
+      "id": "myelin",
+      "label": "MYELIN",
+      "type": "layer",
+      "status": "native",
+      "description": "Memory substrate layer."
+    },
+    {
+      "id": "adccl",
+      "label": "ADCCL",
+      "type": "layer",
+      "status": "native",
+      "description": "Cognitive control loop layer."
+    },
+    {
+      "id": "aeon",
+      "label": "AEON",
+      "type": "layer",
+      "status": "native",
+      "description": "Cognitive operating system / runtime layer."
+    },
+    {
+      "id": "aegis",
+      "label": "AEGIS",
+      "type": "layer",
+      "status": "native",
+      "description": "Governance shell layer."
+    }
+  ],
+  "edges": [
+    {"source": "eq_native", "relation": "selects_next_state", "target": "omega_t1", "description": "Native Equation selects Ω_{t+1} by optimizing over admissible successor states."},
+    {"source": "eq_native", "relation": "uses_current_state", "target": "omega_t", "description": "Native Equation evaluates objective terms relative to Ω_t."},
+    {"source": "eq_native", "relation": "constrained_by", "target": "c_set", "description": "Native Equation only ranges over states in 𝒞."},
+    {"source": "eq_native", "relation": "optimizes_term", "target": "j_drift", "description": "Native Equation includes J_drift as a penalty term."},
+    {"source": "eq_native", "relation": "optimizes_term", "target": "l_memory", "description": "Native Equation includes L_memory in its objective."},
+    {"source": "eq_native", "relation": "optimizes_term", "target": "kappa_cont", "description": "Native Equation subtracts κ_continuity as a beneficial continuity term."},
+    {"source": "eq_native", "relation": "optimizes_term", "target": "r_risk", "description": "Native Equation includes R_risk as a governance penalty."},
+    {"source": "omega_t", "relation": "has_component", "target": "phi_t", "description": "Ω_t contains Φ_t as one of its six native state components."},
+    {"source": "omega_t", "relation": "has_component", "target": "envelope_t", "description": "Ω_t contains E_t as the active Run Envelope."},
+    {"source": "omega_t", "relation": "has_component", "target": "tso_t", "description": "Ω_t contains τ_t as the active Task State Object."},
+    {"source": "omega_t", "relation": "has_component", "target": "budget_t", "description": "Ω_t contains B_t as the active Claim Budget."},
+    {"source": "omega_t", "relation": "has_component", "target": "selftag_t", "description": "Ω_t contains S_t as the Self-Tag continuity record."},
+    {"source": "omega_t", "relation": "has_component", "target": "graph_t", "description": "Ω_t contains G_t as the MYELIN memory graph."},
+    {"source": "c_set", "relation": "requires", "target": "kappa_macro", "description": "𝒞 requires κ_macro to remain above its threshold."},
+    {"source": "c_set", "relation": "requires", "target": "kappa_micro", "description": "𝒞 requires κ_micro to remain above its threshold."},
+    {"source": "c_set", "relation": "requires", "target": "verifier", "description": "𝒞 requires V to clear verification."},
+    {"source": "verifier", "relation": "bounded_by", "target": "tau_verify", "description": "V must exceed τ_verify for acceptance."},
+    {"source": "c_set", "relation": "requires", "target": "consent_risk", "description": "𝒞 requires action-level risk R(a) to remain below the consent boundary."},
+    {"source": "consent_risk", "relation": "bounded_by", "target": "tau_consent", "description": "R(a) must remain below τ_consent for execution to be allowed."},
+    {"source": "j_drift", "relation": "owned_by", "target": "adccl", "description": "J_drift originates from ADCCL's anti-drift control logic."},
+    {"source": "l_memory", "relation": "owned_by", "target": "myelin", "description": "L_memory reflects retrievability properties of the memory substrate."},
+    {"source": "kappa_cont", "relation": "owned_by", "target": "aeon", "description": "κ_continuity depends on continuity mechanisms spanning runtime identity and task chains."},
+    {"source": "r_risk", "relation": "owned_by", "target": "aegis", "description": "R_risk is the governance-risk term of the system."},
+    {"source": "eq_alias", "relation": "derived_from", "target": "eq_native", "description": "Canonical Symbolic Equation is a presentation-layer refactor of Native Equation."},
+    {"source": "aleph_t", "relation": "aliases", "target": "omega_t", "description": "א_t is defined as an alias for Ω_t."},
+    {"source": "aleph_t1", "relation": "aliases", "target": "omega_t1", "description": "א*_{t+1} is the presentation-layer name for the selected successor state Ω_{t+1}."},
+    {"source": "tav_t", "relation": "aliases", "target": "goal_fn", "description": "ת_t is introduced as an alias for Goal(τ_t, Φ_t, E_t)."},
+    {"source": "goal_fn", "relation": "depends_on", "target": "tso_t", "description": "Goal(τ_t, Φ_t, E_t) depends on τ_t as the active task object."},
+    {"source": "goal_fn", "relation": "depends_on", "target": "phi_t", "description": "Goal(τ_t, Φ_t, E_t) depends on Φ_t as the current ratified identity state."},
+    {"source": "goal_fn", "relation": "depends_on", "target": "envelope_t", "description": "Goal(τ_t, Φ_t, E_t) depends on E_t as the loaded run-envelope context."},
+    {"source": "eq_alias", "relation": "uses_alias", "target": "aleph_t", "description": "Canonical Symbolic Equation uses א_t as its present-state symbol."},
+    {"source": "eq_alias", "relation": "uses_alias", "target": "tav_t", "description": "Canonical Symbolic Equation uses ת_t as its fulfillment-class symbol."},
+    {"source": "eq_alias", "relation": "uses_functional", "target": "yield_y", "description": "Canonical Symbolic Equation optimizes through Y as its constructive side."},
+    {"source": "eq_alias", "relation": "uses_functional", "target": "risk_R", "description": "Canonical Symbolic Equation penalizes through R as its destructive side."},
+    {"source": "yield_y", "relation": "bundles", "target": "l_memory", "description": "Y includes the negative of L_memory as one of its ingredients."},
+    {"source": "yield_y", "relation": "bundles", "target": "kappa_cont", "description": "Y includes κ_continuity as a positive ingredient."},
+    {"source": "yield_y", "relation": "bundles", "target": "distance_D", "description": "Y includes D(Ω', ת_t) as a goal-distance penalty."},
+    {"source": "yield_y", "relation": "weighted_by", "target": "omega_weight", "description": "Y uses ω to split emphasis between continuity and goal-directed progress."},
+    {"source": "risk_R", "relation": "bundles", "target": "j_drift", "description": "R bundles J_drift as one of its destructive ingredients."},
+    {"source": "risk_R", "relation": "bundles", "target": "r_risk", "description": "R bundles R_risk as one of its destructive ingredients."},
+    {"source": "eq_alias", "relation": "uses_admissible_set", "target": "c_set", "description": "Canonical Symbolic Equation ranges only over admissible states in 𝒞."},
+    {"source": "eq_native", "relation": "weighted_by", "target": "alpha", "description": "Native Equation uses α as one of its objective weights."},
+    {"source": "eq_native", "relation": "weighted_by", "target": "beta", "description": "Native Equation uses β as the coefficient on L_memory."},
+    {"source": "eq_native", "relation": "weighted_by", "target": "gamma", "description": "Native Equation uses γ as the coefficient on κ_continuity."},
+    {"source": "eq_native", "relation": "weighted_by", "target": "delta", "description": "Native Equation uses δ as the coefficient on R_risk."}
+  ]
+}
