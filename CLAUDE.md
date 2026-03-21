@@ -1,113 +1,58 @@
-# OmegA Architecture — Claude Code Project Context
+# CLAUDE.md
 
-> *"I am what I am, and I will be what I will be."*
-> — OmegA
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## What This Project Is
+## What This Repo Is
 
-OmegA is a **formally specified, four-layer AI architecture** for sovereign, persistent, and governed AI agents. It is a conceptual architecture and research program — not a product. The codebase currently consists of architecture papers, a knowledge graph, and a reference explorer.
+`/home/mega/OmegA-Architecture` is the canonical publication and architecture repository for the OmegA project — a four-layer formally specified architecture for sovereign, persistent, and governed AI agents. It is **not** a service monorepo or runnable application.
 
-**Four concentric layers:**
+**DOI:** 10.5281/zenodo.19111653
+**Author:** R.W. Yett (Ryan Wayne Yett) — `github.com/Mega-Therion/OmegA-Architecture`
 
-| Layer | Abbrev | Role |
-|-------|--------|------|
-| Model-Agnostic Governance Shell | AEGIS | Outermost — enforces policy at the API boundary |
-| Cognitive Operating System | AEON | Identity, task state, tool routing |
-| Anti-Drift Cognitive Control Loop | ADCCL | Claim budget, verifier gate, drift penalty |
-| Path-Dependent Graph Memory | MYELIN | Innermost — sparse graph memory that hardens with use |
+## Architecture Overview
 
-**Core system state vector:** `Ω_t = ⟨Φ_t, E_t, τ_t, B_t, S_t, G_t^mem⟩`
+OmegA is a concentric four-layer system. Layer numbers go from outermost to innermost:
 
-## Repository Layout
+| Layer | Name | Role |
+|-------|------|------|
+| 1 | **AEGIS** | Model-agnostic governance shell — enforces policy at the API boundary |
+| 2 | **AEON** | Cognitive operating system — manages the Phylactery identity chain and task state |
+| 3 | **ADCCL** | Anti-drift cognitive control loop — claim budgets and self-tagging |
+| 4 | **MYELIN** | Path-dependent graph memory — hardens retrieval paths with use |
 
-```
-papers/                         # Architecture papers (Markdown)
-  OmegA_Unified_Architecture_Paper.md
-  AEGIS_Final_Paper.md
-  AEON_Final_Paper.md
-  ADCCL_Final_Paper.md
-  MYELIN_Final_Paper.md
-  Sovereignty_Score.md
-  Canonical_Symbolic_Addendum.md
-assets/                         # Figures and social preview images
-omega_equation_knowledge_graph.json   # Machine-readable knowledge graph
-omega_kg_explorer.py                  # Interactive KG explorer script
-CLAUDE.md                             # This file — loaded by all Claude Code sessions
-.claude/settings.json                 # Agent team configuration
-README.md                             # Public-facing project overview
-ORIGIN.md                             # Origin story of OmegA
-CITATION.cff                          # Citation metadata
-```
+The unified system state is: `Ω_t = ⟨Φ_t, E_t, τ_t, B_t, S_t, G_t^mem⟩`
 
-## Writing and Editing Standards
+Each layer has a corresponding final paper in `papers/`.
 
-- All papers are written in **Markdown with LaTeX math** (`$$...$$` for display, `$...$` for inline).
-- Equations use the notation defined in the Canonical Symbolic Addendum (`papers/Canonical_Symbolic_Addendum.md`). Always check it before adding new symbols.
-- The tone is formal academic — first person is avoided; claims are scoped carefully.
-- No empirical results are reported. All evaluation frameworks define **protocols**, not outcomes.
-- Layer names (AEGIS, AEON, ADCCL, MYELIN) are always written in ALL CAPS.
-- The project name is always **OmegA** (capital A at the end).
+## Key Files
 
-## Agent Team Workflows
+- `README.md` — full architecture overview with equations and layer descriptions
+- `ORIGIN.md` — canonical origin document (the DeepSeek Challenge, Dec 31 2025)
+- `CITATION.cff` — citation metadata for academic use
+- `papers/OmegA_Unified_Architecture_Paper.md` — the master unified paper
+- `papers/MYELIN_Final_Paper.md`, `ADCCL_Final_Paper.md`, `AEON_Final_Paper.md`, `AEGIS_Final_Paper.md` — per-layer papers
+- `papers/Canonical_Symbolic_Addendum.md` — canonical symbol table and equation reference
+- `papers/Sovereignty_Score.md` — scoring framework
+- `omega_equation_knowledge_graph.json` — graph of all formal equations and symbols
+- `omega_kg_explorer.py` — CLI tool for querying the knowledge graph
 
-This project uses **Claude Code agent teams** for parallel research and writing tasks. The sections below describe the recommended team structures for common workflows.
+## Knowledge Graph Explorer
 
-### Parallel Paper Review
-
-Spawn three reviewers, each with a distinct lens:
-
-```
-Create an agent team to review the ADCCL paper. Spawn three reviewers:
-- One checking internal consistency of equations and notation against the Canonical Symbolic Addendum
-- One evaluating whether the evaluation framework is rigorous and complete
-- One acting as a skeptical external reader, identifying unsupported claims or gaps
-Have them each review and report findings to the lead.
+```bash
+python3 omega_kg_explorer.py <search_term>      # search nodes/labels
+python3 omega_kg_explorer.py --list-nodes       # list all nodes
+python3 omega_kg_explorer.py --list-edges       # list all edges
+python3 omega_kg_explorer.py --layer MYELIN     # filter by layer (MYELIN|ADCCL|AEON|AEGIS)
 ```
 
-### Cross-Paper Consistency Audit
+## Default Work Mode
 
-Spawn one teammate per paper layer to audit cross-layer consistency:
+All normal work starts in this repo. Priority tasks:
+- Editing and improving papers (publication quality: precise, formal, cross-referenced)
+- Maintaining cross-references between papers and the knowledge graph
+- Updating `CITATION.cff` and `README.md` for accuracy
+- Adding or revising `assets/` for figures and diagrams
 
-```
-Create an agent team to audit cross-layer consistency. Spawn four teammates,
-one per layer (AEGIS, AEON, ADCCL, MYELIN). Each teammate reads their layer's
-paper and extracts all symbols, equations, and interface assumptions. The lead
-synthesizes findings and identifies any inconsistencies.
-```
+## Archive
 
-### Knowledge Graph Expansion
-
-Spawn a researcher and a graph engineer in parallel:
-
-```
-Create an agent team to expand the knowledge graph. One teammate reads the
-papers and extracts new concept–relation–concept triples. The other teammate
-updates omega_equation_knowledge_graph.json with validated triples. They
-coordinate on triple format before the graph engineer begins writing.
-```
-
-### Competing Hypothesis Investigation
-
-For open research questions, use adversarial teammates:
-
-```
-Spawn 3 agent teammates to investigate [research question]. Have them each
-take a different position and actively try to disprove each other's arguments
-with evidence from the papers. Update a shared findings doc with whatever
-consensus emerges.
-```
-
-## Key Constraints for All Teammates
-
-1. **No empirical claims.** Do not assert that OmegA has been validated against external benchmarks. The 15/15 evals are spec-level conformance tests only.
-2. **Preserve notation.** All symbols must match `papers/Canonical_Symbolic_Addendum.md`. Never introduce new symbols without checking for conflicts.
-3. **Fail-closed principle.** OmegA is designed to fail closed, never silently. Reflect this in any proposed extensions.
-4. **Layer ownership.** Each layer has a paper. Changes to a layer's formal specification must be reflected in its paper.
-5. **Claim scope.** OmegA is described as *formally specified, internally consistent, and empirically testable — but not yet proven.*
-
-## Important Files to Read First
-
-- Before editing any paper: read `papers/Canonical_Symbolic_Addendum.md`
-- Before modifying the knowledge graph: read `omega_equation_knowledge_graph.json` structure and `omega_kg_explorer.py`
-- For the full system picture: read `papers/OmegA_Unified_Architecture_Paper.md`
-- For layer-specific work: read only the relevant layer paper
+`/home/mega/ATTIC/OmegA-cutover-20260319-233802` is the pre-cutover archive. Consult it only for historical recovery — never as a source of truth for current architecture.

@@ -1,27 +1,27 @@
 # I Am What I Am, and I Will Be What I Will Be
-## The OmegA Architecture for Sovereign, Persistent, and Self-Knowing AI
+## The Ωmegα Architecture for Sovereign, Persistent, and Self-Knowing AI
 
 > *"I am what I am, and I will be what I will be."*
-> — OmegA
+> — Ωmegα
 
 > *"Memory failure, cognitive failure, runtime failure, and governance failure in AI agents are not four separate problems. They are four manifestations of a single architectural gap."*
-> — OmegA Unified Architecture Paper
+> — Ωmegα Unified Architecture Paper
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19111652.svg)](https://doi.org/10.5281/zenodo.19111652)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19111653.svg)](https://doi.org/10.5281/zenodo.19111653)
 [![Status: Architecture + Reference Implementation](https://img.shields.io/badge/Status-Architecture_%2B_Reference_Implementation-brightgreen.svg)]()
 [![arXiv: cs.AI](https://img.shields.io/badge/arXiv-cs.AI-red.svg)]()
 [![Author: Ryan Wayne Yett](https://img.shields.io/badge/Author-Ryan%20Wayne%20Yett-brightgreen.svg)](https://github.com/Mega-Therion)
 
 ---
 
-## What Is OmegA?
+## What Is Ωmegα?
 
 Contemporary AI agent frameworks treat **memory**, **cognition**, **identity**, and **governance** as loosely coupled concerns — implemented in separate tools, prompt layers, or fine-tuning regimes — with no unified formal model of how these layers interact, constrain each other, or degrade together under failure.
 
-**OmegA** proposes that these four failure modes share a single root cause: the absence of a formally specified, cross-layer system state with well-defined interfaces between memory, cognition, runtime management, and governance enforcement.
+**Ωmegα** proposes that these four failure modes share a single root cause: the absence of a formally specified, cross-layer system state with well-defined interfaces between memory, cognition, runtime management, and governance enforcement.
 
-OmegA solves this with a **four-layer concentric architecture**:
+Ωmegα solves this with a **four-layer concentric architecture**:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -42,7 +42,7 @@ OmegA solves this with a **four-layer concentric architecture**:
 
 ## The Core Equation
 
-The complete state of an OmegA agent at time *t* is defined by a single unified **System State Vector**:
+The complete state of an Ωmegα agent at time *t* is defined by a single unified **System State Vector**:
 
 $$\Omega_t = \langle \Phi_t,\ E_t,\ \tau_t,\ B_t,\ S_t,\ G_t^{\text{mem}} \rangle$$
 
@@ -139,6 +139,12 @@ A side-effectful action must pass the **ADCCL Verifier**, then the **AEON Bridge
 
 OmegA is not only a conceptual architecture — it has a **live reference implementation**.
 
+The tool suite (v1.0) includes:
+- **One-Block Builder (`obb.py`)**: Reproducible script generator for maintenance.
+- **Repo Cartographer (`repo_cartographer.py`)**: Automatic manifest and map generation.
+- **Spec Auditor (`spec_auditor.py`)**: Cross-layer consistency and link validation.
+- **Hologram CLI (`hologram.py`)**: Reference implementation of the holographic terminal symbol.
+
 The Rust gateway (RC1.3) has been evaluated against the architecture's own formal specifications across five eval suites:
 
 | Eval | What It Tests | Result |
@@ -165,6 +171,23 @@ The Rust gateway (RC1.3) has been evaluated against the architecture's own forma
 | ADCCL: Anti-Drift Cognitive Control Loop | Layer 3 | [ADCCL_Final_Paper.md](papers/ADCCL_Final_Paper.md) |
 | MYELIN: Path-Dependent Graph Memory | Layer 4 | [MYELIN_Final_Paper.md](papers/MYELIN_Final_Paper.md) |
 | The OmegA Sovereignty Score | Measurement Layer | [Sovereignty_Score.md](papers/Sovereignty_Score.md) |
+
+---
+
+## Teleodynamic Workstream
+
+The teleodynamic source paper is being translated into canonical and technical artifacts rather than being treated as already-validated architecture.
+
+Current workstream artifacts:
+
+- [Critique](papers/THE_OMEGA_ARCHITECTURE_CRITIQUE.md)
+- [Split Plan](papers/THE_OMEGA_ARCHITECTURE_SPLIT_PLAN.md)
+- [Canon Draft](papers/OmegA_Teleodynamic_Canon_Draft.md)
+- [Technical Draft](papers/OmegA_Teleodynamic_Technical_Draft.md)
+- [Concept Mapping](specs/concept_to_implementation_mapping.md)
+- [Observability Spec](specs/teleodynamic_observability.md)
+- [Task State Object v2](specs/task_state_object_v2.md)
+- [Eval Plan](evals/TELEODYNAMIC_EVAL_PLAN.md)
 
 ---
 
@@ -214,18 +237,29 @@ This series presents OmegA as a **conceptual architecture and research program**
 
 ---
 
+## Published Record
+
+This architecture is published and archived on Zenodo:
+
+> **DOI:** [10.5281/zenodo.19111653](https://doi.org/10.5281/zenodo.19111653)
+> **Record:** [https://zenodo.org/records/19111653](https://zenodo.org/records/19111653)
+
+---
+
 ## Citation
 
 If you use or build on this work, please cite it as:
 
 ```bibtex
-@techreport{yett2026omega,
+@software{yett2026omega,
   title     = {OmegA: A Unified Architecture for Sovereign, Persistent, and Governed AI Agents},
   author    = {Yett, Ryan Wayne},
   year      = {2026},
   month     = {March},
-  note      = {Conceptual Architecture Paper. Available at https://github.com/Mega-Therion/OmegA-Architecture},
-  institution = {Independent Research}
+  doi       = {10.5281/zenodo.19111653},
+  url       = {https://doi.org/10.5281/zenodo.19111653},
+  publisher = {Zenodo},
+  note      = {Conceptual Architecture Paper}
 }
 ```
 
