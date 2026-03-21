@@ -7,7 +7,8 @@
 
 ## Abstract
 
-MYELIN is a conceptual architecture for a sovereign AI memory substrate that is graph‑first, path‑dependent, and structurally plastic. It is motivated by the observation that most long‑context AI systems treat memory as retrieval over static embeddings, which fails to express path dependence, structural reinforcement, or heterogeneous plasticity across different kinds of memory. MYELIN replaces this pattern with a sparse memory graph whose topology and edge strengths are explicitly shaped by use. Nodes carry semantic, spatial, and usage state; edges are bundled relationships whose semantic similarity, co‑activation, rewarded retrieval contribution, and synthesized weight evolve at different rates. A stable spatial prior with short‑range repulsion and edge‑conditioned spring attraction corrects earlier sign errors and admits finite minima under damped gradient flow. Entry is handled via approximate nearest‑neighbor seed retrieval followed by bounded graph attention; deliberative traversal uses policy‑guided search (PUCT) on a candidate subgraph rather than unconstrained walk over the full graph. Structural plasticity is captured by explicit edge‑hardening and decay rules and by heterogeneous memory strata—canonical identity, operational, episodic, and speculative memory—each with distinct adaptation thresholds, so that long‑lived identity anchors are protected from ordinary drift.
+MYELIN is a conceptual architecture for a sovereign AI memory substrate that is graph‑first, path‑dependent, and structurally plastic. It is motivated by the observation that most long‑context AI systems treat memory as retrieval over static embeddings, which fails to express path dependence, structural reinforcement, or heterogeneous plasticity across different kinds of memory. <!-- @OMEGA_SPEC: MYELIN_GRAPH_MEMORY | Path-dependent sparse memory graph with bundled relationships and heterogeneous plasticity. -->
+MYELIN replaces this pattern with a sparse memory graph whose topology and edge strengths are explicitly shaped by use. Nodes carry semantic, spatial, and usage state; edges are bundled relationships whose semantic similarity, co‑activation, rewarded retrieval contribution, and synthesized weight evolve at different rates. A stable spatial prior with short‑range repulsion and edge‑conditioned spring attraction corrects earlier sign errors and admits finite minima under damped gradient flow. Entry is handled via approximate nearest‑neighbor seed retrieval followed by bounded graph attention; deliberative traversal uses policy‑guided search (PUCT) on a candidate subgraph rather than unconstrained walk over the full graph. Structural plasticity is captured by explicit edge‑hardening and decay rules and by heterogeneous memory strata—canonical identity, operational, episodic, and speculative memory—each with distinct adaptation thresholds, so that long‑lived identity anchors are protected from ordinary drift.
 
 The architecture is not presented as an empirically validated general intelligence system. It is presented as a defensible, implementation‑oriented proposal: a memory blueprint that can be integrated into sovereign agent stacks such as OmegA (AEON/ESS/AEGIS), benchmarked against strong retrieval baselines, and ablated to test whether its geometry, path dependence, and layered plasticity provide real benefit over static vector stores.
 
@@ -50,6 +51,7 @@ Let the memory substrate be a sparse graph \(G = (V, E)\). Each node \(m_i \in V
 - an optional local orientation frame \(R_i\),  
 - provenance metadata such as source, timestamp, confidence, and modality.
 
+<!-- @OMEGA_SPEC: MYELIN_EDGE_BUNDLES | Multi-signal edges (semantic, co-activation, retrieval utility, weight) that evolve independently. -->
 Each edge \((i, j) \in E\) represents an association with both semantic and operational significance and stores at minimum four signals:
 
 - semantic similarity \(s_{ij}\),  
@@ -61,6 +63,7 @@ The architecture treats an edge not as a single number but as a **bundled relati
 
 ### 3.2 Stable Spatial Prior
 
+<!-- @OMEGA_SPEC: MYELIN_SPATIAL_STABILIZATION | Energy-based graph stabilization using edge-conditioned springs and short-range repulsion. -->
 The spatial layer is retained as an organizing prior. Short‑range repulsion prevents geometric collapse. Edge‑conditioned attraction encourages semantically reinforced neighbors to settle at finite distances. A corrected energy objective is:
 
 \[
@@ -89,6 +92,7 @@ The original PCA‑based “synaptic receptivity” idea can be interpreted as a
 
 ### 4.1 Fast Entry and Local Integration
 
+<!-- @OMEGA_SPEC: MYELIN_RETRIEVAL_DYNAMICS | Hybrid fast-entry (ANN) and deliberative (PUCT-guided) graph traversal. -->
 System‑1 retrieval begins with approximate nearest‑neighbor (ANN) seed retrieval rather than a Naive Bayes classifier. A query embedding \(h_q\) is used to retrieve top‑\(k\) seed nodes through an ANN index such as HNSW. Those seeds define a bounded candidate subgraph on which local graph attention is applied.
 
 The attention rule should incorporate both graph and geometry bias rather than relying on plain dot‑product similarity alone, so that edge strength, past success, and geometric distance all influence relevance propagation. In this way, the spatial story becomes operational rather than merely descriptive.
@@ -149,6 +153,8 @@ MYELIN should not be trained as though all components belong to one clean differ
 - Policy priors and value estimates for deliberative traversal can be trained from retrieval episodes.  
 - Structural updates—edge creation/decay, geometry relaxation, pruning—should operate on schedules outside standard gradient descent, using recorded success/failure statistics.
 
+In a reference implementation, these three update processes operate on deliberately separated timescales. Representation learning and policy/value learning run as standard gradient-based updates on minibatches of retrieval episodes, while structural adaptation (edge creation/decay, geometry relaxation, node pruning) runs as a batched, non-differentiable process on much slower schedules (e.g., hourly or daily). The multi-head loss above applies only to the differentiable components; structural adaptation is driven by simple threshold and scheduling rules rather than backpropagation.
+
 The architecture is expressive but potentially expensive if implemented naively. Full pairwise geometry is \(O(N^2)\), and unconstrained graph attention or search will not scale on large memory substrates. The design therefore assumes sparse neighborhoods, periodic rather than continuous geometry relaxation, approximate repulsion via spatial partitioning or Barnes–Hut‑style methods, and search restricted to a bounded candidate subgraph. These are not afterthoughts but part of the architecture.
 
 ---
@@ -163,7 +169,7 @@ Because the source material does not yet supply valid experiments, evaluation mu
 - long‑horizon identity consistency,  
 - retrieval under graph drift.
 
-Each task should be compared against strong baselines such as plain ANN retrieval, ANN plus reranking, static graph retrieval, and graph attention without geometry. Ablations are essential: the spatial layer, the search layer, the success‑based hardening mechanism, and the protected identity layer should each be removed in turn to determine whether they provide real benefit or only conceptual elegance.
+Each task should be compared against strong baselines such as plain ANN retrieval, ANN plus reranking, static graph retrieval, and graph attention without geometry. Ablations are essential: the spatial layer, the search layer, the success‑based hardening mechanism, and the protected identity layer should each be removed in turn to determine whether they provide real benefit or only conceptual elegance. We view the spatial layer as an optional but potentially useful organizing prior rather than a necessary ingredient: if ablations show that graph attention plus path reinforcement recover most of the retrieval advantage, the geometry can be simplified or removed without invalidating the core MYELIN design.
 
 Suitable metrics include Recall@k, MRR or nDCG, path efficiency, search cost, memory stability under updates, and an identity‑consistency metric over time.
 

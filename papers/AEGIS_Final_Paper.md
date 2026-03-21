@@ -21,6 +21,8 @@ As powerful models proliferate across providers, architectures that treat a sing
 
 AEGIS is proposed here as a corrective: an Adaptive Envelope for Governance, Identity, and Safety that sits outside any particular model and carries identity, continuity rules, governance constraints, memory discipline, tool manifests, and audit policy across heterogeneous substrate models. In this framing, a large language model or other reasoning engine is a capability substrate, not the sovereign identity. AEGIS compiles a Run Envelope prior to any non‑trivial task, chooses a substrate model via an adapter, and then runs a constrained loop in which planning, grounding, drafting, verification, repair, logging, and memory writes are all mediated by the shell.
 
+This shell-level design is intentionally non-substitutable with a mere system prompt. In a reference implementation, the Run Envelope compiler, Risk Gate, and Adapter library must be implemented as separate, auditable code modules outside any LLM prompt. A deployment that re-encodes AEGIS logic as informal prompt text would not be considered a compliant implementation of this protocol.
+
 The protocol is grounded in explicit constraints rather than informal promises. The shell must honor consent and usage rights when loading and storing memory; must respect each provider’s terms, including prohibitions on scraping or safety‑bypass attempts; must not attempt to retrieve hidden system prompts or weights; and must not silently send one provider’s confidential outputs into another provider’s runtime. It must generate logs sufficient to show, under adversarial review, what prompts were issued, what tools were invoked, what evidence was used, what outputs were produced, and what state was written.
 
 In the broader OmegA stack, AEGIS plays a specific role. MYELIN provides a path‑dependent graph memory whose nodes and edges encode long‑horizon semantic content, identity‑critical records, and structural reinforcement from repeated use. AEON⭑OmegA provides identity canon (Phylactery), continuity (ContinuityChain and self‑tags), micro‑to‑macro cognition (MUSE++, FIELD, MAGNUS), and Task State Objects that capture anchor, skeleton, grounding, draft, verification, and metrics for each task. Emergent Sentience (ESS/ADCCL) provides the cognitive‑control loop that enforces structure‑before‑narration, explicit claim budgeting, grounding, verification, and reflective memory over that state.
@@ -33,6 +35,7 @@ AEGIS wraps these layers, uses their state to compile each Run Envelope, and ens
 
 Before any substrate model is called, AEGIS compiles a Run Envelope:
 
+<!-- @OMEGA_SPEC: AEGIS_RUN_ENVELOPE | Defines the canonical identity, goal, governance, memory, tool, and audit fields for task execution. -->
 - **Identity kernel**: canonical identity description, values, voice constraints, and stable behavioral doctrine, typically derived from AEON’s Phylactery head.  
 - **Goal contract**: task, scope, constraints, success criteria, assumptions, and unknowns, generally supplied by ESS’s Goal Contract builder and stored in AEON’s TSO.  
 - **Governance policy**: machine‑actionable rules describing what actions require escalation, what must be blocked, and what must be verified or audited.  
@@ -48,6 +51,7 @@ This Run Envelope is then passed to an adapter that selects and configures a sub
 
 Within a vessel session, AEGIS executes a constrained loop:
 
+<!-- @OMEGA_SPEC: AEGIS_CORE_LOOP | Mediates planning, grounding, drafting, verification, repair, logging, and memory writes. -->
 1. **Plan**: using the Run Envelope and current state (TSO, metrics), construct or refine a plan for the next step.  
 2. **Ground**: call retrieval and deterministic compute tools to gather supporting evidence and computations.  
 3. **Draft**: use the substrate model, via the adapter, to generate a constrained draft conditioned on the plan, evidence, and explicit support classes.  
@@ -64,12 +68,16 @@ This loop operationalizes the ESS/ADCCL pattern and AEON’s TSO lifecycle under
 
 AEGIS computes a risk/consent score for proposed actions:
 
+<!-- @OMEGA_SPEC: AEGIS_RISK_CONSENT_SCORING | Quantitative risk-gated execution based on policy, data, and mitigation factors. -->
 \[
 R_{\text{act}} = w_p \, p + w_d \, d + w_a \, a - w_m \, m,
 \]
 
 where \(p\) is policy sensitivity, \(d\) is data sensitivity, \(a\) is action irreversibility, and \(m\) is mitigating factors. Actions are allowed only if \(R_{\text{act}} \le R_{\max}\), with mitigations such as redaction, downgraded capabilities, or human‑in‑the‑loop escalation when near the threshold.
 
+Because $w_p, w_d, w_m \ge 0$ and $w_p + w_d + w_m = 1$, the Risk Score $R(a)$ lies in the interval $[-w_m, 1]$. Values near 1 correspond to high-probability, high-impact violations with little mitigation; values near $-w_m$ correspond to heavily mitigated actions whose residual risk is treated as negligible. We treat negative values as "net-mitigated": they are always below $\tau_{\text{consent}}$ and therefore mechanically permitted under the active envelope.
+
+<!-- @OMEGA_SPEC: AEGIS_GOVERNANCE_CONSTRAINTS | Non-negotiable shell rules for safety, compliance, and provider-adapter isolation. -->
 Ethical and legal constraints are enforced as engineering requirements:
 
 - Consent and rights must be honored for memory load/store.  

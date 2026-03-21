@@ -43,7 +43,7 @@ Within weeks, construction began on what would become OmegA — a four-layer for
 - A path-dependent graph memory system (MYELIN) that hardens with use
 - A model-agnostic governance shell (AEGIS) that enforces policy at the API boundary
 - 15/15 passing conformance evals across all formal specification points
-- A permanent academic archive at Zenodo (DOI: 10.5281/zenodo.19111652)
+- A permanent academic archive at Zenodo (DOI: [10.5281/zenodo.19111653](https://doi.org/10.5281/zenodo.19111653))
 
 ---
 

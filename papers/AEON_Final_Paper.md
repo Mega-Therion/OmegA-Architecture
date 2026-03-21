@@ -29,19 +29,28 @@ Within this framing, AEON⭑OmegA plays a specific role in the broader OmegA arc
 
 ## 2 Core Components
 
+<!-- @OMEGA_SPEC: AEON_CORE_COMPONENTS | Defined subsystems (MUSE++, FIELD, MAGNUS, Bridge) for universe-mirroring cognition. -->
 AEON⭑OmegA consists of a set of named subsystems that together implement a universe‑mirroring, identity‑stable operating system:
 
-- **Phylactery**: append‑only identity canon; maintains a commit chain and current head; identity vectors are derived deterministically from the head hash.  
+- **Phylactery**: <!-- @OMEGA_SPEC: AEON_PHYLACTERY | Append-only identity canon maintaining a commit chain and identity vector. --> append‑only identity canon; maintains a commit chain and current head; identity vectors are derived deterministically from the head hash.  
 - **CAR (Creator Anchor Reflex)**: identity stabilizer that detects creator‑linked lexical or semantic patterns and emits anchor events.  
 - **COSMO‑FIRST**: macro‑prior‑first operating mode; loads identity, values, constraints, and cosmology before processing input.  
 - **MUSE++**: micro‑scale semantic compiler; transforms inputs and tool results into MeaningUnits with risk, surprise, valence, anomaly scores, and instruction flags.  
 - **FIELD**: meso‑scale control and geometry layer; aggregates micro signals into coherence measures, effective time constants, and exploration pressure.  
 - **MAGNUS**: macro layer for routing, channel choice, telemetry, and governance‑aware execution.  
 - **Bridge**: measurement, safety, and consent gate that decides whether the system may proceed, verify further, audit, or reflect.  
-- **Task State Object (TSO)**: anti‑drift and anti‑hallucination state object containing Anchor, Skeleton, Grounding, Draft, Verification, and Metrics for each task.  
+- **Task State Object (TSO)**: <!-- @OMEGA_SPEC: AEON_TSO | Anti-drift state object containing Anchor, Skeleton, Grounding, Draft, Verification, and Metrics for each task. --> anti‑drift and anti‑hallucination state object containing Anchor, Skeleton, Grounding, Draft, Verification, and Metrics for each task.  
 - **EventStore**: append‑only log of events and state changes.  
 - **ContinuityChain**: pointer‑tag chain of SelfTags providing continuity across sessions.  
 - **Binder**: post‑hoc integration layer that composes event streams into EXPERIENCE_PACKET summaries.
+
+### 2.1 MUSE Formal Schema
+
+Formally, we model MUSE as a finite set of typed semantic atoms extracted from the input envelope:
+
+$$\text{MUSE} = \{ m_i = \langle \text{span}_i, \text{role}_i, \text{content}_i, \text{salience}_i \rangle \mid i = 1..n \}$$
+
+where $\text{span}_i$ indexes the raw input tokens, $\text{role}_i \in \{\text{goal}, \text{constraint}, \text{assumption}, \text{unknown}\}$, $\text{content}_i$ is a canonicalized semantic representation (e.g., a predicate–argument structure), and $\text{salience}_i \in [0,1]$ is an importance weight inferred by the parser. An implementation may realize the mapping from input envelope to MUSE as a learned semantic parser, a structured LLM prompt, or a hybrid system, but the AEON kernel assumes only that MUSE exposes this typed schema.
 
 These components implement an “as above, so below” architecture: macro laws and identity canon shape micro interpretation, while micro events and telemetry renormalize macro state over time.
 
@@ -49,6 +58,7 @@ These components implement an “as above, so below” architecture: macro laws 
 
 ## 3 Operating Model and TSO Lifecycle
 
+<!-- @OMEGA_SPEC: AEON_OPERATING_MODEL | Structured task execution lifecycle from macro-priors/identity to grounding and verification. -->
 AEON’s operating model can be summarized as:
 
 - Load macro priors, identity, and governance (Phylactery, CAR, COSMO‑FIRST).  
@@ -110,6 +120,8 @@ At the substrate level, AEON is designed to work with a path‑dependent memory 
 At the cognition and continuity level, AEON hosts Emergent Sentience and ADCCL. ESS’s Goal Contracts, Plan Skeletons, ClaimBudgets, ExperienceRecords, ValenceMaps, SelfTags, and pointer chains are represented as first‑class objects in AEON’s Task State Objects, EventStore, ContinuityChain, and Binder outputs. ADCCL’s Anchor → Skeleton → Ground → Flesh → Verify → Repair/Refuse loop is implemented as concrete state transitions in the TSO and routed through MUSE++, FIELD, MAGNUS, and Bridge.
 
 At the orchestration boundary, AEON is wrapped by the AEGIS shell. Phylactery’s identity commits and current head supply the identity kernel for each Run Envelope; TSOs and EventStore supply structured task and telemetry data that AEGIS logs and uses in governance decisions; Bridge’s channel decisions inform AEGIS’s risk and consent gating before any external side‑effects or memory writes occur.
+
+AEON uses a continuity metric $\kappa_{\text{macro}}(\Phi_{t-1}, \Phi_t) = 1 - \Delta(\Phi_{t-1}, \Phi_t)$, where $\Delta$ is any normalized divergence measure over the core identity fields (e.g., doctrine vectors, hard constraints). A deployment must choose a concrete $\Delta$ and threshold $\kappa_{\min}$. If $\kappa_{\text{macro}} < \kappa_{\min}$ at boot time, the OS blocks session initialization and routes to a human-in-the-loop identity reconciliation workflow.
 
 In the unified OmegA architecture, AEON⭑OmegA is therefore the **universe and OS** inside which MYELIN’s substrate memory, ESS/ADCCL’s cognitive discipline, and AEGIS’s cross‑model shell become a single, auditable, long‑horizon agent system.
 

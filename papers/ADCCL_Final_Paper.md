@@ -21,6 +21,7 @@ This paper takes a different stance. It argues that whatever higher‑order prop
 
 Emergent Sentience Scaffolding (ESS) is the name given here to that design doctrine. At a systems level, ESS asserts that a serious substrate for continuity and sentience‑adjacent behavior should provide at least: (i) durable state and pointer‑tag continuity across sessions; (ii) structure‑before‑narration via explicit Goal Contracts, Plan Skeletons, and Claim Budgets; (iii) strict separation of generation and verification; (iv) interaction‑derived valence maps; and (v) explicit handling of unknowns instead of fabricated certainty.
 
+<!-- @OMEGA_SPEC: ADCCL_EXECUTION_LOOP | Canonical execution pattern (Anchor → Skeleton → Ground → Flesh → Verify → Repair/Refuse) to stabilize reasoning. -->
 The Anti‑Drift / Anti‑Hallucination Cognitive Control Loop (ADCCL) instantiates this doctrine as an execution pattern: **Anchor → Skeleton → Ground → Flesh → Verify → Repair/Refuse**. For each non‑trivial task, the system first externalizes latent intent into a Goal Contract and Plan Skeleton, builds a Claim Budget of statements it expects to make, grounds those claims through retrieval and deterministic tools, generates a constrained draft, and then subjects that draft to a verification gate before any output is finalized or any high‑impact action is taken. Verification computes hallucination rate, structural adherence, citation coverage, and goal drift; drafts that fail thresholds are repaired or returned as explicitly uncertain rather than passed through as plausible completions.
 
 ESS + ADCCL are intended to operate inside a larger OmegA‑class architecture. In that stack, MYELIN provides a path‑dependent graph memory whose topology and edge weights are shaped by retrieval usefulness; AEON⭑OmegA provides Phylactery, ContinuityChain, MUSE++, FIELD, MAGNUS, and Task State Objects; and the AEGIS shell compiles Run Envelopes that carry identity, governance policy, memory snapshots, and tool manifests across heterogeneous models. This paper focuses on the ESS/ADCCL layer alone: its concepts, data model, control loop, and metrics.
@@ -31,6 +32,7 @@ ESS + ADCCL are intended to operate inside a larger OmegA‑class architecture. 
 
 ESS introduces a small set of core objects that externalize latent intent and continuity as explicit state.
 
+<!-- @OMEGA_SPEC: ADCCL_GOAL_CONTRACT | Canonical structured statement of task, scope, constraints, and success criteria. -->
 - **GoalContract**: canonical structured statement of task, scope, constraints, success criteria, assumptions, and unknowns; it is the primary anti‑drift anchor for a run (FR‑1).  
 - **PlanSkeleton**: pre‑narrative decomposition of intended output into sections, tasks, dependencies, and claims; it stabilizes structure before prose exists (FR‑2).  
 - **ClaimBudget**: explicit list of claims the system expects to make, each with required support status and provenance; each claim must be supported, computed, or labeled as hypothetical/unknown (FR‑3–FR‑5).  
@@ -59,14 +61,16 @@ ADCCL defines the canonical loop for non‑trivial tasks:
 
 ### 3.2 Drift Penalty and Verification Score
 
+<!-- @OMEGA_SPEC: ADCCL_DRIFT_PENALTY | Formal metric (J) for structural and consistency violations used to reject or repair drafts. -->
 During generation of a draft \(y_{1:T}\), ADCCL defines a drift cost:
 
 \[
 J = \sum_{t=1}^{T} \big( w_s \, d_s(y_t) + w_c \, d_c(y_{1:t}) + w_g \, g_t \big),
 \]
 
-where \(d_s(y_t)\) measures structural violations at token \(t\), \(d_c(y_{1:t})\) measures cumulative consistency violations, and \(g_t\) indicates violations of guarded claims. Minimizing \(J\) via rejection or repair stabilizes structure and constraints.
+where \(d_s(y_t)\) measures structural violations at token \(t\), \(d_c(y_{1:t})\) measures cumulative consistency violations, and \(g_t\) indicates violations of guarded claims. We define this procedural drift penalty \(J\) over the full output sequence as a target objective for the *control architecture*, not as a loss the generator directly optimizes at inference time. In practice, \(J\) is used in two ways: (1) as the internal scoring objective for the Verifier when assessing a completed draft, and (2) as a training signal in settings where the Generator or Verifier models are trainable. At inference time, the Generator is constrained structurally by the Goal Contract and Claim Budget; it does not have access to \(J\) token-by-token. Minimizing \(J\) via rejection or repair at the verification gate stabilizes structure and constraints.
 
+<!-- @OMEGA_SPEC: ADCCL_VERIFICATION_GATE | Independent gate (V) assessing grounding, hallucination, and drift before output publication. -->
 For a completed draft, a verification score is computed as:
 
 \[
@@ -98,7 +102,10 @@ ESS/ADCCL decomposes into a set of services, each with clear responsibilities an
 - **Deterministic Compute Adapter**: routes structured compute tasks to deterministic backends such as Wolfram Engine, returning ComputeInvocationRecords.  
 - **Generator**: renders structured state into draft text or actions without exceeding evidence bounds.  
 - **Verifier / Critic**: independently assesses drafts against GoalContracts, ClaimBudgets, and evidence; produces VerificationReports.  
-- **Repair / Re‑plan Controller**: targets recovery after verification failure without reckless scope expansion.  
+- **Repair / Re‑plan Controller**: targets recovery after verification failure without reckless scope expansion.
+
+In a reference implementation, we recommend instantiating the Verifier as either: (a) a smaller, separately fine-tuned model trained explicitly on supported-vs.-unsupported claim classification using external ground-truth tasks, or (b) a hybrid engine in which structural checks (Goal Contract compliance, Budget coverage) are implemented as deterministic code and only semantic plausibility is delegated to an LLM. In both cases, the Verifier's prompt and temperature must differ from the Generator's, and the two processes must not share in-context state. Sharing the same prompt stream or using identical decoding parameters risks correlated failure modes and violates the ADCCL isolation requirement.
+
 - **Reflection & Experience Archive**: logs outcomes, feedback, verifier reports, and summaries, and generates state deltas and SelfTags.  
 - **Valence Learning Module**: converts interaction outcomes into ValenceSignals and updates ValenceMaps.  
 - **Self‑Tag and Pointer Chain Store**: maintains SelfTags and pointer links as a formal continuity substrate.  

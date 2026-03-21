@@ -19,12 +19,14 @@
 
 ### What the system is
 
+<!-- @OMEGA_SPEC: OMEGA_SOVEREIGN_PLATFORM | Private, governed multi-agent intelligence system with persistent identity and memory. -->
 OmegA is a **private, sovereign, multi-agent intelligence system** centered on a persistent personal operating model rather than a disposable chatbot session. In the thread, OmegA is described both as a concrete software stack and as an identity-bearing orchestration layer. Technically, the most defensible formulation is:
 
 > OmegA is a governed adaptive agent platform that combines memory, retrieval, orchestration, structured interfaces, and identity continuity to provide high-fidelity, context-aware assistance across CLI and service boundaries.
 
 The platform comprises several interlocking concerns:
 
+<!-- @OMEGA_SPEC: OMEGA_HIERARCHICAL_RETRIEVAL | Retrieval strategy that expands from chunk embeddings to local and structural context. -->
 1. **Hierarchical RAG / vector retrieval** over full documents, sections, and chunks.
 2. **Unified memory and context assembly** across conversation history, study libraries, operational logs, and curated “sovereign moments.”
 3. **A multi-service runtime** (“Trinity”) including Gateway, Bridge, Brain, and CLI entrypoints.
@@ -32,6 +34,7 @@ The platform comprises several interlocking concerns:
    - a rich, streaming, aesthetically polished CLI for human interaction
    - structured JSON / programmatic interfaces for agent-to-agent communication
 5. **A governed adaptive-learning loop** involving experiments, marginalia, scored outcomes, and thresholded integration.
+<!-- @OMEGA_SPEC: OMEGA_EPISTEMIC_DISCIPLINE | Formal differentiation between evidence, inference, uncertainty, and metaphor to resist hallucination. -->
 6. **An epistemic discipline layer** that distinguishes evidence, inference, uncertainty, metaphor, and false-memory resistance.
 7. **A self-model / identity layer** that is meaningful operationally but must not be confused with proof of subjective consciousness.
 
@@ -234,6 +237,27 @@ Thread-derived foundations include:
 | **OMEGA_SESSION_ID** | Session continuity token | Maintains conversational coherence within a session |
 | **Sovereign Kernel** | Distilled operational guidance / cognitive kernel | Inferred from thread: compressed alignment/context artifact for OmegA |
 | **Inferred from thread** | Formalized interpretation not stated verbatim | Must be treated as implementation guidance, not direct canon |
+
+### Notation Across Companion Papers
+
+To avoid ambiguity, we standardize the following symbols across the OmegA suite:
+
+| Symbol | Context | Meaning |
+|--------|---------|---------|
+| $G_t^{\text{mem}}$ | MYELIN | Memory graph at time $t$ (nodes and edges) |
+| $G^{\text{gov}}$ | AEGIS | Governance Policy component of the Run Envelope |
+| $\tau$ | AEON | Task State Object (TSO) |
+| $\tau_{ij}$ | MYELIN | Edge decay timescale |
+| $E_t$ | AEGIS | Run Envelope at time $t$ |
+| $E_{t,\text{graph}}$ | MYELIN | Edge set of $G_t^{\text{mem}}$ when disambiguation is needed |
+| $R(a)$ | AEGIS | Shell-level risk score for external actions |
+| $\rho(A)$ | AEON | Bridge risk score for internal TSO actions |
+| $V$ | ADCCL | Verifier score for draft outputs |
+| $S_t$ | ADCCL | Self-Tag — immutable continuity record written after each completed task |
+
+Throughout this paper, we use subscripts or superscripts where needed to disambiguate context.
+
+$S_t$ stores, at minimum, a hash of the completed TSO $\tau_t$, the final ADCCL Verifier score $V_t$, and an outcome label in $\{\text{verified}, \text{uncertain}, \text{rejected}\}$.
 
 ---
 
@@ -1654,6 +1678,16 @@ Canonical restatement:
 - conflation of metaphor with evidence
 - JSON flags that silently fail into prose
 - casual secret leakage
+
+### Unified Action Gating
+
+OmegA uses three distinct but composable verification and risk assessments for actions with external side effects. The ADCCL Verifier produces score $V$ assessing whether a draft output meets its Goal Contract and Claim Budget. The AEON Bridge computes $\rho(A)$ for proposed actions $A$ originating from a Task State Object, focusing on internal uncertainty and structural readiness. The AEGIS shell computes $R(a)$ for concrete tool calls $a$ that would cross the system boundary, focusing on policy violation likelihood, destructive impact, and available mitigations.
+
+In the unified stack, these scores compose sequentially rather than competing. A proposed action must satisfy all three:
+
+$$V_t > \tau_{\text{verify}} \quad\wedge\quad \rho(A) < \theta_{\text{allow}} \quad\wedge\quad R(a) < \tau_{\text{consent}}$$
+
+The Verifier acts as an internal quality gate that prevents ungrounded or drifted outputs from advancing. The Bridge acts as an internal guardrail that prevents structurally premature actions from becoming concrete tool calls. The shell acts as an external guardrail that enforces deployment-level governance regardless of internal confidence. This composition ensures that a highly confident but policy-violating action is still blocked, and that a low-confidence action is never exposed to the environment even if it would otherwise be permitted by policy.
 
 ---
 

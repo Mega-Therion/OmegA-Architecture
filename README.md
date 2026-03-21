@@ -171,6 +171,7 @@ The Rust gateway (RC1.3) has been evaluated against the architecture's own forma
 | ADCCL: Anti-Drift Cognitive Control Loop | Layer 3 | [ADCCL_Final_Paper.md](papers/ADCCL_Final_Paper.md) |
 | MYELIN: Path-Dependent Graph Memory | Layer 4 | [MYELIN_Final_Paper.md](papers/MYELIN_Final_Paper.md) |
 | The OmegA Sovereignty Score | Measurement Layer | [Sovereignty_Score.md](papers/Sovereignty_Score.md) |
+| The Yettragrammaton | Symbolic Identity | [The_Yettragrammaton.md](papers/The_Yettragrammaton.md) |
 
 ---
 
