@@ -10,7 +10,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19111653.svg)](https://doi.org/10.5281/zenodo.19111653)
 [![Status: Architecture + Reference Implementation](https://img.shields.io/badge/Status-Architecture_%2B_Reference_Implementation-brightgreen.svg)]()
-[![arXiv: cs.AI](https://img.shields.io/badge/arXiv-cs.AI-red.svg)]()
 [![Author: Ryan Wayne Yett](https://img.shields.io/badge/Author-Ryan%20Wayne%20Yett-brightgreen.svg)](https://github.com/Mega-Therion)
 
 ---
@@ -172,6 +171,34 @@ The Rust gateway (RC1.3) has been evaluated against the architecture's own forma
 | MYELIN: Path-Dependent Graph Memory | Layer 4 | [MYELIN_Final_Paper.md](papers/MYELIN_Final_Paper.md) |
 | The OmegA Sovereignty Score | Measurement Layer | [Sovereignty_Score.md](papers/Sovereignty_Score.md) |
 | The Yettragrammaton | Symbolic Identity | [The_Yettragrammaton.md](papers/The_Yettragrammaton.md) |
+
+---
+
+## Reference Implementation
+
+The `omega/` package is a minimal Python implementation of the four-layer stack:
+
+```python
+from omega import OmegaAgent
+
+agent = OmegaAgent()
+result = agent.run("Explain the OmegA architecture", model="llama3.2:3b")
+
+print(result.verification)   # ADCCL verification score
+print(result.self_tag)        # AEON continuity record
+print(agent.state_vector)     # Full Ω_t system state
+```
+
+| Module | Layer | What It Implements |
+|--------|-------|--------------------|
+| `omega.phylactery` | AEON | Append-only identity chain with SHA-256 tamper detection |
+| `omega.envelope` | AEGIS | Run Envelope compilation (structured data, not prompt text) |
+| `omega.risk_gate` | AEGIS | Risk scoring, policy hard-blocks, 3-gate composition (V ∧ ρ ∧ R) |
+| `omega.drift` | ADCCL | Drift penalty J, verification score V, GoalContract, ClaimBudget |
+| `omega.memory` | MYELIN | Sparse graph with edge hardening, bundled signals, strata decay |
+| `omega.agent` | All | Unified agent wiring all layers through Ollama |
+
+Requires: Python 3.12+, Ollama running locally.
 
 ---
 
