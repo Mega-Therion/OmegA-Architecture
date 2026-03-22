@@ -11,6 +11,8 @@ from pathlib import Path
 VALIDATION_MAP = {
     "AEGIS_IDENTITY_ENFORCEMENT": "evals/test_aegis_identity.py",
     "OMEGA_CONFORMANCE_SUITE": "evals/test_conformance.py",
+    # Live tests require Ollama — run separately:
+    #   python3 evals/test_live_ollama.py --model llama3.2:3b
 }
 
 def run_suite():
