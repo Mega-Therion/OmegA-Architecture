@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OmegA Knowledge Graph Explorer
+Ωmegα Knowledge Graph Explorer
 Usage: python omega_kg_explorer.py <search_term>
        python omega_kg_explorer.py --list-nodes
        python omega_kg_explorer.py --list-edges
@@ -70,7 +70,7 @@ def print_node(node, kg, show_edges=True):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="OmegA Canonical Equation Knowledge Graph Explorer"
+        description="Ωmegα Canonical Equation Knowledge Graph Explorer"
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument("query", nargs="?", help="Search term (node ID, label, or keyword)")
@@ -80,7 +80,7 @@ def main():
     args = parser.parse_args()
 
     kg = load_graph()
-    print(f"\n  OmegA Knowledge Graph — {kg['title']}")
+    print(f"\n  Ωmegα Knowledge Graph — {kg['title']}")
     print(f"  {len(kg['nodes'])} nodes  |  {len(kg['edges'])} edges\n")
 
     if args.list_nodes:

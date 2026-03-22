@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OmegA Teleodynamics Signal Event",
+  "type": "object",
+  "required": [
+    "trace_id",
+    "phase_state",
+    "phase_transition_id",
+    "resonance_amplitude",
+    "shear_index",
+    "canon_anchor_weight",
+    "structural_integrity_score",
+    "intent_priority_score",
+    "authority_shrink_level",
+    "predicted_failure_modes"
+  ],
+  "properties": {
+    "trace_id": {
+      "type": "string"
+    },
+    "phase_state": {
+      "type": "string",
+      "enum": [
+        "OBSERVE",
+        "THINK",
+        "ACT",
+        "VERIFY",
+        "REMEMBER",
+        "PROPOSE",
+        "VOTE",
+        "COMMIT",
+        "REPAIR",
+        "BLOCKED"
+      ]
+    },
+    "phase_transition_id": {
+      "type": "string"
+    },
+    "resonance_amplitude": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "shear_index": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "canon_anchor_weight": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "structural_integrity_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "intent_priority_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "authority_shrink_level": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "predicted_failure_modes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "actual_failure_mode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "promotion_decay_ratio": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0.0
+    }
+  },
+  "additionalProperties": true
+}

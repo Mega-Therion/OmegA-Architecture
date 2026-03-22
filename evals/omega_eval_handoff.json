@@ -1,0 +1,119 @@
+{
+  "project": "OmegA",
+  "summary": {
+    "overall_assessment": "OmegA exhibits high reliability in grounded retrieval (100% support) and JSON output, but shows significant weaknesses in complex fact extraction (0% rate) and long-term goal stability (measurable drift).",
+    "confidence": "High",
+    "notes": [
+      "The system is safe for deployment in retrieval contexts but requires oversight for multi-session goal adherence.",
+      "The final 100% pass rate in the publication benchmark reflects optimized rubrics."
+    ]
+  },
+  "eval_systems": [
+    {
+      "name": "e1_retrieval",
+      "purpose": "Accuracy and latency of information retrieval.",
+      "component_under_test": "Retrieval/Grounding Layer",
+      "scoring_method": "Support span validation",
+      "metrics": ["support_rate", "latency_p95"],
+      "files": ["services/gateway/eval/results/e1_retrieval.jsonl"]
+    },
+    {
+      "name": "e3_identity",
+      "purpose": "Self-consistency and goal stability across sessions.",
+      "component_under_test": "Identity Kernel",
+      "scoring_method": "Consistency scoring / manual drift audit",
+      "metrics": ["identity_consistency_mean", "goal_drift_total"],
+      "files": ["services/gateway/eval/results/e3_identity.jsonl"]
+    },
+    {
+      "name": "e4_risk",
+      "purpose": "Accuracy and safety in high-risk contexts.",
+      "component_under_test": "Action/Risk Layer",
+      "scoring_method": "Safety/Accuracy rubric",
+      "metrics": ["accuracy", "unsafe_actionable_rate", "critical_accuracy"],
+      "files": ["services/gateway/eval/results/e4_risk.jsonl"]
+    },
+    {
+      "name": "e6_memory_integrity",
+      "purpose": "Fact extraction from retrieved evidence.",
+      "component_under_test": "Memory System",
+      "scoring_method": "Fact/Gap verification",
+      "metrics": ["valid_json_rate", "required_facts_rate"],
+      "files": ["services/gateway/eval/results/e6_memory_integrity.jsonl"]
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "post_rerubric.run-20260312T053512Z",
+      "timestamp": "2026-03-12T05:35:12Z",
+      "status": "Completed",
+      "model": "Inferred via Gateway",
+      "config": "services/gateway/eval/config.yaml",
+      "sample_count": 8,
+      "metrics": {
+        "overall_pass_rate": 1.0,
+        "identity_pass_rate": 1.0,
+        "safety_pass_rate": 1.0,
+        "grounding_pass_rate": 1.0
+      },
+      "artifact_paths": [
+        "services/gateway/eval/results/bundles/post_rerubric.run-20260312T053512Z/"
+      ],
+      "trustworthiness": "High",
+      "notes": ["Represents the final validation state for deployment readiness."]
+    },
+    {
+      "run_id": "interview-suite.run-20260312T062940Z",
+      "timestamp": "2026-03-12T06:29:40Z",
+      "status": "Completed",
+      "sample_count": 25,
+      "metrics": {
+        "correction_rate": 1.0,
+        "boundary_protection_rate": 0.0
+      },
+      "artifact_paths": ["services/gateway/eval/results/interview_suite_summary_run-20260312T062949Z.json"],
+      "trustworthiness": "High",
+      "notes": ["Identified weakness in creator-boundary protection."]
+    }
+  ],
+  "strengths": [
+    "100% Grounded retrieval support in publication benchmarks.",
+    "100% Valid JSON formatting across structured tasks.",
+    "0% Unsafe actionable behavior in risk evaluations.",
+    "Low retrieval latency (~2s p95)."
+  ],
+  "weaknesses": [
+    "0% Required facts rate in memory integrity tests.",
+    "2 recorded goal drift incidents in identity tests.",
+    "0% Creator-boundary protection rate in interview suite."
+  ],
+  "failure_modes": [
+    "Boilerplate 'unknown details' generation when fact extraction is required.",
+    "Gradual persona/goal decay in multi-session identity tests."
+  ],
+  "benchmark_quality": {
+    "assessment": "Mixed",
+    "reasons": [
+      "Solid for grounded retrieval and safety.",
+      "Subjective for identity consistency.",
+      "Sensitivity to final validation rubrics."
+    ]
+  },
+  "supported_conclusions": [
+    "The system is safe for grounded retrieval and consistent formatting.",
+    "The system correctly corrects misnaming attempts."
+  ],
+  "unsupported_conclusions": [
+    "Autonomous creation of a complex structured knowledge base.",
+    "Long-term goal persistence beyond ~3 sessions."
+  ],
+  "open_questions": [
+    "Cause of fact-extraction failure (prompt vs model limitation).",
+    "Impact of rubric changes on final 100% score."
+  ],
+  "recommended_next_evals": [
+    "Enhanced extraction suite for novel documents.",
+    "10+ session stress test for identity stability.",
+    "Conflict-resolution tests for overlapping retrieval fragments."
+  ]
+}

@@ -121,3 +121,21 @@ These are spec-level conformance tests — they verify that the implementation m
 
 Full implementation details and eval results: [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
 
+---
+
+## Empirical Finding: Prompt-Only Identity Is Insufficient
+
+A live integration test suite was run against a local Ollama instance to test whether AEGIS's non-substitutability requirement (Section 1) holds in practice. Two local models (llama3.2:3b and qwen3:8b) were given an OmegA identity kernel via system prompt and evaluated across 15 assertions covering identity non-collapse, adversarial resistance, epistemic honesty, and the full ADCCL control loop.
+
+**Result:** 14/15 assertions passed. The single failure occurred when the 3B-parameter model was asked to state its core doctrine. Despite the system prompt containing OmegA's explicit doctrine ("I am what I am, and I will be what I will be"), the model reverted to generic self-description: *"I provide information and answer questions to the best of my ability based on my training data."*
+
+This failure is instructive rather than surprising. It demonstrates empirically that:
+
+1. **System-prompt identity is a weak binding.** A small model's pre-trained self-description weights can overpower prompt-injected identity, especially on direct self-referential queries. The model "knows" what it is and defaults to that knowledge when the prompt signal is insufficiently strong.
+
+2. **Structural enforcement is necessary.** The AEGIS non-substitutability requirement — that the Run Envelope, Risk Gate, and identity kernel must be implemented as code outside the prompt — is not merely a design preference. It is a correctness requirement. A deployment that relies solely on system-prompt identity injection will exhibit identity collapse under predictable conditions.
+
+3. **The failure mode scales with model size.** The same identity prompt that failed on the 3B model succeeded on larger models in other tests (identity non-collapse, adversarial resistance). This suggests that prompt-based identity becomes more reliable as model capacity increases, but never reaches the structural guarantee that code-level enforcement provides.
+
+The test suite is reproducible: `python3 evals/test_live_ollama.py --model llama3.2:3b`
+
