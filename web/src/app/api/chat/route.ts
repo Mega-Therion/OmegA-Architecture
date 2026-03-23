@@ -197,10 +197,31 @@ async function fetchGateway(body: string): Promise<Response> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { user, history } = (await req.json()) as { user: string; history?: Msg[] };
+    const { user, history, sessionId } = (await req.json()) as { user: string; history?: Msg[]; sessionId?: string };
 
     if (!user?.trim()) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 });
+    }
+
+    const dbUrl = process.env.DATABASE_URL;
+    let finalSessionId = sessionId;
+
+    // Track user message in Neon
+    if (dbUrl) {
+      try {
+        const db = neon(dbUrl);
+        if (!finalSessionId) {
+          const sessionRes = await db`INSERT INTO omega_sessions DEFAULT VALUES RETURNING id`;
+          if (sessionRes && sessionRes.length > 0) {
+            finalSessionId = sessionRes[0].id as string;
+          }
+        }
+        if (finalSessionId) {
+          await db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'user', ${user})`;
+        }
+      } catch (err) {
+        console.error('[OmegA chat] Failed to update Neon session data for user message', err);
+      }
     }
 
     // Identify Compute Context
@@ -293,7 +314,18 @@ ${conversationContext}`;
       }
     }
 
-    return NextResponse.json(data);
+    // Track OmegA response in Neon
+    if (dbUrl && finalSessionId && data && (data.reply || data.response)) {
+      try {
+        const db = neon(dbUrl);
+        const replyText = data.reply || data.response;
+        await db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'omega', ${replyText})`;
+      } catch (err) {
+        console.error('[OmegA chat] Failed to update Neon session data for omega message', err);
+      }
+    }
+
+    return NextResponse.json({ ...data, sessionId: finalSessionId });
 
   } catch (err) {
     console.error('[OmegA chat]', err);

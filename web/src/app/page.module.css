@@ -360,11 +360,28 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  color: rgba(196, 181, 253, 0.4);
+  gap: 0.8rem;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: rgba(241, 245, 249, 0.7);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.historyBtn {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--lavender);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.65rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-snappy);
+}
+.historyBtn:hover {
+  color: var(--gold);
+  border-color: rgba(184, 134, 11, 0.3);
 }
 
 .headerSession {

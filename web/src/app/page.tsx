@@ -163,18 +163,32 @@ function ThinkingIndicator() {
 // ── Main ──────────────────────────────────────────────────────────
 export default function Home() {
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [animatingIdx, setAnimatingIdx] = useState<number>(-1);
   const [input, setInput] = useState("");
-  const [canvasState, setCanvasState] = useState<CanvasState>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [canvasState, setCanvasState] = useState<CanvasState>("idle");
   const [latestOmega, setLatestOmega] = useState("");
-  const [animatingIdx, setAnimatingIdx] = useState(-1);
   const [showPill, setShowPill] = useState(false);
-
-  const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  const bottomRef = useRef<HTMLDivElement>(null);
   const inChatMode = messages.length > 0;
 
+  // Auto-resize
+  const autoResize = () => {
+    if (!textareaRef.current) return;
+    textareaRef.current.style.height = "auto";
+    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+  };
+
+  // On page load, try to resume session
+  useEffect(() => {
+    // eslint-disable-next-line react-compiler/react-compiler
+    const saved = localStorage.getItem("omega_session");
+    if (saved) setSessionId(saved);
+  }, []);
   // Suppress unused-var lint — latestOmega is retained for future streaming use
   void latestOmega;
 
@@ -186,6 +200,8 @@ export default function Home() {
     setLatestOmega("");
     setAnimatingIdx(-1);
     setShowPill(false);
+    setSessionId(null); // Reset session ID on new chat
+    localStorage.removeItem("omega_session"); // Clear stored session
   };
 
   const scrollToBottom = () => {
@@ -221,7 +237,13 @@ export default function Home() {
     setShowPill(false);
 
     try {
-      const res = await chat({ user: text, history: currentMessages });
+      const res = await chat({ user: text, history: currentMessages, sessionId: sessionId ?? undefined });
+      
+      if (res.sessionId && !sessionId) {
+        setSessionId(res.sessionId);
+        localStorage.setItem("omega_session", res.sessionId);
+      }
+
       const reply = res.reply ?? res.response ?? "";
       setMessages(prev => {
         const next = [...prev, { role: "omega" as const, text: reply, timestamp: new Date().toISOString() }];
@@ -236,17 +258,10 @@ export default function Home() {
       setError(err instanceof Error ? err.message : String(err));
       setCanvasState("idle");
     }
-  }, [input, canvasState, messages]);
+  }, [input, canvasState, messages, sessionId]);
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  };
-
-  const autoResize = () => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
 
   // ── Render ───────────────────────────────────────────────────────
@@ -354,6 +369,9 @@ export default function Home() {
                 <span className={`${s.headerOmega} ${canvasState === "thinking" ? s.thinking : ""}`}>Ω</span>
                 <span className={s.headerName}>OmegA</span>
                 <div className={s.headerStatus}>
+                  <button className={s.historyBtn} title="View Session History" onClick={() => alert("History loading coming soon.")}>
+                    ⌘ History
+                  </button>
                   <div className={s.statusDot} />
                   Sovereign
                 </div>

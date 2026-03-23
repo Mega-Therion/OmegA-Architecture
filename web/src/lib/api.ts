@@ -4,12 +4,14 @@
 export interface ChatRequest {
   user: string;
   history?: { role: "user" | "omega"; text: string; timestamp?: string }[];
+  sessionId?: string;
 }
 
 export interface ChatResponse {
   reply?: string;
   response?: string;
   provider?: string;
+  sessionId?: string;
 }
 
 export async function chat(req: ChatRequest): Promise<ChatResponse> {
