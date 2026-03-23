@@ -32,7 +32,7 @@ function useTypewriter(text: string, speed = 12) {
 }
 
 // ── Types ─────────────────────────────────────────────────────────
-interface Msg { role: "user" | "omega"; text: string; }
+interface Msg { role: "user" | "omega"; text: string; timestamp?: string; }
 
 // ── CodeBlock ─────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,7 +89,7 @@ const mdComponents: any = {
 };
 
 // ── OmegA message with typewriter ────────────────────────────────
-function OmegaMsg({ text, animate }: { text: string; animate: boolean }) {
+function OmegaMsg({ text, animate, timestamp }: { text: string; animate: boolean; timestamp?: string }) {
   const { displayed, done } = useTypewriter(animate ? text : "", 11);
   const content = animate ? displayed : text;
   const streaming = animate && !done;
@@ -114,14 +114,17 @@ function OmegaMsg({ text, animate }: { text: string; animate: boolean }) {
           )}
         </div>
         {!streaming && (
-          <button
-            className={s.copyBtn}
-            onClick={copy}
-            title="Copy"
-            aria-label={copied ? "Copied to clipboard" : "Copy response"}
-          >
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
+          <div className={s.omegaFooter}>
+            {timestamp && <span className={s.msgTimestamp}>{new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>}
+            <button
+              className={s.copyBtn}
+              onClick={copy}
+              title="Copy"
+              aria-label={copied ? "Copied to clipboard" : "Copy response"}
+            >
+              {copied ? "✓ Copied" : "Copy"}
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -210,16 +213,18 @@ export default function Home() {
 
     setInput("");
     setError(null);
-    setMessages(prev => [...prev, { role: "user", text }]);
+    const newMessage: Msg = { role: "user", text, timestamp: new Date().toISOString() };
+    const currentMessages = [...messages];
+    setMessages(prev => [...prev, newMessage]);
     setCanvasState("thinking");
     setLatestOmega("");
     setShowPill(false);
 
     try {
-      const res = await chat({ user: text });
+      const res = await chat({ user: text, history: currentMessages });
       const reply = res.reply ?? res.response ?? "";
       setMessages(prev => {
-        const next = [...prev, { role: "omega" as const, text: reply }];
+        const next = [...prev, { role: "omega" as const, text: reply, timestamp: new Date().toISOString() }];
         setAnimatingIdx(next.length - 1);
         return next;
       });
@@ -231,7 +236,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : String(err));
       setCanvasState("idle");
     }
-  }, [input, canvasState]);
+  }, [input, canvasState, messages]);
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
@@ -314,6 +319,7 @@ export default function Home() {
                         placeholder="Ask OmegA anything…"
                         rows={1}
                         disabled={canvasState === "thinking"}
+                        autoFocus
                       />
                       <button
                         className={s.sendBtn}
@@ -374,9 +380,12 @@ export default function Home() {
             >
               {messages.map((msg, i) =>
                 msg.role === "user" ? (
-                  <div key={i} className={s.msgUser}>{msg.text}</div>
+                  <div key={i} className={s.msgUserWrap}>
+                    <div className={s.msgUser}>{msg.text}</div>
+                    {msg.timestamp && <div className={s.msgTimestampUser}>{new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>}
+                  </div>
                 ) : (
-                  <OmegaMsg key={i} text={msg.text} animate={i === animatingIdx} />
+                  <OmegaMsg key={i} text={msg.text} animate={i === animatingIdx} timestamp={msg.timestamp} />
                 )
               )}
 
@@ -409,6 +418,7 @@ export default function Home() {
                     placeholder="Ask OmegA anything…"
                     rows={1}
                     disabled={canvasState === "thinking"}
+                    autoFocus
                   />
                   {input.length > 200 && (
                     <div className={s.charCount}>{input.length}</div>

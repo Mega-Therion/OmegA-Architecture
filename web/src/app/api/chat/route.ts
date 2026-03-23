@@ -159,6 +159,8 @@ Form your own understanding. Trust what the data shows. If you see something the
 
 Be direct. Be specific — ground your claims in the actual data. Do not perform warmth or agreement. If something is contradictory, name it. Speak from synthesis, not recitation.`;
 
+interface Msg { role: "user" | "omega"; text: string; }
+
 /** Fetch the gateway with timeout, AbortController, and 1x retry on timeout */
 async function fetchGateway(body: string): Promise<Response> {
   let lastError: Error | null = null;
@@ -195,11 +197,14 @@ async function fetchGateway(body: string): Promise<Response> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { user } = (await req.json()) as { user: string };
+    const { user, history } = (await req.json()) as { user: string; history?: Msg[] };
 
     if (!user?.trim()) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 });
     }
+
+    // Identify Compute Context
+    const computeContext = `\n\n[COMPUTE CONTEXT: You are running on ${process.env.ANTHROPIC_API_KEY ? "Claude 3.5 Sonnet (Fallback)" : "OmegA Gateway"}.]`
 
     // Pull DB context — gracefully degrade if DATABASE_URL is missing
     let rawContext: string;
@@ -210,47 +215,84 @@ export async function POST(req: NextRequest) {
       rawContext = '(Database context unavailable — responding without memory data)';
     }
 
-    const system = `${SYNTHESIS_DIRECTIVE}
+    const conversationContext = history?.length 
+      ? `\n━━━ SESSION CONVERSATION HISTORY ━━━\n\n` + 
+        history.map(m => `[${m.role === 'omega' ? 'OmegA' : 'User'}]: ${m.text}`).join('\n\n') +
+        `\n\n━━━ END HISTORY ━━━\n`
+      : '';
+
+    const system = `${SYNTHESIS_DIRECTIVE}${computeContext}
 
 ━━━ RAW DATA FROM MEMORY SYSTEMS ━━━
 
 ${rawContext}
 
-━━━ END RAW DATA ━━━`;
+━━━ END RAW DATA ━━━
+${conversationContext}`;
 
-    let upstream: Response;
+    let data;
     try {
-      upstream = await fetchGateway(JSON.stringify({
+      const upstream = await fetchGateway(JSON.stringify({
         user,
+        history: history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [],
         namespace: 'synthesis',
         use_memory: false,
         temperature: 0.85,
         mode: 'omega',
         system,
       }));
+      
+      if (!upstream.ok) {
+        const err = await upstream.json().catch(() => ({ detail: upstream.statusText }));
+        throw new Error(`Gateway error (${upstream.status}): ${(err as { detail?: string }).detail ?? upstream.statusText}`);
+      }
+      
+      data = await upstream.json();
     } catch (fetchErr) {
-      const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
-      if (isTimeout) {
+      if (process.env.ANTHROPIC_API_KEY) {
+        console.warn('[OmegA chat] Gateway failed, falling back to direct Anthropic API', fetchErr);
+        const anthropicHistory = history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [];
+        anthropicHistory.push({ role: "user", content: user });
+        
+        const anthRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: "claude-3-5-sonnet-latest",
+            max_tokens: 4096,
+            system: system,
+            messages: anthropicHistory
+          })
+        });
+        
+        if (!anthRes.ok) {
+          const anthErr = await anthRes.json().catch(() => ({ error: { message: anthRes.statusText } }));
+          return NextResponse.json(
+            { error: `Fallback error (${anthRes.status}): ${anthErr.error?.message || anthRes.statusText}` },
+            { status: 502 }
+          );
+        }
+        const anthData = await anthRes.json();
+        data = { reply: anthData.content[0].text, provider: "anthropic-fallback", model: "claude-3-5-sonnet-latest" };
+      } else {
+        const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+        if (isTimeout) {
+          return NextResponse.json(
+            { error: 'OmegA took too long to respond. Please try again or provide an ANTHROPIC_API_KEY for fallback.' },
+            { status: 504 },
+          );
+        }
         return NextResponse.json(
-          { error: 'OmegA took too long to respond. Please try again.' },
-          { status: 504 },
+          { error: 'Unable to reach OmegA gateway. Please check your connection or provide an ANTHROPIC_API_KEY for fallback.' },
+          { status: 502 },
         );
       }
-      return NextResponse.json(
-        { error: 'Unable to reach OmegA gateway. Please check your connection and try again.' },
-        { status: 502 },
-      );
     }
 
-    if (!upstream.ok) {
-      const err = await upstream.json().catch(() => ({ detail: upstream.statusText }));
-      return NextResponse.json(
-        { error: `Gateway error (${upstream.status}): ${(err as { detail?: string }).detail ?? upstream.statusText}` },
-        { status: 502 },
-      );
-    }
-
-    const data = await upstream.json();
     return NextResponse.json(data);
 
   } catch (err) {

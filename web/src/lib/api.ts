@@ -3,6 +3,7 @@
 
 export interface ChatRequest {
   user: string;
+  history?: { role: "user" | "omega"; text: string; timestamp?: string }[];
 }
 
 export interface ChatResponse {
