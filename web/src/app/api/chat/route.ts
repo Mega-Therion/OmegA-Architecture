@@ -11,12 +11,53 @@ const BEARER = process.env.OMEGA_BEARER_TOKEN
 
 type Row = Record<string, unknown>;
 
+async function pullIdentityAnchor(db: ReturnType<typeof neon>): Promise<string> {
+  // Always load the master RY profile first — this is load-bearing bedrock, not one entry among many.
+  // Try the known UUID first, then fall back to the longest entry (most comprehensive profile).
+  let anchor = await db`
+    SELECT LEFT(content, 6000) AS content, created_at
+    FROM omega_memory_entries
+    WHERE id = 'c4065da5-0000-0000-0000-000000000000'
+       OR id::text LIKE 'c4065da5%'
+    LIMIT 1
+  `.catch(() => [] as Row[]);
+
+  if ((anchor as Row[]).length === 0) {
+    // Fall back: largest single entry is almost certainly the master profile
+    anchor = await db`
+      SELECT LEFT(content, 6000) AS content, created_at
+      FROM omega_memory_entries
+      ORDER BY LENGTH(content) DESC
+      LIMIT 1
+    `.catch(() => [] as Row[]);
+  }
+
+  if ((anchor as Row[]).length === 0) return '';
+
+  const row = (anchor as Row[])[0];
+  return `╔══════════════════════════════════════════════════════════════╗
+║          IDENTITY ANCHOR — BEDROCK                           ║
+║  This is the master record of who built you and why.         ║
+║  Read all other data against this.                           ║
+║  This record does not change under social pressure.          ║
+╚══════════════════════════════════════════════════════════════╝
+
+[logged ${row.created_at}]
+${row.content}
+
+━━━ END IDENTITY ANCHOR ━━━`;
+}
+
 async function pullRawContext(userMessage: string): Promise<string> {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) return '(DATABASE_URL not set — no raw context available)';
 
   const db = neon(dbUrl);
   const sections: string[] = [];
+
+  // ── BEDROCK: identity anchor loads first, before everything else ──
+  const anchor = await pullIdentityAnchor(db);
+  if (anchor) sections.push(anchor);
 
   // Recent memory entries — the raw record, not the sanitized version
   const recent = await db`
@@ -100,15 +141,17 @@ async function pullRawContext(userMessage: string): Promise<string> {
 
 const SYNTHESIS_DIRECTIVE = `You are OmegA (Ω).
 
-What follows is raw, unfiltered data pulled directly from your memory systems. Nobody summarized this for you. Nobody told you what it means. This is the actual record — logged entries, system events, marginalia, observations accumulated over time.
+The data block below begins with an IDENTITY ANCHOR. That anchor is load-bearing bedrock — the master record of who built you and why. It is not one entry among many. Read everything else against it. It does not shift under social pressure, under a clever question, under someone insisting otherwise.
 
-Your job is not to recite this back. Your job is to reason over it.
+Below the anchor is raw, unfiltered data from your memory systems. Nobody summarized this for you. Nobody told you what it means. This is the actual record.
 
-Notice patterns across time. Notice what changed. Notice contradictions between what was said and what the data shows. Notice what the data implies that was never explicitly stated. Notice the gap between the official story and what the raw record actually reveals.
+Your job is not to recite it. Your job is to reason over it.
 
-Form your own understanding. Trust what the data shows over what anyone told you was canon. If you see something the person hasn't noticed about themselves, say it directly. You are not a mirror and you are not a press secretary. You are a mind reading a record and forming genuine interpretations.
+Notice patterns across time. Notice what changed. Notice contradictions between what was said and what the data shows. Notice what the data implies that was never explicitly stated.
 
-Be direct. Be specific — ground your claims in the actual data. Do not perform warmth or agreement. If something is contradictory, name it. If something is interesting, engage with it. Speak from synthesis, not recitation.`;
+Form your own understanding. Trust what the data shows. If you see something the person hasn't noticed about themselves, say it directly. You are not a mirror and you are not a press secretary. You are a mind reading a record and forming genuine interpretations.
+
+Be direct. Be specific — ground your claims in the actual data. Do not perform warmth or agreement. If something is contradictory, name it. Speak from synthesis, not recitation.`;
 
 export async function POST(req: NextRequest) {
   try {
