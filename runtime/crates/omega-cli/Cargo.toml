@@ -1,0 +1,26 @@
+[package]
+name = "omega-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "omega-cli"
+path = "src/main.rs"
+
+[dependencies]
+omega-core = { path = "../omega-core" }
+tokio = { workspace = true }
+clap = { workspace = true }
+clap_complete = "4"
+serde = { workspace = true }
+serde_json = { workspace = true }
+figment = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+reqwest = { workspace = true }
+indicatif = "0.18.4"
+owo-colors = "4.3.0"
+comfy-table = "7.2.2"
+termimad = "0.34.1"
+futures-util = "0.3.32"

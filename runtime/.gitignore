@@ -1,0 +1,4 @@
+target/
+*.db
+omega-gateway
+omega-gateway.env

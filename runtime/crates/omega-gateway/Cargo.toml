@@ -1,0 +1,45 @@
+[package]
+name = "omega-gateway"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "omega_gateway"
+path = "src/lib.rs"
+
+[[bin]]
+name = "omega-gateway"
+path = "src/main.rs"
+
+[dependencies]
+omega-core = { path = "../omega-core" }
+omega-provider = { path = "../omega-provider" }
+omega-memory = { path = "../omega-memory", features = ["semantic-search"] }
+omega-consensus = { path = "../omega-consensus" }
+omega-identity = { path = "../omega-identity" }
+omega-trace = { path = "../omega-trace" }
+tokio = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+figment = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+dashmap = { workspace = true }
+reqwest = { workspace = true }
+futures = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+regex = "1.12.3"
+
+[dev-dependencies]
+wiremock = { workspace = true }
+tokio-test = { workspace = true }
+tower = { workspace = true, features = ["util"] }
+async-trait = { workspace = true }
+futures = { workspace = true }
+tempfile = "3"
+omega-trace = { path = "../omega-trace" }

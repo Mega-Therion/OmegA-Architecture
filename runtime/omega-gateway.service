@@ -1,0 +1,37 @@
+[Unit]
+Description=OmegA Rust Gateway (LLM Proxy)
+After=network.target
+# Keep same PartOf relationship so omega-workflows still orchestrates this unit.
+PartOf=omega-workflows.service
+
+[Service]
+Type=simple
+User=mega
+WorkingDirectory=/home/mega
+
+# Load gateway secrets (OMEGA_*-prefixed keys).
+# Run scripts/sync-gateway-env.sh --apply after rotating any API key.
+# This is the same EnvironmentFile the Python gateway used — the env var
+# contract does not change between Python and Rust.
+EnvironmentFile=/home/mega/NEXUS/OmegA/OmegA-SI/services/trinity/gateway/.env
+
+# Force SQLite so startup does not block on Supabase network availability.
+# The path is absolute to avoid WorkingDirectory ambiguity (Python used a
+# relative path which was resolved against the WorkingDirectory).
+# Remove this line if Supabase is reliably reachable at boot time.
+Environment=OMEGA_DB_URL=sqlite:////home/mega/.omega/gateway.db
+
+ExecStart=/home/mega/bin/omega-gateway --host 127.0.0.1 --port 8787
+
+Restart=on-failure
+RestartSec=5
+
+# Give the gateway up to 30s to shut down cleanly (SIGTERM then SIGKILL).
+TimeoutStopSec=30
+
+# Security hardening — Rust binary does not need elevated privileges.
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

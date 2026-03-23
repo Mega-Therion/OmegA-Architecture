@@ -1,0 +1,33 @@
+[Unit]
+Description=OmegA Python Gateway (LLM Proxy)
+After=network.target
+# Restart if the workflow engine is also running
+PartOf=omega-workflows.service
+
+[Service]
+Type=simple
+User=mega
+WorkingDirectory=/home/mega/NEXUS/OmegA/OmegA-SI/services/trinity/gateway
+
+# Load gateway secrets (OMEGA_*-prefixed keys).
+# Run scripts/sync-gateway-env.sh --apply after rotating any API key.
+EnvironmentFile=/home/mega/NEXUS/OmegA/OmegA-SI/services/trinity/gateway/.env
+
+# Force SQLite so startup does not block on Supabase network availability.
+# Remove this line if Supabase is reliably reachable at boot time.
+Environment=OMEGA_DB_URL=sqlite:///gateway.db
+
+ExecStart=/home/mega/NEXUS/OmegA/OmegA-SI/services/trinity/gateway/venv/bin/python \
+    -m uvicorn app.main:app \
+    --host 127.0.0.1 \
+    --port 8787 \
+    --workers 1
+
+Restart=always
+RestartSec=5
+
+# Give the gateway up to 30s to shut down cleanly
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

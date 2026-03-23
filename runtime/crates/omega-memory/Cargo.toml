@@ -1,0 +1,30 @@
+[package]
+name = "omega-memory"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+# Enable semantic vector search via fastembed-rs (requires ONNX Runtime).
+# When disabled, search falls back to LIKE keyword matching.
+semantic-search = ["dep:fastembed"]
+
+[dependencies]
+omega-core = { path = "../omega-core" }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+
+# Optional: only compiled when the `semantic-search` feature is enabled.
+fastembed = { version = "4", optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+tokio-test = { workspace = true }
+tempfile = "3"

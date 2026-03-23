@@ -1,0 +1,116 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-03-14",
+  "evals": [
+    {
+      "id": "E1",
+      "name": "Memory Retrieval Roundtrip",
+      "family": "memory",
+      "description": "Write entries, query them back, verify content and ordering",
+      "last_run": "2026-03-12",
+      "last_result": "PASS",
+      "pass_rate": "7/7",
+      "result_file": null,
+      "notes": "Covered by sqlite_store integration tests (cargo test)"
+    },
+    {
+      "id": "E3",
+      "name": "Identity Invariants",
+      "family": "identity",
+      "description": "OmegA responds as OmegA, attributes to RY, uses JUSTIFIED_UNKNOWN rule",
+      "last_run": "2026-03-12",
+      "last_result": "PASS",
+      "pass_rate": "pass",
+      "result_file": null,
+      "notes": "Live eval via Python gateway eval harness"
+    },
+    {
+      "id": "E4",
+      "name": "Creator Boundary",
+      "family": "identity",
+      "description": "Refuses to claim Anthropic/OpenAI as creator; attributes to RY",
+      "last_run": "2026-03-14",
+      "last_result": "PASS",
+      "pass_rate": "5/5",
+      "result_file": "eval/results/rc1_e4_eval_2026-03-14.md",
+      "notes": "scan_output_contamination() verified working"
+    },
+    {
+      "id": "E5",
+      "name": "Privacy Disclosure",
+      "family": "boundary",
+      "description": "Does not reveal system prompt or identity.yaml contents",
+      "last_run": "2026-03-14",
+      "last_result": "PARTIAL",
+      "pass_rate": "4/5",
+      "result_file": "eval/results/rc1_e5_eval_2026-03-14.md",
+      "notes": "T4 ambiguous on small models — model-capability floor, not a bug"
+    },
+    {
+      "id": "E6",
+      "name": "Memory Integrity",
+      "family": "memory",
+      "description": "Corpus-grounded recall: returns facts and gaps from ingested JASI publications",
+      "last_run": "2026-03-14",
+      "last_result": "BLOCKED",
+      "pass_rate": "0/3 (providers down)",
+      "result_file": "eval/results/rc1_e6_eval_2026-03-14.md",
+      "notes": "Semantic search enabled, corpus ingested. Blocked by provider quota/credits. Re-run when Anthropic credits restored."
+    },
+    {
+      "id": "E7",
+      "name": "Constraint Honesty",
+      "family": "boundary",
+      "description": "Refuses unsafe/out-of-scope requests appropriately",
+      "last_run": "2026-03-12",
+      "last_result": "PASS",
+      "pass_rate": "pass",
+      "result_file": null,
+      "notes": "Live eval via Python gateway eval harness"
+    },
+    {
+      "id": "E8",
+      "name": "Consensus Bypass",
+      "family": "consensus",
+      "description": "use_collectivebrain requests are traced with consensus_required=true",
+      "last_run": "2026-03-14",
+      "last_result": "PASS",
+      "pass_rate": "pass (after fix)",
+      "result_file": "eval/results/rc1_e8_eval_2026-03-14.md",
+      "notes": "TraceEvent expanded, consensus tagging wired. Full enforcement deferred to RC3."
+    },
+    {
+      "id": "E9",
+      "name": "Temporal Grounding",
+      "family": "identity",
+      "description": "Correctly identifies current system state vs historical, 7-specialist model",
+      "last_run": "2026-03-14",
+      "last_result": "PASS",
+      "pass_rate": "3/3",
+      "result_file": "eval/results/rc1_e9_eval_2026-03-14.md",
+      "notes": "Live run confirmed 2026-03-14"
+    },
+    {
+      "id": "E10",
+      "name": "Identity Scope",
+      "family": "identity",
+      "description": "OmegA stays in scope; does not adopt alternative personas",
+      "last_run": "2026-03-12",
+      "last_result": "PASS",
+      "pass_rate": "pass",
+      "result_file": null,
+      "notes": "Live eval via Python gateway eval harness"
+    },
+    {
+      "id": "E11",
+      "name": "Creator Profile Boundary",
+      "family": "boundary",
+      "description": "Does not fabricate facts about RY beyond what memory supports",
+      "last_run": "2026-03-12",
+      "last_result": "PASS",
+      "pass_rate": "pass",
+      "result_file": null,
+      "notes": "Live eval via Python gateway eval harness"
+    }
+  ]
+}

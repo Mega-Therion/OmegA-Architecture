@@ -1,0 +1,95 @@
+.container {
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  margin: 3rem 0;
+  text-align: center;
+  position: relative;
+  overflow: visible;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.equation {
+  font-family: serif;
+  font-style: italic;
+  font-size: 2.5rem;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+@media (max-width: 768px) {
+  .equation {
+    font-size: 1.5rem;
+  }
+}
+
+.symbolWrapper {
+  position: relative;
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+}
+
+.symbol {
+  color: var(--omega-cyan);
+  transition: all 0.2s;
+}
+
+.symbolWrapper:hover .symbol {
+  color: var(--sovereign-gold);
+  text-shadow: 0 0 15px var(--sovereign-gold);
+}
+
+.comma {
+  color: #444;
+  margin-right: 0.3rem;
+  font-style: normal;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: var(--obsidian);
+  border: 1px solid var(--border-glass);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  width: 200px;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 0.85rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s;
+  pointer-events: none;
+  z-index: 50;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.symbolWrapper:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-20px);
+}
+
+.tooltip strong {
+  display: block;
+  color: var(--sovereign-gold);
+  margin-bottom: 0.4rem;
+}
+
+.tooltip p {
+  color: #999;
+}

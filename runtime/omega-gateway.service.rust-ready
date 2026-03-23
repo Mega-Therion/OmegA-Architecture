@@ -1,0 +1,33 @@
+[Unit]
+Description=OmegA Rust Gateway (LLM Proxy)
+After=network.target
+# Optional: if you use a parent orchestrator service, uncomment.
+# PartOf=omega-workflows.service
+
+[Service]
+Type=simple
+User=omega
+WorkingDirectory=/var/lib/omega
+
+# Load gateway config + secrets (OMEGA_*-prefixed keys).
+# Create this file on the server (example path shown below).
+EnvironmentFile=/etc/omega/omega-gateway.env
+
+# The Rust gateway reads configuration from env vars (OMEGA_PORT, OMEGA_DB_URL, etc.).
+ExecStart=/usr/local/bin/omega-gateway
+
+Restart=on-failure
+RestartSec=5
+
+# Give the gateway up to 30s to shut down cleanly (SIGTERM then SIGKILL).
+TimeoutStopSec=30
+
+# Security hardening — Rust binary does not need elevated privileges.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/omega
+
+[Install]
+WantedBy=multi-user.target

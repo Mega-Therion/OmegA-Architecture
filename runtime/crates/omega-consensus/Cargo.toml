@@ -1,0 +1,17 @@
+[package]
+name = "omega-consensus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+omega-core = { path = "../omega-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+dashmap = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true }

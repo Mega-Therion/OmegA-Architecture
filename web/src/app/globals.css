@@ -1,0 +1,103 @@
+:root {
+  /* Sovereign Palette */
+  --obsidian: #030406;
+  --glass: rgba(10, 15, 25, 0.7);
+  --border-glass: rgba(255, 255, 255, 0.1);
+  
+  --omega-cyan: #00ffff;
+  --omega-blue: #0070f3;
+  --sovereign-gold: #ffd700;
+  --sovereign-orange: #ff8c00;
+  
+  --foreground: #ededed;
+  --background: var(--obsidian);
+  
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--obsidian);
+    --foreground: #ededed;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* Base Sovereign Background Engine (Subtle Noise/Glow) */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% -20%, rgba(0, 229, 255, 0.05) 0%, transparent 60%),
+              radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+pre, code {
+  font-family: var(--font-mono);
+}
+
+a {
+  color: var(--omega-cyan);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* Glassmorphism Class */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+section {
+  padding: 4rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Animations */
+@keyframes sovereign-flow {
+  0% { opacity: 0.8; filter: hue-rotate(0deg); }
+  50% { opacity: 1; filter: hue-rotate(15deg); }
+  100% { opacity: 0.8; filter: hue-rotate(0deg); }
+}
+
+.flow-glow {
+  animation: sovereign-flow 8s infinite ease-in-out;
+}

@@ -1,0 +1,25 @@
+[Unit]
+Description=OmegA Rust Gateway (LLM Proxy)
+After=network.target
+
+[Service]
+Type=simple
+User=mega
+WorkingDirectory=/var/lib/omega
+
+EnvironmentFile=/etc/omega/omega-gateway.env
+ExecStart=/usr/local/bin/omega-gateway
+
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/omega
+
+[Install]
+WantedBy=multi-user.target
+
