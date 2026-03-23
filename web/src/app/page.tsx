@@ -45,7 +45,7 @@ export default function Home() {
     setChatErr(null);
     setChatResp(null);
     try {
-      const resp = await chat({ user: prompt, namespace: "default", use_memory: true });
+      const resp = await chat({ user: prompt, namespace: "biography.ry", use_memory: true });
       setChatResp(resp);
       setPrompt("");
       setTimeout(() => chatRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
