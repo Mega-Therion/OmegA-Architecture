@@ -4,32 +4,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { chat } from "@/lib/api";
+import { chatStream } from "@/lib/api";
 import type { CanvasState } from "@/components/OmegaCanvas";
 import s from "./page.module.css";
 
 const OmegaCanvas = dynamic(() => import("@/components/OmegaCanvas"), { ssr: false });
 
-// ── Typewriter hook ───────────────────────────────────────────────
-function useTypewriter(text: string, speed = 12) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    setDisplayed("");
-    setDone(false);
-    if (!text) return;
-    let i = 0;
-    const id = setInterval(() => {
-      i++;
-      setDisplayed(text.slice(0, i));
-      if (i >= text.length) { clearInterval(id); setDone(true); }
-    }, speed);
-    return () => clearInterval(id);
-  }, [text, speed]);
-
-  return { displayed, done };
-}
+// Removed useTypewriter Hook — upgraded to real streaming
 
 // ── Types ─────────────────────────────────────────────────────────
 interface Msg { role: "user" | "omega"; text: string; timestamp?: string; }
@@ -88,11 +69,9 @@ const mdComponents: any = {
   )
 };
 
-// ── OmegA message with typewriter ────────────────────────────────
+// ── OmegA message with streaming ─────────────────────────────────
 function OmegaMsg({ text, animate, timestamp }: { text: string; animate: boolean; timestamp?: string }) {
-  const { displayed, done } = useTypewriter(animate ? text : "", 11);
-  const content = animate ? displayed : text;
-  const streaming = animate && !done;
+  const streaming = animate;
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -107,11 +86,8 @@ function OmegaMsg({ text, animate, timestamp }: { text: string; animate: boolean
       <span className={s.omegaGlyph}>Ω</span>
       <div className={s.omegaBody}>
         <div className={`${s.omegaText} ${streaming ? s.streaming : ""}`}>
-          {streaming ? (
-            <>{content}<span className={s.cursor} /></>
-          ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{content}</ReactMarkdown>
-          )}
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{text}</ReactMarkdown>
+          {streaming && <span className={s.cursor} />}
         </div>
         {!streaming && (
           <div className={s.omegaFooter}>
@@ -183,10 +159,9 @@ export default function Home() {
     textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
   };
 
-  // On page load, try to resume session
   useEffect(() => {
-    // eslint-disable-next-line react-compiler/react-compiler
     const saved = localStorage.getItem("omega_session");
+    // eslint-disable-next-line
     if (saved) setSessionId(saved);
   }, []);
   // Suppress unused-var lint — latestOmega is retained for future streaming use
@@ -237,23 +212,27 @@ export default function Home() {
     setShowPill(false);
 
     try {
-      const res = await chat({ user: text, history: currentMessages, sessionId: sessionId ?? undefined });
+      const res = await chatStream({ user: text, history: currentMessages, sessionId: sessionId ?? undefined }, (chunk) => {
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          const last = newMsgs[newMsgs.length - 1];
+          if (last.role === "user") {
+            newMsgs.push({ role: "omega", text: chunk, timestamp: new Date().toISOString() });
+            setAnimatingIdx(newMsgs.length - 1);
+            setCanvasState("idle");
+          } else {
+            newMsgs[newMsgs.length - 1] = { ...last, text: last.text + chunk };
+          }
+          return newMsgs;
+        });
+      });
       
       if (res.sessionId && !sessionId) {
         setSessionId(res.sessionId);
         localStorage.setItem("omega_session", res.sessionId);
       }
 
-      const reply = res.reply ?? res.response ?? "";
-      setMessages(prev => {
-        const next = [...prev, { role: "omega" as const, text: reply, timestamp: new Date().toISOString() }];
-        setAnimatingIdx(next.length - 1);
-        return next;
-      });
-      setLatestOmega(reply);
-      setCanvasState("responding");
-      // Return to idle after animation
-      setTimeout(() => setCanvasState("idle"), 2000);
+      setAnimatingIdx(-1);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setCanvasState("idle");
