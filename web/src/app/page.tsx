@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { chat } from "@/lib/api";
 import type { CanvasState } from "@/components/OmegaCanvas";
 import s from "./page.module.css";
@@ -37,14 +39,32 @@ function OmegaMsg({ text, animate }: { text: string; animate: boolean }) {
   const { displayed, done } = useTypewriter(animate ? text : "", 11);
   const content = animate ? displayed : text;
   const streaming = animate && !done;
+  const [copied, setCopied] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <div className={s.msgOmega}>
       <span className={s.omegaGlyph}>Ω</span>
-      <p className={`${s.omegaText} ${streaming ? s.streaming : ""}`}>
-        {content}
-        {streaming && <span className={s.cursor} />}
-      </p>
+      <div className={s.omegaBody}>
+        <div className={`${s.omegaText} ${streaming ? s.streaming : ""}`}>
+          {streaming ? (
+            <>{content}<span className={s.cursor} /></>
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          )}
+        </div>
+        {!streaming && (
+          <button className={s.copyBtn} onClick={copy} title="Copy">
+            {copied ? "✓ Copied" : "Copy"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -61,6 +81,15 @@ export default function Home() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inChatMode = messages.length > 0;
+
+  const newChat = () => {
+    setMessages([]);
+    setInput("");
+    setError(null);
+    setCanvasState("idle");
+    setLatestOmega("");
+    setAnimatingIdx(-1);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -170,6 +199,9 @@ export default function Home() {
                 <div className={s.statusDot} />
                 Sovereign
               </div>
+              <button className={s.newChatBtn} onClick={newChat} title="New chat">
+                + New
+              </button>
             </header>
 
             <div className={s.feed}>

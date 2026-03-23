@@ -169,6 +169,13 @@
   animation: fade-up 0.4s ease;
 }
 
+.omegaBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
 .omegaGlyph {
   font-family: 'Orbitron', sans-serif;
   font-size: 1.1rem;
@@ -184,9 +191,60 @@
   color: rgba(241, 245, 249, 0.92);
   font-size: 0.97rem;
   line-height: 1.75;
-  white-space: pre-wrap;
   position: relative;
 }
+
+/* Markdown styles inside omega responses */
+.omegaText p { margin: 0 0 0.75em; }
+.omegaText p:last-child { margin-bottom: 0; }
+.omegaText strong { color: var(--white); font-weight: 600; }
+.omegaText em { color: rgba(196, 181, 253, 0.9); }
+.omegaText h1, .omegaText h2, .omegaText h3 {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--gold);
+  margin: 1em 0 0.4em;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.omegaText h1 { font-size: 1.1rem; }
+.omegaText h2 { font-size: 1rem; }
+.omegaText h3 { font-size: 0.95rem; }
+.omegaText ul, .omegaText ol {
+  padding-left: 1.4em;
+  margin: 0.5em 0;
+}
+.omegaText li { margin: 0.25em 0; }
+.omegaText code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.88em;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+  color: var(--lavender);
+}
+.omegaText pre {
+  background: rgba(2, 2, 18, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+.omegaText pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.9em;
+  color: rgba(241, 245, 249, 0.85);
+}
+.omegaText blockquote {
+  border-left: 3px solid rgba(139, 92, 246, 0.5);
+  padding-left: 1rem;
+  margin: 0.5em 0;
+  color: rgba(241, 245, 249, 0.6);
+}
+.omegaText a { color: var(--lavender); text-decoration: underline; }
 
 /* Shimmer on streaming text */
 .omegaText.streaming {
@@ -213,6 +271,47 @@
   animation: cursor-blink 0.8s ease infinite;
   box-shadow: 0 0 8px var(--lavender);
   border-radius: 1px;
+}
+
+/* ── Copy button ────────────────────────────────────────────────── */
+.copyBtn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 0.5rem;
+  color: rgba(196, 181, 253, 0.45);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+.copyBtn:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  color: var(--lavender);
+  background: rgba(139, 92, 246, 0.08);
+}
+
+/* ── New chat button ─────────────────────────────────────────────── */
+.newChatBtn {
+  margin-left: 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 0.6rem;
+  color: rgba(196, 181, 253, 0.5);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  flex-shrink: 0;
+}
+.newChatBtn:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  color: var(--lavender);
+  background: rgba(139, 92, 246, 0.08);
 }
 
 /* ── Thinking indicator ─────────────────────────────────────────── */
