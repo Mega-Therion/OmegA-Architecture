@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 import { NextRequest, NextResponse } from 'next/server';
 
 const GATEWAY = process.env.OMEGA_API_URL
@@ -9,9 +9,15 @@ const BEARER = process.env.OMEGA_BEARER_TOKEN
   ?? process.env.NEXT_PUBLIC_OMEGA_BEARER_TOKEN
   ?? '';
 
+/** Timeout for gateway fetch (ms) */
+const GATEWAY_TIMEOUT_MS = 15_000;
+
+/** Number of retries on gateway timeout before surfacing error */
+const GATEWAY_RETRIES = 1;
+
 type Row = Record<string, unknown>;
 
-async function pullIdentityAnchor(db: ReturnType<typeof neon>): Promise<string> {
+async function pullIdentityAnchor(db: NeonQueryFunction<false, false>): Promise<string> {
   // Always load the master RY profile first — this is load-bearing bedrock, not one entry among many.
   // Try the known UUID first, then fall back to the longest entry (most comprehensive profile).
   let anchor = await db`
@@ -153,6 +159,40 @@ Form your own understanding. Trust what the data shows. If you see something the
 
 Be direct. Be specific — ground your claims in the actual data. Do not perform warmth or agreement. If something is contradictory, name it. Speak from synthesis, not recitation.`;
 
+/** Fetch the gateway with timeout, AbortController, and 1x retry on timeout */
+async function fetchGateway(body: string): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= GATEWAY_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), GATEWAY_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(`${GATEWAY}/api/v1/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${BEARER}`,
+        },
+        body,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err instanceof Error ? err : new Error(String(err));
+
+      const isTimeout = lastError.name === 'AbortError';
+      // Only retry on timeout, not on other fetch errors
+      if (!isTimeout || attempt >= GATEWAY_RETRIES) break;
+      // else loop for retry
+    }
+  }
+
+  throw lastError;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { user } = (await req.json()) as { user: string };
@@ -161,7 +201,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 });
     }
 
-    const rawContext = await pullRawContext(user);
+    // Pull DB context — gracefully degrade if DATABASE_URL is missing
+    let rawContext: string;
+    try {
+      rawContext = await pullRawContext(user);
+    } catch (dbErr) {
+      console.warn('[OmegA chat] DB context unavailable, degrading gracefully:', dbErr);
+      rawContext = '(Database context unavailable — responding without memory data)';
+    }
 
     const system = `${SYNTHESIS_DIRECTIVE}
 
@@ -171,27 +218,35 @@ ${rawContext}
 
 ━━━ END RAW DATA ━━━`;
 
-    const upstream = await fetch(`${GATEWAY}/api/v1/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${BEARER}`,
-      },
-      body: JSON.stringify({
+    let upstream: Response;
+    try {
+      upstream = await fetchGateway(JSON.stringify({
         user,
         namespace: 'synthesis',
         use_memory: false,
         temperature: 0.85,
         mode: 'omega',
         system,
-      }),
-    });
+      }));
+    } catch (fetchErr) {
+      const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+      if (isTimeout) {
+        return NextResponse.json(
+          { error: 'OmegA took too long to respond. Please try again.' },
+          { status: 504 },
+        );
+      }
+      return NextResponse.json(
+        { error: 'Unable to reach OmegA gateway. Please check your connection and try again.' },
+        { status: 502 },
+      );
+    }
 
     if (!upstream.ok) {
       const err = await upstream.json().catch(() => ({ detail: upstream.statusText }));
       return NextResponse.json(
-        { error: `Gateway ${upstream.status}: ${(err as { detail?: string }).detail ?? upstream.statusText}` },
-        { status: 502 }
+        { error: `Gateway error (${upstream.status}): ${(err as { detail?: string }).detail ?? upstream.statusText}` },
+        { status: 502 },
       );
     }
 

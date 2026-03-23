@@ -60,7 +60,12 @@ function OmegaMsg({ text, animate }: { text: string; animate: boolean }) {
           )}
         </div>
         {!streaming && (
-          <button className={s.copyBtn} onClick={copy} title="Copy">
+          <button
+            className={s.copyBtn}
+            onClick={copy}
+            title="Copy"
+            aria-label={copied ? "Copied to clipboard" : "Copy response"}
+          >
             {copied ? "✓ Copied" : "Copy"}
           </button>
         )}
@@ -81,6 +86,9 @@ export default function Home() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inChatMode = messages.length > 0;
+
+  // Suppress unused-var lint — latestOmega is retained for future streaming use
+  void latestOmega;
 
   const newChat = () => {
     setMessages([]);
@@ -181,7 +189,12 @@ export default function Home() {
                       rows={1}
                       disabled={canvasState === "thinking"}
                     />
-                    <button className={s.sendBtn} type="submit" disabled={!input.trim() || canvasState === "thinking"}>
+                    <button
+                      className={s.sendBtn}
+                      type="submit"
+                      disabled={!input.trim() || canvasState === "thinking"}
+                      aria-label="Send message"
+                    >
                       Ω
                     </button>
                   </div>
@@ -199,12 +212,22 @@ export default function Home() {
                 <div className={s.statusDot} />
                 Sovereign
               </div>
-              <button className={s.newChatBtn} onClick={newChat} title="New chat">
+              <button
+                className={s.newChatBtn}
+                onClick={newChat}
+                title="New chat"
+                aria-label="Start new chat"
+              >
                 + New
               </button>
             </header>
 
-            <div className={s.feed}>
+            <div
+              className={s.feed}
+              role="log"
+              aria-live="polite"
+              aria-label="Chat messages"
+            >
               {messages.map((msg, i) =>
                 msg.role === "user" ? (
                   <div key={i} className={s.msgUser}>{msg.text}</div>
@@ -214,7 +237,7 @@ export default function Home() {
               )}
 
               {canvasState === "thinking" && (
-                <div className={s.thinking}>
+                <div className={s.thinkingIndicator}>
                   <span className={s.omegaGlyph}>Ω</span>
                   <div className={s.thinkingDots}>
                     <span /><span /><span />
@@ -223,7 +246,7 @@ export default function Home() {
                 </div>
               )}
 
-              {error && <div className={s.error}>⚠ {error}</div>}
+              {error && <div className={s.error} role="alert">⚠ {error}</div>}
               <div ref={bottomRef} style={{ height: 1 }} />
             </div>
 
@@ -240,7 +263,12 @@ export default function Home() {
                     rows={1}
                     disabled={canvasState === "thinking"}
                   />
-                  <button className={s.sendBtn} type="submit" disabled={!input.trim() || canvasState === "thinking"}>
+                  <button
+                    className={s.sendBtn}
+                    type="submit"
+                    disabled={!input.trim() || canvasState === "thinking"}
+                    aria-label="Send message"
+                  >
                     Ω
                   </button>
                 </div>
