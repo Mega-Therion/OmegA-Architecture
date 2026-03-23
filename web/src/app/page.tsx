@@ -31,7 +31,7 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const resp = await chat({ user: text, mode: "omega" });
+      const resp = await chat({ user: text });
       setMessages(prev => [...prev, { role: "omega", text: resp.reply ?? resp.response ?? "" }]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
