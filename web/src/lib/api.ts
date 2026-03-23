@@ -29,7 +29,11 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
   return res.json() as Promise<ChatResponse>;
 }
 
-export async function chatStream(req: ChatRequest, onChunk: (text: string) => void): Promise<{ sessionId?: string }> {
+export async function chatStream(
+  req: ChatRequest, 
+  onChunk: (text: string) => void,
+  onStatus?: (text: string) => void
+): Promise<{ sessionId?: string }> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -47,17 +51,41 @@ export async function chatStream(req: ChatRequest, onChunk: (text: string) => vo
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
+  let buffer = "";
 
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
     const chunkText = decoder.decode(value, { stream: true });
-    if (chunkText) onChunk(chunkText);
+    buffer += chunkText;
+
+    // Split by SSE double newline if it looks like status events are active
+    while (buffer.includes('\n\n')) {
+      const idx = buffer.indexOf('\n\n');
+      const line = buffer.slice(0, idx).trim();
+      if (line.startsWith('data: {"type":"status"')) {
+        try {
+          const json = JSON.parse(line.slice(5));
+          if (onStatus) onStatus(json.text);
+          buffer = buffer.slice(idx + 2);
+          continue;
+        } catch {
+          // fallback if parse fails
+        }
+      }
+      break; // stop if front of buffer isn't a status event
+    }
+
+    if (buffer && !buffer.startsWith('data: {"type":"status"')) {
+      onChunk(buffer);
+      buffer = "";
+    }
   }
   
-  // Flush
+  // Flush remaining buffer
   const final = decoder.decode();
-  if (final) onChunk(final);
+  buffer += final;
+  if (buffer) onChunk(buffer);
 
   return { sessionId };
 }

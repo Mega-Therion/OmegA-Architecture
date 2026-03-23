@@ -207,138 +207,137 @@ export async function POST(req: NextRequest) {
     const dbUrl = process.env.DATABASE_URL;
     let finalSessionId = sessionId;
 
-    // Track user message in Neon
-    if (dbUrl) {
+    // Fast session creation if needed to set the header immediately
+    if (dbUrl && !finalSessionId) {
       try {
         const db = neon(dbUrl);
-        if (!finalSessionId) {
-          const sessionRes = await db`INSERT INTO omega_sessions DEFAULT VALUES RETURNING id`;
-          if (sessionRes && sessionRes.length > 0) {
-            finalSessionId = sessionRes[0].id as string;
-          }
-        }
-        if (finalSessionId) {
-          await db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'user', ${user})`;
+        const sessionRes = await db`INSERT INTO omega_sessions DEFAULT VALUES RETURNING id`;
+        if (sessionRes && sessionRes.length > 0) {
+          finalSessionId = sessionRes[0].id as string;
         }
       } catch (err) {
-        console.error('[OmegA chat] Failed to update Neon session data for user message', err);
+        console.error('[OmegA chat] Session creation failed', err);
       }
     }
 
-    // Identify Compute Context
-    const computeContext = `\n\n[COMPUTE CONTEXT: You are running on ${process.env.ANTHROPIC_API_KEY ? "Claude 3.5 Sonnet (Fallback)" : "OmegA Gateway"}.]`
-
-    // Pull DB context — gracefully degrade if DATABASE_URL is missing
-    let rawContext: string;
-    try {
-      rawContext = await pullRawContext(user);
-    } catch (dbErr) {
-      console.warn('[OmegA chat] DB context unavailable, degrading gracefully:', dbErr);
-      rawContext = '(Database context unavailable — responding without memory data)';
-    }
-
-    const conversationContext = history?.length 
-      ? `\n━━━ SESSION CONVERSATION HISTORY ━━━\n\n` + 
-        history.map(m => `[${m.role === 'omega' ? 'OmegA' : 'User'}]: ${m.text}`).join('\n\n') +
-        `\n\n━━━ END HISTORY ━━━\n`
-      : '';
-
-    const system = `${SYNTHESIS_DIRECTIVE}${computeContext}
-
-━━━ RAW DATA FROM MEMORY SYSTEMS ━━━
-
-${rawContext}
-
-━━━ END RAW DATA ━━━
-${conversationContext}`;
-
-    let stream: ReadableStream;
-    let provider = "omega-gateway";
-
-    try {
-      const upstream = await fetchGateway(JSON.stringify({
-        user,
-        history: history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [],
-        namespace: 'synthesis',
-        use_memory: false,
-        temperature: 0.85,
-        mode: 'omega',
-        system,
-        stream: true
-      }));
-      
-      if (!upstream.ok) {
-        throw new Error(`Gateway returned ${upstream.status}`);
-      }
-      
-      const contentType = upstream.headers.get('content-type') || '';
-      if (contentType.includes('event-stream') || contentType.includes('plain') || contentType.includes('ndjson') || contentType.includes('chunk')) {
-        stream = upstream.body as ReadableStream;
-      } else {
-        throw new Error("Gateway did not return a stream");
-      }
-      
-    } catch (fetchErr) {
-      if (process.env.ANTHROPIC_API_KEY) {
-        console.warn('[OmegA chat] Gateway stream failed, falling back to direct Anthropic API', fetchErr);
-        const anthropicHistory: Anthropic.MessageParam[] = history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [];
-        anthropicHistory.push({ role: "user", content: user });
-        
-        const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-        const anthStream = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-latest",
-          max_tokens: 4096,
-          system,
-          messages: anthropicHistory,
-          stream: true
-        });
-
-        stream = new ReadableStream({
-          async start(controller) {
-            for await (const chunk of anthStream) {
-              if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-                controller.enqueue(new TextEncoder().encode(chunk.delta.text + "\n"));
-              }
-            }
-            controller.close();
-          }
-        });
-        provider = "anthropic-fallback";
-      } else {
-        const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
-        return NextResponse.json(
-          { error: isTimeout ? 'Gateway timeout - streaming failed.' : 'Gateway streaming failed.' },
-          { status: 504 }
-        );
-      }
-    }
-
-    // Capture streamed tokens to save to Neon DB when finished
+    const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    let fullOmegaResponse = "";
+    
+    let provider = "omega-gateway";
+    const customStream = new ReadableStream({
+      async start(controller) {
+        try {
+          // Status: reading memory...
+          controller.enqueue(encoder.encode('data: {"type":"status","text":"reading memory..."}\n\n'));
 
-    const transform = new TransformStream({
-      transform(chunk, controller) {
-        fullOmegaResponse += decoder.decode(chunk, { stream: true });
-        controller.enqueue(chunk);
-      },
-      flush(controller) {
-        fullOmegaResponse += decoder.decode();
-        
-        // Track OmegA response in Neon (fire-and-forget)
-        if (dbUrl && finalSessionId && fullOmegaResponse) {
-          try {
-            const db = neon(dbUrl);
-            db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'omega', ${fullOmegaResponse})`
-              .catch(e => console.error('[OmegA chat db flush error]', e));
-          } catch (err) {
-            console.error('[OmegA chat] Failed to queue session update for omega message', err);
+          // 1. Thread context and persistence
+          if (dbUrl && finalSessionId) {
+             // Non-blocking log for user message
+             const db = neon(dbUrl);
+             db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'user', ${user})`
+               .catch(e => console.error('[OmegA chat db msg error]', e));
           }
+
+          // 2. Fetch all raw context entries
+          let rawContext: string;
+          try {
+            rawContext = await pullRawContext(user);
+          } catch (dbErr) {
+            console.warn('[OmegA chat] DB pull failed:', dbErr);
+            rawContext = '(Memory bank unreachable — reasoning independently)';
+          }
+
+          // Status: synthesizing...
+          controller.enqueue(encoder.encode('data: {"type":"status","text":"synthesizing..."}\n\n'));
+
+          // 3. Assemble full OmegA prompt block
+          const conversationContext = history?.length 
+            ? `\n━━━ SESSION CONVERSATION HISTORY ━━━\n\n` + 
+              history.map(m => `[${m.role === 'omega' ? 'OmegA' : 'User'}]: ${m.text}`).join('\n\n') +
+              `\n\n━━━ END HISTORY ━━━\n`
+            : '';
+          
+          const computeContext = `\n\n[COMPUTE CONTEXT: You are running on ${process.env.ANTHROPIC_API_KEY ? "Claude 3.5 Sonnet (Fallback)" : "OmegA Gateway"}.]`
+          const system = `${SYNTHESIS_DIRECTIVE}${computeContext}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}`;
+
+          // 4. Proxy to gateway (main) or anthropic (fallback)
+          let responseStream: ReadableStream;
+          // (provider moved out)
+
+          try {
+            const upstream = await fetchGateway(JSON.stringify({
+              user,
+              history: history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [],
+              namespace: 'synthesis',
+              use_memory: false,
+              temperature: 0.85,
+              mode: 'omega',
+              system,
+              stream: true
+            }));
+            
+            if (!upstream.ok) throw new Error(`Gateway: ${upstream.status}`);
+            if (!upstream.body) throw new Error("Gateway empty body");
+            responseStream = upstream.body;
+            
+          } catch (err) {
+            if (process.env.ANTHROPIC_API_KEY) {
+              console.warn('[OmegA chat] Fallback active:', err);
+              provider = "anthropic-fallback";
+              const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+              const hist: Anthropic.MessageParam[] = history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [];
+              hist.push({ role: "user", content: user });
+              
+              const anthRes = await anthropic.messages.create({
+                model: "claude-3-5-sonnet-latest",
+                max_tokens: 4096,
+                system,
+                messages: hist,
+                stream: true
+              });
+
+              responseStream = new ReadableStream({
+                async start(ctrl) {
+                  for await (const chunk of anthRes) {
+                    if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+                      ctrl.enqueue(encoder.encode(chunk.delta.text));
+                    }
+                  }
+                  ctrl.close();
+                }
+              });
+            } else {
+              throw err;
+            }
+          }
+
+          // 5. Pipe tokens through and capture for persistent history
+          let fullResponse = "";
+          const reader = responseStream.getReader();
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            fullResponse += decoder.decode(value, { stream: true });
+            controller.enqueue(value);
+          }
+          fullResponse += decoder.decode();
+
+          // Save history asynchronously
+          if (dbUrl && finalSessionId && fullResponse) {
+            const db = neon(dbUrl);
+            db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'omega', ${fullResponse})`
+              .catch(e => console.error('[OmegA chat db end error]', e));
+          }
+
+          controller.close();
+        } catch (err) {
+          console.error('[OmegA chat stream error]', err);
+          controller.error(err);
         }
       }
     });
 
-    return new NextResponse(stream.pipeThrough(transform), {
+    return new NextResponse(customStream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Session-Id': finalSessionId || '',
@@ -347,7 +346,8 @@ ${conversationContext}`;
     });
 
   } catch (err) {
-    console.error('[OmegA chat]', err);
+    console.error('[OmegA chat POST error]', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
+

@@ -110,7 +110,7 @@ function OmegaMsg({ text, animate, timestamp }: { text: string; animate: boolean
 // ── Thinking Indicator ───────────────────────────────────────────
 const THINKING_STATES = ["reading memory...", "synthesizing...", "forming response..."];
 
-function ThinkingIndicator() {
+function ThinkingIndicator({ status }: { status?: string | null }) {
   const [idx, setIdx] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setIdx(i => (i + 1) % THINKING_STATES.length), 2000);
@@ -121,16 +121,22 @@ function ThinkingIndicator() {
     <div className={s.thinkingIndicator}>
       <span className={s.omegaGlyph}>Ω</span>
       <div className={s.thinkingContent}>
-        <div className={s.thinkingDots}>
-          <span /><span /><span />
-        </div>
-        <div className={s.thinkingLabelWrap}>
-          {THINKING_STATES.map((txt, i) => (
-            <span key={txt} className={`${s.thinkingLabelItem} ${i === idx ? s.active : ""}`}>
-              {txt}
-            </span>
-          ))}
-        </div>
+        {status ? (
+          <div className={s.thinkingStatusText}>{status}</div>
+        ) : (
+          <>
+            <div className={s.thinkingDots}>
+              <span /><span /><span />
+            </div>
+            <div className={s.thinkingLabelWrap}>
+              {THINKING_STATES.map((txt, i) => (
+                <span key={txt} className={`${s.thinkingLabelItem} ${i === idx ? s.active : ""}`}>
+                  {txt}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -158,6 +164,7 @@ export default function Home() {
   const [canvasState, setCanvasState] = useState<CanvasState>("idle");
   const [latestOmega, setLatestOmega] = useState("");
   const [showPill, setShowPill] = useState(false);
+  const [statusText, setStatusText] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -259,20 +266,27 @@ export default function Home() {
     setShowPill(false);
 
     try {
-      const res = await chatStream({ user: text, history: currentMessages, sessionId: sessionId ?? undefined }, (chunk) => {
-        setMessages(prev => {
-          const newMsgs = [...prev];
-          const last = newMsgs[newMsgs.length - 1];
-          if (last.role === "user") {
-            newMsgs.push({ role: "omega", text: chunk, timestamp: new Date().toISOString() });
-            setAnimatingIdx(newMsgs.length - 1);
-            setCanvasState("idle");
-          } else {
-            newMsgs[newMsgs.length - 1] = { ...last, text: last.text + chunk };
-          }
-          return newMsgs;
-        });
-      });
+      const res = await chatStream(
+        { user: text, history: currentMessages, sessionId: sessionId ?? undefined }, 
+        (chunk) => {
+          setStatusText(null); // First token arrives, clear status
+          setMessages(prev => {
+            const newMsgs = [...prev];
+            const last = newMsgs[newMsgs.length - 1];
+            if (last.role === "user") {
+              newMsgs.push({ role: "omega", text: chunk, timestamp: new Date().toISOString() });
+              setAnimatingIdx(newMsgs.length - 1);
+              setCanvasState("idle");
+            } else {
+              newMsgs[newMsgs.length - 1] = { ...last, text: last.text + chunk };
+            }
+            return newMsgs;
+          });
+        },
+        (status) => {
+          setStatusText(status);
+        }
+      );
       
       if (res.sessionId && !sessionId) {
         setSessionId(res.sessionId);
@@ -280,9 +294,11 @@ export default function Home() {
       }
 
       setAnimatingIdx(-1);
+      setStatusText(null); // End of stream
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setCanvasState("idle");
+      setStatusText(null);
     }
   }, [input, canvasState, messages, sessionId]);
 
@@ -433,7 +449,7 @@ export default function Home() {
                 )
               )}
 
-              {canvasState === "thinking" && <ThinkingIndicator />}
+              {canvasState === "thinking" && <ThinkingIndicator status={statusText} />}
 
               {error && <div className={s.error} role="alert">⚠ {error}</div>}
               <div ref={bottomRef} style={{ height: 1 }} />
