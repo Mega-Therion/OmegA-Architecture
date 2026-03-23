@@ -1,283 +1,179 @@
-.main {
+/* ── Shell ──────────────────────────────────────────────────────────────── */
+.shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-.hero {
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.header {
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  padding-top: 2rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
 }
 
-.intro {
-  margin-top: 4rem;
-}
-
-.introGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-.card {
-  padding: 2.5rem;
-  border-radius: 1rem;
-  transition: transform 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.card h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+.omega {
+  font-size: 1.6rem;
   color: var(--omega-cyan);
+  line-height: 1;
 }
 
-.card p {
-  color: #888;
-  font-size: 1rem;
+.name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* Backend Status Section Styles */
-.backendStatus {
-  margin-top: 6rem;
-  padding: 4rem 1.5rem;
-  background-color: rgba(0, 0, 0, 0.1); /* Subtle dark background */
-  border-radius: 1.5rem;
+/* ── Feed ───────────────────────────────────────────────────────────────── */
+.feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
 }
 
-.sectionTitle {
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.empty {
+  margin: auto;
   text-align: center;
-  font-size: 2.2rem;
-  margin-bottom: 3rem;
-  background: linear-gradient(to right, var(--omega-cyan), var(--sovereign-gold));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  max-width: 480px;
+  padding: 2rem 1rem;
 }
 
-.statusGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-  margin-bottom: 3rem;
+.emptyTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.75rem;
 }
 
-.statusCard {
-  padding: 2rem;
-  border-radius: 1rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.statusCard:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-}
-
-.statusCard h3 {
-  font-size: 1.3rem;
-  color: var(--sovereign-gold);
-  margin-bottom: 1rem;
-}
-
-.statusCard p {
-  color: #ccc;
+.emptySubtitle {
   font-size: 1rem;
-  margin-bottom: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.65;
 }
 
-.statusCard p strong {
+/* ── Bubbles ────────────────────────────────────────────────────────────── */
+.bubbleUser {
+  align-self: flex-end;
+  max-width: 72%;
+  background: rgba(0, 212, 212, 0.12);
+  border: 1px solid rgba(0, 212, 212, 0.2);
+  border-radius: 1.2rem 1.2rem 0.25rem 1.2rem;
+  padding: 0.8rem 1.1rem;
+}
+
+.bubbleOmega {
+  align-self: flex-start;
+  max-width: 80%;
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+}
+
+.bubbleLabel {
   color: var(--omega-cyan);
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  padding-top: 0.05rem;
 }
 
+.bubbleText {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.thinking {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 1rem;
+  font-style: italic;
+  margin: 0;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.7; }
+}
+
+/* ── Error ──────────────────────────────────────────────────────────────── */
 .error {
   color: #ff6b6b;
-  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 0 0.5rem;
 }
 
-/* Provider badges */
-.providerList {
+/* ── Input row ──────────────────────────────────────────────────────────── */
+.inputRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.6rem;
+  align-items: flex-end;
+  padding: 1rem 0 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
 }
 
-.providerBadge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 0.3rem;
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-
-.providerOn {
-  background: rgba(0, 255, 255, 0.12);
-  border: 1px solid rgba(0, 255, 255, 0.35);
-  color: var(--omega-cyan);
-}
-
-.providerOff {
+.input {
+  flex: 1;
+  padding: 0.75rem 1rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #555;
-}
-
-.dimText {
-  color: #555;
-  font-size: 0.85rem;
-}
-
-/* Chat section */
-.chatSection {
-  margin-top: 6rem;
-  padding: 4rem 1.5rem;
-  border-radius: 1.5rem;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.chatForm {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-end;
-}
-
-.chatInput {
-  flex: 1;
-  padding: 0.9rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.6rem;
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  border-radius: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
   font-size: 1rem;
-  resize: vertical;
+  line-height: 1.5;
+  resize: none;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s;
+  max-height: 160px;
+  overflow-y: auto;
 }
 
-.chatInput:focus {
-  border-color: var(--omega-cyan);
+.input:focus {
+  border-color: rgba(0, 212, 212, 0.5);
 }
 
-.memInput {
-  flex: 1;
-  padding: 0.9rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.6rem;
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s ease;
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
 }
 
-.memInput:focus {
-  border-color: var(--sovereign-gold);
-}
-
-.submitBtn {
-  padding: 0.8rem 1.8rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #000;
+.sendBtn {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
   background: var(--omega-cyan);
+  color: #000;
+  font-size: 1.1rem;
+  font-weight: 700;
   border: none;
-  border-radius: 0.6rem;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s ease, transform 0.15s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
 }
 
-.submitBtn:hover:not(:disabled) {
+.sendBtn:hover:not(:disabled) {
   background: var(--sovereign-gold);
   transform: translateY(-1px);
 }
 
-.submitBtn:disabled {
-  opacity: 0.5;
+.sendBtn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
-}
-
-.chatResponse {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  border-radius: 0.8rem;
-}
-
-.chatMeta {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.chatText {
-  color: var(--foreground);
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
-
-/* Memory section */
-.memorySection {
-  margin-top: 4rem;
-  padding: 4rem 1.5rem;
-  border-radius: 1.5rem;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.memHits {
-  margin-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.memHit {
-  padding: 1.25rem 1.5rem;
-  border-radius: 0.7rem;
-}
-
-.hitMeta {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-  margin-bottom: 0.6rem;
-}
-
-.memContent {
-  color: #bbb;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  max-height: 8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.footer {
-  padding: 6rem 2rem 4rem;
-  text-align: center;
-  color: #444;
-  font-size: 0.9rem;
-}
-
-.footer p {
-  margin-bottom: 0.5rem;
-}
-
-.mono {
-  font-family: var(--font-mono);
-  color: #222;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
 }

@@ -51,7 +51,8 @@ export interface ChatRequest {
 }
 
 export interface ChatResponse {
-  response: string;
+  reply?: string;
+  response?: string;
   provider?: string;
   memory_hits?: unknown[];
 }
@@ -122,7 +123,7 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
       namespace: 'biography.ry',
       use_memory: true,
       temperature: 0.7,
-      mode: 'local',
+      mode: 'omega',
       system: PUBLIC_SYSTEM_PROMPT,
       ...req,
     }),
