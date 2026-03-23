@@ -1031,3 +1031,99 @@
     display: none;
   }
 }
+
+/* ── History Panel ─────────────────────────────────────────────── */
+.historyOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  animation: fade-in 0.3s var(--ease-snappy);
+}
+
+.historyPanel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background: rgba(8, 8, 28, 0.92);
+  border-right: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.historyPanel.open {
+  transform: translateX(0);
+}
+
+.historyPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1rem 1rem;
+  border-bottom: 1px solid var(--glass-border);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  color: var(--lavender);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.historyPanelHeader button {
+  background: transparent;
+  color: var(--lavender);
+  border: 1px solid var(--glass-border);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-snappy);
+}
+.historyPanelHeader button:hover {
+  color: var(--gold);
+  border-color: rgba(184, 134, 11, 0.4);
+}
+
+.historyList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.historyItem {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: background 0.2s var(--ease-snappy);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.historyItem:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.historyPreview {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.historyTime {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.65rem;
+  color: rgba(241, 245, 249, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

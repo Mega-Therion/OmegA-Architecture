@@ -136,6 +136,19 @@ function ThinkingIndicator() {
   );
 }
 
+function formatRelativeTime(dateStr: string) {
+  if (!dateStr) return "";
+  const diff = Math.max(0, Date.now() - new Date(dateStr).getTime());
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return `just now`;
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return `yesterday`;
+  return `${days}d ago`;
+}
+
 // ── Main ──────────────────────────────────────────────────────────
 export default function Home() {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -148,9 +161,55 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [sessionList, setSessionList] = useState<{id: string; created_at: string; preview: string}[]>([]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inChatMode = messages.length > 0;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setHistoryOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (historyOpen) {
+      fetch('/api/sessions').then(res => res.json()).then(data => {
+        if (Array.isArray(data)) setSessionList(data);
+      }).catch(console.error);
+    }
+  }, [historyOpen]);
+
+  const loadSession = async (id: string) => {
+    try {
+      const res = await fetch(`/api/sessions/${id}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMessages(data.map((m: any) => ({ role: m.role, text: m.content, timestamp: m.created_at })));
+        setSessionId(id);
+        localStorage.setItem("omega_session", id);
+        setHistoryOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const startNewSession = () => {
+    setMessages([]);
+    setAnimatingIdx(-1);
+    setLatestOmega("");
+    setSessionId(null);
+    localStorage.removeItem("omega_session");
+    setHistoryOpen(false);
+  };
+  
+  const newChat = startNewSession;
+
 
   // Auto-resize
   const autoResize = () => {
@@ -161,23 +220,11 @@ export default function Home() {
 
   useEffect(() => {
     const saved = localStorage.getItem("omega_session");
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setSessionId(saved);
   }, []);
   // Suppress unused-var lint — latestOmega is retained for future streaming use
   void latestOmega;
-
-  const newChat = () => {
-    setMessages([]);
-    setInput("");
-    setError(null);
-    setCanvasState("idle");
-    setLatestOmega("");
-    setAnimatingIdx(-1);
-    setShowPill(false);
-    setSessionId(null); // Reset session ID on new chat
-    localStorage.removeItem("omega_session"); // Clear stored session
-  };
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -347,8 +394,8 @@ export default function Home() {
               <div className={s.headerInner}>
                 <span className={`${s.headerOmega} ${canvasState === "thinking" ? s.thinking : ""}`}>Ω</span>
                 <span className={s.headerName}>OmegA</span>
-                <div className={s.headerStatus}>
-                  <button className={s.historyBtn} title="View Session History" onClick={() => alert("History loading coming soon.")}>
+                <div className={s.headerGroup}>
+                  <button className={s.historyBtn} title="View Session History" onClick={() => setHistoryOpen(true)}>
                     ⌘ History
                   </button>
                   <div className={s.statusDot} />
@@ -433,6 +480,25 @@ export default function Home() {
             </div>
           </>
         )}
+      </div>
+
+      {/* History Panel */}
+      {historyOpen && <div className={s.historyOverlay} onClick={() => setHistoryOpen(false)} />}
+      <div className={`${s.historyPanel} ${historyOpen ? s.open : ""}`}>
+        <div className={s.historyPanelHeader}>
+          <span>Session History</span>
+          <button onClick={startNewSession}>+ New</button>
+        </div>
+        <div className={s.historyList}>
+          {sessionList.map(session => (
+            <div key={session.id} className={s.historyItem} onClick={() => loadSession(session.id)}>
+              <span className={s.historyPreview}>
+                {session.preview ? (session.preview.length > 60 ? session.preview.slice(0, 60) + "..." : session.preview) : "Empty Session"}
+              </span>
+              <span className={s.historyTime}>{formatRelativeTime(session.created_at)}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   );
