@@ -327,7 +327,7 @@ export async function POST(req: NextRequest) {
                 parts: [{ text: h.text }],
               }));
               const chat = genai.chats.create({
-                model: "gemini-2.5-pro",
+                model: "gemini-2.5-flash",
                 config: { systemInstruction: system, temperature: 0.85, maxOutputTokens: 4096 },
                 history: geminiHistory,
               });
