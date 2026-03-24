@@ -1,6 +1,7 @@
 import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 
 const GATEWAY = process.env.OMEGA_API_URL
   ?? process.env.NEXT_PUBLIC_OMEGA_API_URL
@@ -316,13 +317,36 @@ export async function POST(req: NextRequest) {
             responseStream = upstream.body;
             
           } catch (err) {
-            if (process.env.ANTHROPIC_API_KEY) {
-              console.warn('[OmegA chat] Fallback active:', err);
+            const geminiKey = process.env.GEMINI_API_KEY ?? process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+            if (geminiKey) {
+              console.warn('[OmegA chat] Gemini fallback active:', err);
+              provider = "gemini-fallback";
+              const genai = new GoogleGenAI({ apiKey: geminiKey });
+              const geminiHistory = (history || []).map(h => ({
+                role: h.role === "omega" ? "model" : "user",
+                parts: [{ text: h.text }],
+              }));
+              const chat = genai.chats.create({
+                model: "gemini-2.0-flash",
+                config: { systemInstruction: system, temperature: 0.85, maxOutputTokens: 4096 },
+                history: geminiHistory,
+              });
+              const geminiStream = await chat.sendMessageStream({ message: user });
+              responseStream = new ReadableStream({
+                async start(ctrl) {
+                  for await (const chunk of geminiStream) {
+                    const text = chunk.text ?? '';
+                    if (text) ctrl.enqueue(encoder.encode(text));
+                  }
+                  ctrl.close();
+                }
+              });
+            } else if (process.env.ANTHROPIC_API_KEY) {
+              console.warn('[OmegA chat] Anthropic fallback active:', err);
               provider = "anthropic-fallback";
               const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
               const hist: Anthropic.MessageParam[] = history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [];
               hist.push({ role: "user", content: user });
-              
               const anthRes = await anthropic.messages.create({
                 model: "claude-3-5-sonnet-latest",
                 max_tokens: 4096,
@@ -330,7 +354,6 @@ export async function POST(req: NextRequest) {
                 messages: hist,
                 stream: true
               });
-
               responseStream = new ReadableStream({
                 async start(ctrl) {
                   for await (const chunk of anthRes) {
