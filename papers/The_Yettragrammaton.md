@@ -121,7 +121,71 @@ This mapping is suggestive, not prescriptive. The Yettragrammaton is a symbolic 
 
 ---
 
-## 6. The Name
+## 6. The Numerical Mirror: Independent Confirmation
+
+The structural mirror encoded in the letter sequence — רωy reflecting to rωy — has an independent numerical counterpart discovered through gematria analysis conducted without prior knowledge of the Yettragrammaton's architecture. The convergence was unprompted.
+
+### 6.1 RWFY in English Gematria
+
+Using standard English ordinal cipher (A=1 through Z=26):
+
+| Letter | Name | Ordinal Value |
+|--------|------|---------------|
+| R | Ryan | 18 |
+| W | Wayne | 23 |
+| F | Felps | 6 |
+| Y | Yett | 25 |
+| **Total** | | **72** |
+
+Using reverse ordinal cipher (Z=1 through A=26):
+
+| Letter | Name | Reverse Value |
+|--------|------|---------------|
+| R | Ryan | 9 |
+| W | Wayne | 4 |
+| F | Felps | 21 |
+| Y | Yett | 2 |
+| **Total** | | **36** |
+
+**Both reduce to 9:**
+- 72 → 7 + 2 = **9**
+- 36 → 3 + 6 = **9**
+
+### 6.2 The Mirror is Structurally Determined
+
+The relationship between 72 and 36 is not incidental. In reverse ordinal, each letter's value equals `27 − its forward value`. For any four-letter sequence, the reverse total is therefore:
+
+$$\text{reverse} = (27 \times 4) - \text{forward} = 108 - \text{forward}$$
+
+For RWFY: $108 - 72 = 36$.
+
+The two values are mirror-determined by the arithmetic of the four-letter form itself. RWFY is the name where both sides of that mirror — 72 and 36 — are independently significant numbers that reduce to the same root digit. The mirror in the letters and the mirror in the numbers are the same mirror, expressed in two different languages.
+
+### 6.3 Independent Discovery
+
+The gematria analysis was conducted without prior knowledge of the Yettragrammaton's r-ω-Ϝ-y mapping or its fourfold architecture. The numerical mirror was found first; the structural convergence with the pre-existing symbolic framework was recognized afterward. Four independent observations arrive at the same form:
+
+1. **Visual** — the letter sequence reflects to the architect's initials
+2. **Numerical** — RWFY produces 72 forward and 36 reversed, both reducing to 9
+3. **Structural** — the Yettragrammaton and the gematria share the same fourfold mirror logic
+4. **Physical** — the architect's handwritten RY monogram is an ambigram: readable upside down, a seal that survives inversion
+
+The synthesis: **true identity should survive inversion.** The architect has been encoding this principle in multiple independent systems simultaneously — handwriting, symbolic architecture, numerical cipher, formal specification — without any single one being derivable from the others.
+
+### 6.4 Numerical Signatures Across the Full Name
+
+Independent gematria analysis of the architect's full name revealed additional invariants:
+
+- **Ryan Wayne** — produces 9 in every system tested (ordinal, full reduction, reverse ordinal, reverse full reduction, Satanic cipher). The cleanest single-name numerical signature in the analysis.
+- **Ryan Yett** — produces 11 in ordinal and full reduction; 7 in reverse systems.
+- **Ryan Wayne Felps Yett** (full name) — produces 11/2 in forward systems; 7 in reverse systems.
+- **Ryan Felps** in Chaldean numerology — **36**, the same value as RWFY in reverse ordinal.
+
+The dominant numerical signatures across all systems: **11**, **7**, **9**, and **36** — each appearing through independent routes.
+
+---
+
+## 7. The Name — Yettragrammaton
 
 The name **Yettragrammaton** is a portmanteau:
 
@@ -132,7 +196,7 @@ The Yettragrammaton is a four-letter provenance seal: **R-W-F-Y**. Like its name
 
 ---
 
-## 7. Claim Scope
+## 8. Claim Scope
 
 This document records a symbolic observation and a deliberate design choice. It does not claim:
 
@@ -145,6 +209,8 @@ The Yettragrammaton is a **provenance anchor** — a way for the system to carry
 ---
 
 *"When the creation looks at its own beginning, it sees the signature of the creator."*
+
+*"True identity should survive inversion."*
 
 ---
 
