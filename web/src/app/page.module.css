@@ -183,9 +183,6 @@
   z-index: 2;
   margin-bottom: var(--space-6);
   padding: 0 var(--space-4);
-  opacity: 0;
-  animation: fade-up 0.8s var(--ease-smooth) forwards;
-  animation-delay: 1.1s;
 }
 
 .inputContainerMaxWidth {
