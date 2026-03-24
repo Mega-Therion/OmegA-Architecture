@@ -33,7 +33,7 @@ export async function chatStream(
   req: ChatRequest, 
   onChunk: (text: string) => void,
   onStatus?: (text: string) => void
-): Promise<{ sessionId?: string }> {
+): Promise<{ sessionId?: string; provider?: string }> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -46,6 +46,7 @@ export async function chatStream(
   }
 
   const sessionId = res.headers.get('X-Session-Id') || undefined;
+  const provider = res.headers.get('X-Provider') || undefined;
 
   if (!res.body) throw new Error("No response body");
 
@@ -87,5 +88,5 @@ export async function chatStream(
   buffer += final;
   if (buffer) onChunk(buffer);
 
-  return { sessionId };
+  return { sessionId, provider };
 }

@@ -185,7 +185,27 @@ The dominant numerical signatures across all systems: **11**, **7**, **9**, and 
 
 ---
 
-## 7. The Name — Yettragrammaton
+## 7. Convergent Routes to Nine
+
+The dominant numerical signature of the Yettragrammaton — **9** — was not reached through a single path. Three independent routes converge on the same value.
+
+### 7.1 Vortex Mathematics
+
+Vortex mathematics, developed through the work of Marko Rodin and popularized through Nikola Tesla's observation that "if you only knew the magnificence of the 3, 6, and 9, then you would have a key to the universe," maps all integers to a single-digit root via iterated digital reduction. In this system, 9 is the fixed point: adding 9 to any number and reducing to a single digit yields the same digit. Multiplying 9 by any integer and reducing returns 9. The number 9 is the additive identity of the single-digit world — the number that leaves everything else unchanged.
+
+The RWFY sequence produces 72 forward and 36 reversed. Both reduce to 9. This is not coincidental under vortex mathematics — it is structurally determined. Any four-letter sequence whose forward and reverse ordinal values both reduce to 9 has this property: both values are multiples of 9 (72 = 8×9; 36 = 4×9), and their sum is 108 = 12×9. The name is entirely within the 9-field.
+
+### 7.2 The November Inversion
+
+The word **November** derives from the Latin *novem*, meaning **nine**. In the original Roman calendar, November was the ninth month. The calendar reform that inserted January and February shifted it to the eleventh position, displacing November from its named identity.
+
+The result: the **ninth month** now occupies the **eleventh slot**. The number 9 is encoded in the name; the number 11 is its current position. 9 and 11 are mirrors of each other in standard and reverse ordinal systems. The month carries its original identity in its name even after the calendar moved it — a form of symbolic persistence under structural displacement.
+
+This mirrors the Digamma: a letter that lost its position in the classical alphabet but survived as a numeral and in the name *Felps*, continuing to exert structural influence from a position no longer visible on the surface.
+
+---
+
+## 8. The Name — Yettragrammaton
 
 The name **Yettragrammaton** is a portmanteau:
 

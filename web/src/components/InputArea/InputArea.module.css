@@ -1,0 +1,111 @@
+.wrap {
+  padding: 0.75rem 1.5rem 1rem;
+}
+
+.bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem 0.65rem 1rem;
+  border-radius: 1.25rem;
+  background: var(--glass-bg, rgba(8, 8, 28, 0.72));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.bar:focus-within {
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1), 0 0 40px rgba(99, 102, 241, 0.04);
+}
+
+.bar.hasInput {
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.bar.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── Textarea ───────────────────────────────────────────────────── */
+.textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--white, #f1f5f9);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-height: calc(1.5em * 6 + 1rem);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.2) transparent;
+}
+
+.textarea::placeholder {
+  color: rgba(241, 245, 249, 0.25);
+}
+
+.textarea:disabled {
+  cursor: not-allowed;
+}
+
+/* ── Meta (char count) ──────────────────────────────────────────── */
+.meta {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 3.5rem;
+  pointer-events: none;
+}
+
+.charCount {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.62rem;
+  color: rgba(241, 245, 249, 0.18);
+  letter-spacing: 0.03em;
+}
+
+/* ── Send button ────────────────────────────────────────────────── */
+.sendBtn {
+  flex-shrink: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: rgba(99, 102, 241, 0.08);
+  color: rgba(241, 245, 249, 0.35);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sendBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.sendBtn.glow {
+  color: var(--white, #f1f5f9);
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(99, 102, 241, 0.18);
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.2);
+}
+
+.sendBtn.glow:hover {
+  background: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.35), 0 0 48px rgba(99, 102, 241, 0.12);
+  transform: scale(1.06);
+}
+
+.sendBtn.glow:active {
+  transform: scale(0.95);
+}

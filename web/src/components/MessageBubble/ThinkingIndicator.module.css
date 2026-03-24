@@ -1,0 +1,106 @@
+.wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0 1.5rem;
+  margin-bottom: 1.25rem;
+  animation: fadeIn 0.35s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Avatar with gold glow ──────────────────────────────────────── */
+.avatar {
+  flex-shrink: 0;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(228, 184, 74, 0.2), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(228, 184, 74, 0.35);
+  box-shadow: 0 0 18px rgba(228, 184, 74, 0.2), 0 0 40px rgba(228, 184, 74, 0.08);
+  animation: goldPulse 2s ease-in-out infinite;
+}
+
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(228, 184, 74, 0.2), 0 0 40px rgba(228, 184, 74, 0.08); }
+  50% { box-shadow: 0 0 26px rgba(228, 184, 74, 0.35), 0 0 56px rgba(228, 184, 74, 0.15); }
+}
+
+.glyph {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold, #e4b84a);
+  text-shadow: 0 0 10px rgba(228, 184, 74, 0.5);
+}
+
+/* ── Body ───────────────────────────────────────────────────────── */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-top: 0.35rem;
+}
+
+/* ── Bouncing dots ──────────────────────────────────────────────── */
+.dots {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold, #e4b84a);
+  box-shadow: 0 0 8px rgba(228, 184, 74, 0.4);
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.dots span:nth-child(2) { animation-delay: 0.16s; }
+.dots span:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ── Cycling status labels ──────────────────────────────────────── */
+.labelWrap {
+  position: relative;
+  height: 1.2rem;
+  overflow: hidden;
+}
+
+.label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(228, 184, 74, 0.55);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  white-space: nowrap;
+}
+
+.label.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Direct status text ─────────────────────────────────────────── */
+.statusText {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  color: var(--gold, #e4b84a);
+  text-shadow: 0 0 8px rgba(228, 184, 74, 0.25);
+  animation: fadeIn 0.3s ease both;
+}
