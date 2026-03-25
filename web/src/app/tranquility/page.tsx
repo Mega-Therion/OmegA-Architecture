@@ -224,7 +224,8 @@ export default function Tranquility() {
     recogRef.current = r;
 
     r.onstart = () => setState('listening');
-    r.onresult = (e) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    r.onresult = (e: any) => {
       let t = '';
       for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
       setUserLine(`"${t}"`);
