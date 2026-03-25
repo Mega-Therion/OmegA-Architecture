@@ -1,248 +1,246 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
-import { chatStream } from "@/lib/api";
-import type { CanvasState } from "@/components/OmegaCanvas";
-import Sidebar from "@/components/Sidebar/Sidebar";
-import ChatHeader from "@/components/ChatHeader/ChatHeader";
-import UserMessage from "@/components/MessageBubble/UserMessage";
-import OmegaMessage from "@/components/MessageBubble/OmegaMessage";
-import ThinkingIndicator from "@/components/MessageBubble/ThinkingIndicator";
-import InputArea from "@/components/InputArea/InputArea";
-import s from "./page.module.css";
+import { useState, useRef, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import { chatStream } from '@/lib/api';
+import { useVoiceEngine } from '@/hooks/useVoiceEngine';
+import Sidebar from '@/components/Sidebar/Sidebar';
+import s from './page.module.css';
 
-const OmegaCanvas = dynamic(() => import("@/components/OmegaCanvas"), { ssr: false });
+const VoiceOrb = dynamic(() => import('@/components/VoiceOrb/VoiceOrb'), { ssr: false });
 
 interface Msg {
-  role: "user" | "omega";
+  role: 'user' | 'omega';
   text: string;
   timestamp?: string;
   provider?: string;
 }
 
+const STATE_LABELS: Record<string, string> = {
+  dormant:   'Say "Mega" to wake',
+  listening: 'Listening...',
+  thinking:  'Thinking...',
+  speaking:  'Speaking...',
+  followup:  "I'm here — go ahead",
+};
+
 export default function Home() {
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [animatingIdx, setAnimatingIdx] = useState(-1);
-  const [error, setError] = useState<string | null>(null);
-  const [canvasState, setCanvasState] = useState<CanvasState>("idle");
-  const [statusText, setStatusText] = useState<string | null>(null);
-  const [provider, setProvider] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages]       = useState<Msg[]>([]);
+  const [error, setError]             = useState<string | null>(null);
+  const [sessionId, setSessionId]     = useState<string | null>(null);
+  const [sessionList, setSessionList] = useState<{id:string;created_at:string;preview:string}[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [provider, setProvider]       = useState<string | null>(null);
+  const [textInput, setTextInput]     = useState('');
+  const [showText, setShowText]       = useState(false);
+  const [processing, setProcessing]   = useState(false);
 
-  // Open sidebar by default on desktop — after mount to avoid hydration mismatch
+  const pendingTTS = useRef<string | null>(null);
+  const feedRef    = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (window.innerWidth >= 768) setSidebarOpen(true);
-  }, []);
-  const [sessionList, setSessionList] = useState<{ id: string; created_at: string; preview: string }[]>([]);
-  const [showPill, setShowPill] = useState(false);
-
-  const feedRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  // Load saved session on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("omega_session");
+    const saved = localStorage.getItem('omega_session');
     if (saved) setSessionId(saved);
   }, []);
 
-  // Fetch session list for sidebar
   const refreshSessions = useCallback(() => {
-    fetch("/api/sessions")
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setSessionList(data); })
+    fetch('/api/sessions').then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setSessionList(d); })
       .catch(console.error);
   }, []);
 
   useEffect(() => { refreshSessions(); }, [refreshSessions]);
 
-  // Scroll management
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    setShowPill(false);
-  };
-  const handleScroll = () => {
-    const el = feedRef.current;
-    if (!el) return;
-    setShowPill(el.scrollHeight - el.scrollTop - el.clientHeight > 50);
-  };
   useEffect(() => {
-    if (!showPill) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, canvasState, showPill]);
+    feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages, processing]);
 
-  // Core send logic
-  const sendMessage = useCallback(
-    async (text: string) => {
-      if (!text.trim() || canvasState === "thinking") return;
-      setError(null);
-      const newMsg: Msg = { role: "user", text, timestamp: new Date().toISOString() };
-      const currentHistory = [...messages];
-      setMessages((prev) => [...prev, newMsg]);
-      setCanvasState("thinking");
-      setShowPill(false);
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || processing) return;
+    setError(null);
+    setProcessing(true);
+    pendingTTS.current = null;
 
-      try {
-        const res = await chatStream(
-          { user: text, history: currentHistory, sessionId: sessionId ?? undefined },
-          (chunk) => {
-            setStatusText(null);
-            setMessages((prev) => {
-              const updated = [...prev];
-              const last = updated[updated.length - 1];
-              if (last.role === "user") {
-                updated.push({ role: "omega", text: chunk, timestamp: new Date().toISOString() });
-                setAnimatingIdx(updated.length - 1);
-                setCanvasState("idle");
-              } else {
-                updated[updated.length - 1] = { ...last, text: last.text + chunk };
-              }
-              return updated;
-            });
-          },
-          (status) => setStatusText(status)
-        );
+    const history = [...messages];
+    setMessages(prev => [...prev, { role: 'user', text, timestamp: new Date().toISOString() }]);
 
-        if (res.sessionId && !sessionId) {
-          setSessionId(res.sessionId);
-          localStorage.setItem("omega_session", res.sessionId);
-        }
-        if (res.provider) setProvider(res.provider);
-
-        // Tag the last omega message with provider
-        setMessages((prev) => {
-          const updated = [...prev];
-          const last = updated[updated.length - 1];
-          if (last.role === "omega") updated[updated.length - 1] = { ...last, provider: res.provider };
-          return updated;
-        });
-
-        setAnimatingIdx(-1);
-        setStatusText(null);
-        refreshSessions();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
-        setCanvasState("idle");
-        setStatusText(null);
+    let fullReply = '';
+    try {
+      const res = await chatStream(
+        { user: text, history, sessionId: sessionId ?? undefined },
+        chunk => {
+          fullReply += chunk;
+          setMessages(prev => {
+            const u = [...prev];
+            const last = u[u.length - 1];
+            if (last.role === 'user') {
+              u.push({ role: 'omega', text: chunk, timestamp: new Date().toISOString() });
+            } else {
+              u[u.length - 1] = { ...last, text: last.text + chunk };
+            }
+            return u;
+          });
+        },
+        () => {}
+      );
+      if (res.sessionId && !sessionId) {
+        setSessionId(res.sessionId);
+        localStorage.setItem('omega_session', res.sessionId);
       }
-    },
-    [canvasState, messages, sessionId, refreshSessions]
-  );
+      if (res.provider) {
+        setProvider(res.provider);
+        setMessages(prev => {
+          const u = [...prev];
+          const last = u[u.length - 1];
+          if (last.role === 'omega') u[u.length - 1] = { ...last, provider: res.provider };
+          return u;
+        });
+      }
+      refreshSessions();
+      pendingTTS.current = fullReply;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(false);
+    }
+  }, [processing, messages, sessionId, refreshSessions]);
+
+  const voice = useVoiceEngine({ onTranscript: sendMessage });
+
+  useEffect(() => {
+    if (!processing && pendingTTS.current) {
+      const t = pendingTTS.current;
+      pendingTTS.current = null;
+      voice.speakText(t);
+    }
+  }, [processing, voice]);
+
+  const handleTextSend = useCallback(() => {
+    const t = textInput.trim();
+    if (!t) return;
+    setTextInput('');
+    setShowText(false);
+    sendMessage(t);
+  }, [textInput, sendMessage]);
 
   const loadSession = async (id: string) => {
     try {
       const res = await fetch(`/api/sessions/${id}`);
       const data = await res.json();
       if (Array.isArray(data)) {
-        setMessages(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          data.map((m: any) => ({ role: m.role, text: m.content, timestamp: m.created_at }))
-        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMessages(data.map((m: any) => ({ role: m.role, text: m.content, timestamp: m.created_at })));
         setSessionId(id);
-        localStorage.setItem("omega_session", id);
+        localStorage.setItem('omega_session', id);
         setSidebarOpen(false);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const startNewChat = () => {
     setMessages([]);
-    setAnimatingIdx(-1);
     setSessionId(null);
     setProvider(null);
-    localStorage.removeItem("omega_session");
+    localStorage.removeItem('omega_session');
     setSidebarOpen(false);
   };
 
-  // Close sidebar when clicking outside on mobile
-  const handleMainClick = () => {
-    if (sidebarOpen && window.innerWidth < 768) {
-      setSidebarOpen(false);
-    }
-  };
+  const vs = processing ? 'thinking' : voice.voiceState;
+  const stateLabel = processing ? 'Thinking...' : (STATE_LABELS[voice.voiceState] ?? '');
 
-  const hasMessages = messages.length > 0;
-
-  // ── Render ──────────────────────────────────────────────────────
   return (
-    <>
-      <OmegaCanvas state={canvasState} />
+    <div className={s.root}>
+      <div className={s.stars} aria-hidden />
 
-      <div className={s.appLayout}>
-        <Sidebar
-          sessions={sessionList}
-          activeSessionId={sessionId}
-          onNewChat={startNewChat}
-          onSelectSession={loadSession}
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen((o) => !o)}
-        />
+      <Sidebar
+        sessions={sessionList}
+        activeSessionId={sessionId}
+        onNewChat={startNewChat}
+        onSelectSession={loadSession}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(o => !o)}
+      />
 
-        <div className={s.mainArea} onClick={handleMainClick}>
-          <ChatHeader
-            provider={provider ?? undefined}
-            thinking={canvasState === "thinking"}
-            sidebarOpen={sidebarOpen}
-            onToggleSidebar={() => setSidebarOpen((o) => !o)}
-            onNewChat={startNewChat}
-          />
+      <div className={`${s.main} ${sidebarOpen ? s.mainShifted : ''}`}>
 
-          <div
-            className={s.feed}
-            role="log"
-            aria-live="polite"
-            aria-label="Chat messages"
-            ref={feedRef}
-            onScroll={handleScroll}
-          >
-            {!hasMessages && (
-              <div className={s.emptyState}>
-                <div className={s.emptyOmega}>{"\u03A9"}</div>
-                <div className={s.emptyLabel}>Ask OmegA anything</div>
-              </div>
-            )}
-
-            {messages.map((msg, i) =>
-              msg.role === "user" ? (
-                <UserMessage key={i} text={msg.text} timestamp={msg.timestamp} />
-              ) : (
-                <OmegaMessage
-                  key={i}
-                  text={msg.text}
-                  streaming={i === animatingIdx}
-                  timestamp={msg.timestamp}
-                  provider={msg.provider}
-                />
-              )
-            )}
-
-            {canvasState === "thinking" && <ThinkingIndicator status={statusText} />}
-
-            {error && (
-              <div className={s.error} role="alert">
-                {error}
-              </div>
-            )}
-            <div ref={bottomRef} style={{ height: 1 }} />
+        <header className={s.topBar}>
+          <button className={s.menuBtn} onClick={() => setSidebarOpen(o => !o)} aria-label="History">
+            <span /><span /><span />
+          </button>
+          <div className={s.brand}>
+            <span className={s.brandGlyph}>Ω</span>
+            <span className={s.brandName}>OmegA</span>
           </div>
+          <div className={s.topRight}>
+            {provider && <span className={s.badge}>{provider.split('-')[0]}</span>}
+            <span className={`${s.dot} ${vs === 'thinking' ? s.dotThink : vs !== 'dormant' ? s.dotLive : ''}`} />
+          </div>
+        </header>
 
-          {showPill && (
-            <div className={s.scrollPillWrap}>
-              <button className={s.scrollPill} onClick={scrollToBottom} aria-label="Scroll to bottom">
-                New response
+        <div className={s.stage}>
+          <div className={s.orbClick} onClick={voice.toggle} title="Toggle voice">
+            <VoiceOrb
+              voiceState={voice.voiceState}
+              micLevel={voice.micLevel}
+              ttsLevel={voice.ttsLevel}
+              thinking={processing}
+            />
+          </div>
+          <p className={`${s.stateLabel} ${s['sl_' + vs]}`}>{stateLabel}</p>
+          {voice.interim && (
+            <div className={s.interim}><span>{voice.interim}</span></div>
+          )}
+        </div>
+
+        {(messages.length > 0 || processing) && (
+          <div className={s.feed} ref={feedRef}>
+            {messages.map((m, i) => (
+              <div key={i} className={`${s.msg} ${m.role === 'user' ? s.msgUser : s.msgOmega}`}>
+                {m.role === 'omega' && <span className={s.msgGlyph}>Ω</span>}
+                <span className={s.msgText}>{m.text}</span>
+              </div>
+            ))}
+            {processing && (
+              <div className={`${s.msg} ${s.msgOmega}`}>
+                <span className={s.msgGlyph}>Ω</span>
+                <span className={s.dots}><span /><span /><span /></span>
+              </div>
+            )}
+            {error && <div className={s.errMsg}>{error}</div>}
+          </div>
+        )}
+
+        <div className={s.bottom}>
+          {showText ? (
+            <div className={s.textRow}>
+              <textarea
+                className={s.textArea}
+                value={textInput}
+                onChange={e => setTextInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend(); } }}
+                placeholder="Type a message..."
+                rows={1}
+                autoFocus
+              />
+              <button className={s.sendBtn} onClick={handleTextSend} disabled={!textInput.trim() || processing}>›</button>
+              <button className={s.closeBtn} onClick={() => setShowText(false)}>✕</button>
+            </div>
+          ) : (
+            <div className={s.actions}>
+              <button className={s.typeBtn} onClick={() => setShowText(true)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Type
+              </button>
+              <button className={`${s.micBtn} ${vs !== 'dormant' ? s.micActive : ''}`} onClick={voice.toggle} aria-label="Toggle voice">
+                {vs === 'dormant'
+                  ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                }
               </button>
             </div>
           )}
-
-          <InputArea
-            onSend={sendMessage}
-            disabled={canvasState === "thinking"}
-            autoFocus
-          />
         </div>
       </div>
-    </>
+    </div>
   );
 }
