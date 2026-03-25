@@ -8,7 +8,6 @@ interface VoiceOrbProps {
   voiceState: VoiceState;
   micLevel?: number;   // 0-1
   ttsLevel?: number;   // 0-1
-  thinking?: boolean;  // OmegA is processing
   size?: number;
 }
 
@@ -16,15 +15,17 @@ export default function VoiceOrb({
   voiceState,
   micLevel = 0,
   ttsLevel = 0,
-  thinking = false,
   size = 220,
 }: VoiceOrbProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
   const phaseRef = useRef(0);
 
-  const activeLevel = voiceState === 'speaking' ? ttsLevel : micLevel;
-  const isActive = voiceState !== 'dormant';
+  // Live values updated via refs so the rAF loop doesn't restart
+  const stateRef = useRef(voiceState);
+  const levelRef = useRef(0);
+  stateRef.current = voiceState;
+  levelRef.current = voiceState === 'speaking' ? ttsLevel : micLevel;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -36,16 +37,19 @@ export default function VoiceOrb({
     canvas.width = W;
     canvas.height = W;
     const C = W / 2;
-    const R = C * 0.32; // core radius
+    const R = C * 0.32;
 
     const draw = () => {
       phaseRef.current += 0.018;
       const ph = phaseRef.current;
-      const lv = activeLevel;
+      const lv = levelRef.current;
+      const vs = stateRef.current;
+      const thinking = vs === 'thinking';
+      const isActive = vs !== 'dormant';
 
       ctx.clearRect(0, 0, W, W);
 
-      // ── Outer ambient glow ──────────────────────────────────────────────────
+      // Outer ambient glow
       const ambientR = C * 0.85 + lv * C * 0.12;
       const ambient = ctx.createRadialGradient(C, C, R * 0.5, C, C, ambientR);
 
@@ -53,11 +57,11 @@ export default function VoiceOrb({
         ambient.addColorStop(0, 'rgba(228,184,74,0.12)');
         ambient.addColorStop(0.5, 'rgba(228,184,74,0.04)');
         ambient.addColorStop(1, 'rgba(0,0,0,0)');
-      } else if (voiceState === 'listening' || voiceState === 'followup') {
+      } else if (vs === 'listening' || vs === 'followup') {
         ambient.addColorStop(0, 'rgba(99,102,241,0.18)');
         ambient.addColorStop(0.5, 'rgba(139,92,246,0.06)');
         ambient.addColorStop(1, 'rgba(0,0,0,0)');
-      } else if (voiceState === 'speaking') {
+      } else if (vs === 'speaking') {
         ambient.addColorStop(0, 'rgba(196,181,253,0.20)');
         ambient.addColorStop(0.5, 'rgba(139,92,246,0.07)');
         ambient.addColorStop(1, 'rgba(0,0,0,0)');
@@ -68,10 +72,9 @@ export default function VoiceOrb({
       ctx.fillStyle = ambient;
       ctx.fillRect(0, 0, W, W);
 
-      // ── Pulse rings (3 rings, offset phase) ────────────────────────────────
-      const ringCount = 3;
-      for (let i = 0; i < ringCount; i++) {
-        const offset = (i / ringCount) * Math.PI * 2;
+      // Pulse rings
+      for (let i = 0; i < 3; i++) {
+        const offset = (i / 3) * Math.PI * 2;
         const pulse = Math.sin(ph * 0.8 + offset) * 0.5 + 0.5;
         const ringR = R * (1.5 + i * 0.55) + lv * R * 0.6 * (1 - i * 0.2);
         const alpha = isActive
@@ -80,8 +83,8 @@ export default function VoiceOrb({
 
         let color: string;
         if (thinking) color = `rgba(228,184,74,${alpha})`;
-        else if (voiceState === 'speaking') color = `rgba(196,181,253,${alpha})`;
-        else if (voiceState === 'followup') color = `rgba(99,210,190,${alpha})`;
+        else if (vs === 'speaking') color = `rgba(196,181,253,${alpha})`;
+        else if (vs === 'followup') color = `rgba(99,210,190,${alpha})`;
         else color = `rgba(139,92,246,${alpha})`;
 
         ctx.beginPath();
@@ -91,12 +94,12 @@ export default function VoiceOrb({
         ctx.stroke();
       }
 
-      // ── Waveform ring (when active) ─────────────────────────────────────────
+      // Waveform ring
       if (isActive && lv > 0.02) {
         const waveR = R * 1.35 + lv * R * 0.4;
         const points = 128;
         ctx.beginPath();
-        for (let p = 0; p <= points; p++) {
+        for (let p = 0; p < points; p++) {
           const angle = (p / points) * Math.PI * 2 - Math.PI / 2;
           const wave = Math.sin(angle * 8 + ph * 3) * lv * R * 0.18
                      + Math.sin(angle * 5 - ph * 2) * lv * R * 0.10;
@@ -109,14 +112,14 @@ export default function VoiceOrb({
         const waveAlpha = 0.4 + lv * 0.4;
         ctx.strokeStyle = thinking
           ? `rgba(228,184,74,${waveAlpha})`
-          : voiceState === 'speaking'
+          : vs === 'speaking'
           ? `rgba(196,181,253,${waveAlpha})`
           : `rgba(99,102,241,${waveAlpha})`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
 
-      // ── Rotating arc (thinking) ─────────────────────────────────────────────
+      // Rotating arc (thinking)
       if (thinking) {
         ctx.save();
         ctx.translate(C, C);
@@ -136,7 +139,7 @@ export default function VoiceOrb({
         ctx.restore();
       }
 
-      // ── Core glow ───────────────────────────────────────────────────────────
+      // Core glow
       const coreGlow = ctx.createRadialGradient(C, C, 0, C, C, R * 1.3);
       const breathe = Math.sin(ph * 0.7) * 0.5 + 0.5;
 
@@ -144,15 +147,15 @@ export default function VoiceOrb({
         coreGlow.addColorStop(0, `rgba(255,230,130,${0.25 + breathe * 0.15})`);
         coreGlow.addColorStop(0.4, `rgba(228,184,74,${0.15 + breathe * 0.10})`);
         coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
-      } else if (voiceState === 'speaking') {
+      } else if (vs === 'speaking') {
         coreGlow.addColorStop(0, `rgba(220,200,255,${0.22 + lv * 0.2})`);
         coreGlow.addColorStop(0.4, `rgba(139,92,246,${0.14 + lv * 0.1})`);
         coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
-      } else if (voiceState === 'listening') {
+      } else if (vs === 'listening') {
         coreGlow.addColorStop(0, `rgba(140,120,255,${0.20 + lv * 0.25})`);
         coreGlow.addColorStop(0.4, `rgba(99,102,241,${0.10 + lv * 0.15})`);
         coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
-      } else if (voiceState === 'followup') {
+      } else if (vs === 'followup') {
         coreGlow.addColorStop(0, `rgba(99,210,190,${0.18 + breathe * 0.08})`);
         coreGlow.addColorStop(0.4, `rgba(16,185,129,${0.10})`);
         coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
@@ -170,9 +173,9 @@ export default function VoiceOrb({
 
     draw();
     return () => cancelAnimationFrame(frameRef.current);
-  }, [voiceState, thinking, activeLevel, isActive, size]);
+  }, [size]); // Only restart loop when canvas size changes
 
-  const stateClass = thinking ? s.thinking
+  const stateClass = voiceState === 'thinking' ? s.thinking
     : voiceState === 'listening' ? s.listening
     : voiceState === 'speaking' ? s.speaking
     : voiceState === 'followup' ? s.followup

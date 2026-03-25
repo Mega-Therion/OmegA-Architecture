@@ -24,19 +24,28 @@ const STATE_LABELS: Record<string, string> = {
   followup:  "I'm here — go ahead",
 };
 
+const STATE_CLASSES: Record<string, string> = {
+  dormant:   s.sl_dormant,
+  listening: s.sl_listening,
+  thinking:  s.sl_thinking,
+  speaking:  s.sl_speaking,
+  followup:  s.sl_followup,
+};
+
 export default function Home() {
   const [messages, setMessages]       = useState<Msg[]>([]);
   const [error, setError]             = useState<string | null>(null);
   const [sessionId, setSessionId]     = useState<string | null>(null);
   const [sessionList, setSessionList] = useState<{id:string;created_at:string;preview:string}[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [provider, setProvider]       = useState<string | null>(null);
   const [textInput, setTextInput]     = useState('');
   const [showText, setShowText]       = useState(false);
   const [processing, setProcessing]   = useState(false);
 
   const pendingTTS = useRef<string | null>(null);
   const feedRef    = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
 
   useEffect(() => {
     const saved = localStorage.getItem('omega_session');
@@ -61,7 +70,7 @@ export default function Home() {
     setProcessing(true);
     pendingTTS.current = null;
 
-    const history = [...messages];
+    const history = [...messagesRef.current];
     setMessages(prev => [...prev, { role: 'user', text, timestamp: new Date().toISOString() }]);
 
     let fullReply = '';
@@ -87,8 +96,8 @@ export default function Home() {
         setSessionId(res.sessionId);
         localStorage.setItem('omega_session', res.sessionId);
       }
+      // Annotate provider in a single update
       if (res.provider) {
-        setProvider(res.provider);
         setMessages(prev => {
           const u = [...prev];
           const last = u[u.length - 1];
@@ -103,17 +112,19 @@ export default function Home() {
     } finally {
       setProcessing(false);
     }
-  }, [processing, messages, sessionId, refreshSessions]);
+  }, [processing, sessionId, refreshSessions]);
 
   const voice = useVoiceEngine({ onTranscript: sendMessage });
+  const speakTextRef = useRef(voice.speakText);
+  speakTextRef.current = voice.speakText;
 
   useEffect(() => {
     if (!processing && pendingTTS.current) {
       const t = pendingTTS.current;
       pendingTTS.current = null;
-      voice.speakText(t);
+      speakTextRef.current(t);
     }
-  }, [processing, voice]);
+  }, [processing]);
 
   const handleTextSend = useCallback(() => {
     const t = textInput.trim();
@@ -140,13 +151,13 @@ export default function Home() {
   const startNewChat = () => {
     setMessages([]);
     setSessionId(null);
-    setProvider(null);
     localStorage.removeItem('omega_session');
     setSidebarOpen(false);
   };
 
   const vs = processing ? 'thinking' : voice.voiceState;
   const stateLabel = processing ? 'Thinking...' : (STATE_LABELS[voice.voiceState] ?? '');
+  const lastProvider = messagesRef.current.findLast(m => m.role === 'omega')?.provider;
 
   return (
     <div className={s.root}>
@@ -172,7 +183,7 @@ export default function Home() {
             <span className={s.brandName}>OmegA</span>
           </div>
           <div className={s.topRight}>
-            {provider && <span className={s.badge}>{provider.split('-')[0]}</span>}
+            {lastProvider && <span className={s.badge}>{lastProvider.split('-')[0]}</span>}
             <span className={`${s.dot} ${vs === 'thinking' ? s.dotThink : vs !== 'dormant' ? s.dotLive : ''}`} />
           </div>
         </header>
@@ -183,12 +194,11 @@ export default function Home() {
               voiceState={voice.voiceState}
               micLevel={voice.micLevel}
               ttsLevel={voice.ttsLevel}
-              thinking={processing}
             />
           </div>
-          <p className={`${s.stateLabel} ${s['sl_' + vs]}`}>{stateLabel}</p>
+          <p className={`${s.stateLabel} ${STATE_CLASSES[vs] ?? ''}`}>{stateLabel}</p>
           {voice.interim && (
-            <div className={s.interim}><span>{voice.interim}</span></div>
+            <div className={s.interim}>{voice.interim}</div>
           )}
         </div>
 

@@ -28,6 +28,23 @@ export interface VoiceEngineReturn {
 const WAKE_WORDS = ['mega', 'omega'];
 const FOLLOW_UP_MS = 25_000;
 const MIN_SPEECH_CHARS = 3;
+const SILENCE_COMMIT_MS = 1400;
+
+// Shared helper: drive an audio level meter from an AnalyserNode
+function startLevelTick(
+  analyser: AnalyserNode,
+  setLevel: (v: number) => void,
+  animRef: React.MutableRefObject<number | null>,
+) {
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  const tick = () => {
+    analyser.getByteFrequencyData(buf);
+    const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
+    setLevel(Math.min(avg / 80, 1));
+    animRef.current = requestAnimationFrame(tick);
+  };
+  tick();
+}
 
 export function useVoiceEngine({
   onTranscript,
@@ -52,48 +69,50 @@ export function useVoiceEngine({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const micAnimRef = useRef<number | null>(null);
   const ttsSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const ttsAnalyserRef = useRef<AnalyserNode | null>(null);
+  const ttsCtxRef = useRef<AudioContext | null>(null);
   const ttsAnimRef = useRef<number | null>(null);
   const mutedRef = useRef(false);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep stateRef in sync
+  // Stale-closure avoidance: callbacks read stateRef instead of voiceState
   const setState = useCallback((s: VoiceState) => {
     stateRef.current = s;
     setVoiceState(s);
   }, []);
 
+  // ── Shared AudioContext ────────────────────────────────────────────────────
+  const getAudioCtx = useCallback(() => {
+    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+      audioCtxRef.current = new AudioContext();
+    }
+    return audioCtxRef.current;
+  }, []);
+
   // ── Mic level analyzer ─────────────────────────────────────────────────────
   const startMicAnalyzer = useCallback(async () => {
     try {
-      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-        audioCtxRef.current = new AudioContext();
-      }
+      const ctx = getAudioCtx();
       if (!micStreamRef.current) {
         micStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       }
-      const src = audioCtxRef.current.createMediaStreamSource(micStreamRef.current);
-      analyserRef.current = audioCtxRef.current.createAnalyser();
+      analyserRef.current?.disconnect();
+      const src = ctx.createMediaStreamSource(micStreamRef.current);
+      analyserRef.current = ctx.createAnalyser();
       analyserRef.current.fftSize = 128;
       src.connect(analyserRef.current);
-
-      const tick = () => {
-        if (!analyserRef.current) return;
-        const buf = new Uint8Array(analyserRef.current.frequencyBinCount);
-        analyserRef.current.getByteFrequencyData(buf);
-        const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
-        setMicLevel(Math.min(avg / 80, 1));
-        micAnimRef.current = requestAnimationFrame(tick);
-      };
-      tick();
-    } catch { /* mic denied — voice still works via recognition */ }
-  }, []);
+      startLevelTick(analyserRef.current, setMicLevel, micAnimRef);
+    } catch { /* mic denied */ }
+  }, [getAudioCtx]);
 
   const stopMicAnalyzer = useCallback(() => {
-    if (micAnimRef.current) cancelAnimationFrame(micAnimRef.current);
-    setMicLevel(0);
+    if (micAnimRef.current) {
+      cancelAnimationFrame(micAnimRef.current);
+      micAnimRef.current = null;
+      setMicLevel(0);
+    }
   }, []);
 
-  // ── Follow-up window ────────────────────────────────────────────────────────
+  // ── Follow-up window ──────────────────────────────────────────────────────
   const clearFollowUp = useCallback(() => {
     if (followUpTimer.current) clearTimeout(followUpTimer.current);
   }, []);
@@ -106,11 +125,19 @@ export function useVoiceEngine({
     }, followUpWindowMs);
   }, [setState, clearFollowUp, followUpWindowMs]);
 
-  // ── TTS playback ────────────────────────────────────────────────────────────
+  // ── TTS playback ──────────────────────────────────────────────────────────
   const stopSpeaking = useCallback(() => {
     ttsSourceRef.current?.stop();
     ttsSourceRef.current = null;
-    if (ttsAnimRef.current) cancelAnimationFrame(ttsAnimRef.current);
+    if (ttsAnimRef.current) {
+      cancelAnimationFrame(ttsAnimRef.current);
+      ttsAnimRef.current = null;
+    }
+    // Close the dedicated TTS AudioContext to prevent leaks
+    if (ttsCtxRef.current) {
+      ttsCtxRef.current.close().catch(() => {});
+      ttsCtxRef.current = null;
+    }
     setTtsLevel(0);
   }, []);
 
@@ -130,18 +157,17 @@ export function useVoiceEngine({
 
       if (!data.audio) throw new Error('No audio returned');
 
-      // Decode base64 WAV
       const raw = atob(data.audio);
       const bytes = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
 
+      // Dedicated context for TTS — tracked in ttsCtxRef for cleanup
       const ctx = new AudioContext();
+      ttsCtxRef.current = ctx;
       const buffer = await ctx.decodeAudioData(bytes.buffer);
 
-      // TTS level analyzer
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 128;
-      ttsAnalyserRef.current = analyser;
 
       const src = ctx.createBufferSource();
       src.buffer = buffer;
@@ -149,21 +175,15 @@ export function useVoiceEngine({
       analyser.connect(ctx.destination);
       ttsSourceRef.current = src;
 
-      const tick = () => {
-        if (!ttsAnalyserRef.current) return;
-        const buf = new Uint8Array(ttsAnalyserRef.current.frequencyBinCount);
-        ttsAnalyserRef.current.getByteFrequencyData(buf);
-        const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
-        setTtsLevel(Math.min(avg / 80, 1));
-        ttsAnimRef.current = requestAnimationFrame(tick);
-      };
-      tick();
+      startLevelTick(analyser, setTtsLevel, ttsAnimRef);
 
       src.start();
       src.onended = () => {
         if (ttsAnimRef.current) cancelAnimationFrame(ttsAnimRef.current);
+        ttsAnimRef.current = null;
         setTtsLevel(0);
-        ctx.close();
+        ctx.close().catch(() => {});
+        ttsCtxRef.current = null;
         onTTSEnd?.();
         enterFollowUp();
       };
@@ -174,14 +194,14 @@ export function useVoiceEngine({
     }
   }, [ttsUrl, stopSpeaking, setState, enterFollowUp, onTTSStart, onTTSEnd]);
 
-  // ── Speech recognition ──────────────────────────────────────────────────────
+  // ── Speech recognition ────────────────────────────────────────────────────
   const stopRecognition = useCallback(() => {
     try { recogRef.current?.stop(); } catch { /* ignore */ }
   }, []);
 
   const startRecognition = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (typeof window !== 'undefined')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ? ((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition)
       : null;
     if (!SR) return;
@@ -210,7 +230,7 @@ export function useVoiceEngine({
           setState('thinking');
           onTranscript(text);
         }
-      }, 1400);
+      }, SILENCE_COMMIT_MS);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -231,7 +251,6 @@ export function useVoiceEngine({
 
       setInterim((finalBuffer + interimText).trim());
 
-      // Wake word check when dormant
       if (stateRef.current === 'dormant') {
         const all = (finalBuffer + interimText).toLowerCase();
         if (WAKE_WORDS.some(w => all.includes(w))) {
@@ -259,18 +278,20 @@ export function useVoiceEngine({
     };
 
     r.onend = () => {
-      // Auto-restart unless we're muted or thinking/speaking
       if (!mutedRef.current &&
           stateRef.current !== 'thinking' &&
           stateRef.current !== 'speaking') {
-        setTimeout(() => { if (!mutedRef.current) startRecognition(); }, 200);
+        restartTimerRef.current = setTimeout(() => {
+          restartTimerRef.current = null;
+          if (!mutedRef.current) startRecognition();
+        }, 200);
       }
     };
 
     try { r.start(); } catch { /* already running */ }
   }, [stopRecognition, stopMicAnalyzer, setState, startMicAnalyzer, onTranscript, clearFollowUp]);
 
-  // ── Public controls ─────────────────────────────────────────────────────────
+  // ── Public controls ───────────────────────────────────────────────────────
   const wakeUp = useCallback(() => {
     clearFollowUp();
     setState('listening');
@@ -292,24 +313,24 @@ export function useVoiceEngine({
     }
   }, [wakeUp, startRecognition, stopRecognition, stopSpeaking, stopMicAnalyzer, clearFollowUp, setState]);
 
-  // ── Init ────────────────────────────────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hasSR = typeof window !== 'undefined' &&
       !!((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition);
     setSupported(hasSR);
     if (!hasSR || !autoStart) return;
 
-    // Small delay to let the page settle
     const t = setTimeout(() => {
       mutedRef.current = false;
       startRecognition();
-      // Start in listening mode immediately
       setState('listening');
       startMicAnalyzer();
     }, 800);
 
     return () => {
       clearTimeout(t);
+      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
       mutedRef.current = true;
       stopRecognition();
       stopMicAnalyzer();
@@ -318,7 +339,6 @@ export function useVoiceEngine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When thinking ends (canvasState goes back to idle from parent), restart recognition
   useEffect(() => {
     if (voiceState === 'listening' || voiceState === 'followup') {
       if (!recogRef.current) startRecognition();

@@ -56,14 +56,13 @@ export async function POST(req: NextRequest) {
           }
         );
 
-        if (!res.ok) { console.warn(`[TTS] Key ${res.status}`); continue; }
+        if (!res.ok) { console.warn(`[TTS] Key failed — status ${res.status}`); continue; }
 
         const data = await res.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const part = data.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
         if (!part?.inlineData?.data) continue;
 
-        // Gemini returns raw LINEAR16 PCM — wrap in WAV for browser compatibility
         const pcm = Buffer.from(part.inlineData.data, 'base64');
         const wav = pcmToWav(pcm);
         const wavB64 = wav.toString('base64');

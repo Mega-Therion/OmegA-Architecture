@@ -184,7 +184,7 @@
   text-align: center;
   animation: fade-up 0.25s ease both;
 }
-.interim span {
+.interim {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(0.95rem, 2.5vw, 1.1rem);
   color: rgba(241,245,249,0.75);
@@ -415,7 +415,6 @@
 }
 .closeBtn:hover { color: rgba(241,245,249,0.7); }
 
-/* ── Shared keyframes ────────────────────────────────────────────── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
