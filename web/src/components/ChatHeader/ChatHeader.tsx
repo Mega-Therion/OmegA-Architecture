@@ -5,17 +5,22 @@ import s from './ChatHeader.module.css';
 interface ChatHeaderProps {
   thinking?: boolean;
   provider?: string;
+  sidebarOpen?: boolean;
   onToggleSidebar?: () => void;
   onNewChat?: () => void;
 }
 
-export default function ChatHeader({ thinking, provider, onToggleSidebar, onNewChat }: ChatHeaderProps) {
+export default function ChatHeader({ thinking, provider, sidebarOpen, onToggleSidebar, onNewChat }: ChatHeaderProps) {
   return (
     <header className={`${s.header} ${thinking ? s.thinking : ''}`}>
       <div className={s.inner}>
-        {/* Mobile hamburger */}
         {onToggleSidebar && (
-          <button className={s.hamburger} onClick={onToggleSidebar} aria-label="Toggle sidebar">
+          <button
+            className={s.hamburger}
+            onClick={onToggleSidebar}
+            aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            aria-expanded={sidebarOpen}
+          >
             <span />
             <span />
             <span />

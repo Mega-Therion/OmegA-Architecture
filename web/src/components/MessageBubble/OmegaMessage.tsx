@@ -5,50 +5,55 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import s from './OmegaMessage.module.css';
 
-/* ── Code block with copy button and dark inline theme ──────────── */
+/* ── Code block with copy button — react-markdown v10 pattern ───── */
+// Pre wraps block code; code alone is inline.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CodeBlock({ inline, className, children, ...props }: any) {
-  const lang = /language-(\w+)/.exec(className || '')?.[1];
-  const [copied, setCopied] = useState(false);
+function PreBlock({ children, ...props }: any) {
+  // Extract className + text from the nested <code> child
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const codeChild = (children as any)?.props;
+  const className = codeChild?.className ?? '';
+  const lang = /language-(\w+)/.exec(className)?.[1];
+  const text = String(codeChild?.children ?? '').replace(/\n$/, '');
 
+  const [copied, setCopied] = useState(false);
   const copy = () => {
-    navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!inline && lang) {
-    return (
-      <div className={s.codeWrap}>
-        <div className={s.codeHeader}>
-          <span className={s.codeLang}>{lang}</span>
-          <button className={s.codeCopy} onClick={copy} aria-label="Copy code">
-            {copied ? '✓ Copied' : 'Copy'}
-          </button>
-        </div>
-        <pre
-          style={{
-            margin: 0,
-            padding: '1rem',
-            background: 'rgba(2, 2, 12, 0.92)',
-            borderRadius: '0 0 0.75rem 0.75rem',
-            overflowX: 'auto',
-            fontSize: '0.85rem',
-            lineHeight: 1.6,
-            color: '#c4b5fd',
-          }}
-        >
-          <code className={className} {...props} style={{ color: '#c4b5fd' }}>
-            {children}
-          </code>
-        </pre>
+  return (
+    <div className={s.codeWrap}>
+      <div className={s.codeHeader}>
+        <span className={s.codeLang}>{lang ?? 'code'}</span>
+        <button className={s.codeCopy} onClick={copy} aria-label="Copy code">
+          {copied ? '✓ Copied' : 'Copy'}
+        </button>
       </div>
-    );
-  }
+      <pre
+        {...props}
+        style={{
+          margin: 0,
+          padding: '1rem',
+          background: 'rgba(2, 2, 12, 0.92)',
+          borderRadius: '0 0 0.75rem 0.75rem',
+          overflowX: 'auto',
+          fontSize: '0.85rem',
+          lineHeight: 1.6,
+          color: '#c4b5fd',
+        }}
+      >
+        {children}
+      </pre>
+    </div>
+  );
+}
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function InlineCode({ children, ...props }: any) {
   return (
     <code
-      className={className}
       {...props}
       style={{
         background: 'rgba(99, 102, 241, 0.12)',
@@ -66,7 +71,8 @@ function CodeBlock({ inline, className, children, ...props }: any) {
 /* ── Markdown component overrides ───────────────────────────────── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mdComponents: any = {
-  code: CodeBlock,
+  pre: PreBlock,
+  code: InlineCode,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: ({ children }: any) => (
     <div className={s.tableWrap}>

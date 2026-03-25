@@ -43,10 +43,9 @@
   background: var(--lavender, #c4b5fd);
 }
 
-@media (max-width: 768px) {
-  .hamburger {
-    display: flex;
-  }
+/* Visible on all screen sizes — sidebar toggles on desktop too */
+.hamburger {
+  display: flex;
 }
 
 /* ── Branding ───────────────────────────────────────────────────── */

@@ -22,11 +22,12 @@
 
 /* ── Sidebar ─────────────────────────────────────────────── */
 .sidebar {
-  position: fixed;
+  position: relative;
   top: 0;
   left: 0;
   bottom: 0;
   width: 280px;
+  flex-shrink: 0;
   z-index: 999;
   display: flex;
   flex-direction: column;
@@ -34,11 +35,26 @@
   border-right: 1px solid var(--glass-border);
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
+/* Desktop: collapsed = zero width */
+@media (min-width: 768px) {
+  .sidebar {
+    width: 0;
+    min-width: 0;
+  }
+  .sidebarOpen {
+    width: 280px;
+  }
+}
+
+/* Mobile: slide from left */
 @media (max-width: 767px) {
   .sidebar {
+    position: fixed;
+    width: 280px;
     transform: translateX(-100%);
   }
 
@@ -54,6 +70,7 @@
   gap: 12px;
   padding: 24px 20px 16px;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .omega {
@@ -64,6 +81,7 @@
   animation: breathe 4s ease-in-out infinite;
   text-shadow: 0 0 20px rgba(99, 102, 241, 0.4), 0 0 40px rgba(99, 102, 241, 0.15);
   line-height: 1;
+  flex-shrink: 0;
 }
 
 @keyframes breathe {
@@ -80,7 +98,6 @@
 }
 
 .toggle {
-  display: none;
   margin-left: auto;
   background: none;
   border: none;
@@ -90,17 +107,12 @@
   padding: 4px 8px;
   border-radius: 6px;
   transition: color 0.2s, background 0.2s;
+  flex-shrink: 0;
 }
 
 .toggle:hover {
   color: var(--white);
   background: rgba(241, 245, 249, 0.06);
-}
-
-@media (max-width: 767px) {
-  .toggle {
-    display: block;
-  }
 }
 
 /* ── New Chat ────────────────────────────────────────────── */
@@ -122,6 +134,7 @@
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .newChat::before {
@@ -172,6 +185,7 @@
   text-transform: uppercase;
   color: var(--dimmer);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* ── Session List ────────────────────────────────────────── */
@@ -207,37 +221,28 @@
   font-size: 13px;
   color: var(--dimmer);
   line-height: 1.5;
+  white-space: normal;
 }
 
-/* ── Hamburger (external toggle for mobile) ──────────────── */
-.hamburger {
-  display: none;
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 997;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(16px);
-  color: var(--white);
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  font-size: 20px;
-  cursor: pointer;
+/* ── About Section ───────────────────────────────────────── */
+.aboutSection {
+  flex-shrink: 0;
+  padding: 0 0 20px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  flex-direction: column;
 }
 
-.hamburger:hover {
-  border-color: var(--indigo);
-  box-shadow: 0 0 16px rgba(99, 102, 241, 0.2);
+.aboutLink {
+  display: block;
+  padding: 6px 20px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  white-space: nowrap;
 }
 
-@media (min-width: 768px) {
-  .hamburger {
-    display: none;
-  }
+.aboutLink:hover {
+  color: var(--lavender);
 }

@@ -44,6 +44,8 @@ export default function OmegaCanvas({ state }: { state: CanvasState }) {
     let W = 0, H = 0;
     let frame = 0;
 
+    const isMobile = window.innerWidth < 768;
+
     const resize = () => {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
@@ -51,8 +53,8 @@ export default function OmegaCanvas({ state }: { state: CanvasState }) {
     window.addEventListener("resize", resize);
     resize();
 
-    // Particles
-    const COUNT = 140;
+    // Fewer particles on mobile to preserve battery and frame rate
+    const COUNT = isMobile ? 55 : 140;
     const particles: Particle[] = Array.from({ length: COUNT }, () => ({
       x: Math.random() * W,
       y: Math.random() * H,

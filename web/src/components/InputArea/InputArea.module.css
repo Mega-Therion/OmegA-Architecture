@@ -1,5 +1,10 @@
 .wrap {
   padding: 0.75rem 1.5rem 1rem;
+  max-width: 860px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
 }
 
 .bar {

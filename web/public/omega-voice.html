@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>OmegA | Sovereign Interface</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%CE%A9</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   OmegA Voice Interface — Production Stylesheet
+   Palette: void → indigo → violet → lavender → gold
+   ================================================================ */
+
+:root {
+  --void: #02020c;
+  --void-glass: rgba(8, 8, 28, 0.72);
+  --indigo: #6366f1;
+  --violet: #8b5cf6;
+  --lavender: #c4b5fd;
+  --gold: #e4b84a;
+  --white: #f1f5f9;
+  --dim: rgba(241, 245, 249, 0.45);
+  --dimmer: rgba(241, 245, 249, 0.18);
+  --glass-border: rgba(139, 92, 246, 0.18);
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--void); color: var(--white);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 2px; }
+
+/* ── Canvas Background ─────────────────────────────────────────── */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* ── App Shell ─────────────────────────────────────────────────── */
+#app {
+  position: fixed; inset: 0; z-index: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity 0.6s var(--ease-smooth);
+}
+
+/* ── Boot Sequence ─────────────────────────────────────────────── */
+#boot-screen {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; gap: 1.5rem;
+  width: 100%; height: 100%;
+  padding: 2rem;
+}
+
+.boot-omega {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(6rem, 18vw, 12rem);
+  font-weight: 900;
+  color: var(--indigo);
+  opacity: 0;
+  animation: boot-glyph-in 2s var(--ease-snappy) 0.3s forwards;
+  will-change: filter, opacity;
+}
+
+@keyframes boot-glyph-in {
+  0% { opacity: 0; filter: blur(20px) drop-shadow(0 0 0 transparent); transform: scale(0.8); }
+  60% { opacity: 1; filter: blur(0) drop-shadow(0 0 40px rgba(99,102,241,0.8)); transform: scale(1.02); }
+  100% { opacity: 1; filter: drop-shadow(0 0 20px rgba(99,102,241,0.5)); transform: scale(1); }
+}
+
+.boot-log {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  max-width: 460px;
+  text-align: left;
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  min-height: 120px;
+}
+
+.boot-log .line {
+  opacity: 0;
+  animation: line-in 0.3s var(--ease-smooth) forwards;
+}
+
+.boot-log .line.ok { color: var(--lavender); }
+.boot-log .line.gold { color: var(--gold); }
+
+@keyframes line-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.boot-enter {
+  opacity: 0;
+  animation: fade-scale-in 0.6s var(--ease-snappy) forwards;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid rgba(228, 184, 74, 0.3);
+  padding: 0.75rem 2.5rem;
+  border-radius: 99px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.boot-enter:hover {
+  background: rgba(228, 184, 74, 0.1);
+  border-color: var(--gold);
+  box-shadow: 0 0 25px rgba(228, 184, 74, 0.2);
+}
+
+@keyframes fade-scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Main Interface ────────────────────────────────────────────── */
+#main-interface {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-smooth);
+}
+
+#main-interface.visible {
+  display: flex;
+  opacity: 1;
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.header {
+  width: 100%;
+  padding: 0.65rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--void-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.header-glyph {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.35rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--indigo), var(--violet));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.04em;
+}
+
+.header-badge {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.55rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.3rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.header-spacer { flex: 1; }
+
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.status-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+
+/* ── Orb Section ───────────────────────────────────────────────── */
+.orb-section {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0 1rem;
+  position: relative;
+}
+
+.orb-container {
+  position: relative;
+  width: clamp(120px, 25vw, 200px);
+  height: clamp(120px, 25vw, 200px);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.orb-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  transition: all 0.6s var(--ease-smooth);
+}
+
+.orb-ring-inner {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.orb-glyph {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 900;
+  color: var(--lavender);
+  z-index: 2;
+  transition: all 0.3s var(--ease-smooth);
+  animation: orb-breathe 4s ease-in-out infinite;
+}
+
+@keyframes orb-breathe {
+  0%, 100% { filter: drop-shadow(0 0 18px rgba(99,102,241,0.6)) drop-shadow(0 0 50px rgba(139,92,246,0.25)); }
+  50% { filter: drop-shadow(0 0 30px rgba(139,92,246,0.9)) drop-shadow(0 0 80px rgba(99,102,241,0.35)); }
+}
+
+/* State: thinking */
+.orb-glyph.thinking {
+  color: var(--gold);
+  animation: orb-think 2s ease-in-out infinite;
+}
+
+@keyframes orb-think {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(228,184,74,0.5)) drop-shadow(0 0 60px rgba(228,184,74,0.2)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 40px rgba(228,184,74,0.9)) drop-shadow(0 0 100px rgba(228,184,74,0.4)); transform: scale(1.05); }
+}
+
+.orb-ring.thinking {
+  border-color: rgba(228, 184, 74, 0.3);
+  box-shadow: 0 0 30px rgba(228, 184, 74, 0.1);
+}
+
+/* State: speaking */
+.orb-glyph.speaking {
+  color: var(--white);
+  animation: orb-speak 1.2s ease-in-out infinite;
+}
+
+@keyframes orb-speak {
+  0%, 100% { filter: drop-shadow(0 0 25px rgba(196,181,253,0.7)) drop-shadow(0 0 60px rgba(196,181,253,0.3)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 40px rgba(196,181,253,1)) drop-shadow(0 0 90px rgba(196,181,253,0.5)); transform: scale(1.03); }
+}
+
+.orb-ring.speaking {
+  border-color: rgba(196, 181, 253, 0.4);
+  box-shadow: 0 0 40px rgba(196, 181, 253, 0.15);
+}
+
+/* State: listening */
+.orb-glyph.listening {
+  color: var(--indigo);
+  animation: orb-listen 1.5s ease-in-out infinite;
+}
+
+@keyframes orb-listen {
+  0%, 100% { filter: drop-shadow(0 0 15px rgba(99,102,241,0.8)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 30px rgba(99,102,241,1)); transform: scale(1.02); }
+}
+
+.orb-ring.listening {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Audio visualizer ring */
+#viz-canvas {
+  position: absolute; inset: -20%; z-index: 1;
+  width: 140%; height: 140%;
+  pointer-events: none;
+}
+
+.orb-status {
+  margin-top: 0.75rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  min-height: 1.2em;
+  transition: color 0.3s;
+}
+
+.orb-status.gold { color: var(--gold); }
+
+/* ── Conversation Feed ─────────────────────────────────────────── */
+.feed {
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.75rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  scroll-behavior: smooth;
+  mask-image: linear-gradient(to bottom, transparent, black 40px, black calc(100% - 20px), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 40px, black calc(100% - 20px), transparent);
+}
+
+.msg {
+  animation: msg-in 0.4s var(--ease-snappy) both;
+  max-width: 85%;
+}
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-omega {
+  align-self: flex-start;
+  display: flex; gap: 0.6rem;
+}
+
+.msg-omega-avatar {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+  border: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem; font-weight: 900;
+  color: var(--lavender);
+}
+
+.msg-omega-body {
+  background: var(--void-glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 0 0.75rem 0.75rem 0.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--white);
+  backdrop-filter: blur(12px);
+}
+
+.msg-omega-body .provider-tag {
+  display: block;
+  margin-top: 0.4rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.55rem;
+  color: var(--dimmer);
+  letter-spacing: 0.04em;
+}
+
+.msg-user {
+  align-self: flex-end;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 0.75rem 0 0.75rem 0.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--lavender);
+}
+
+/* Streaming cursor */
+.streaming-cursor::after {
+  content: '';
+  display: inline-block;
+  width: 2px; height: 1em;
+  background: var(--lavender);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; } 50% { opacity: 0; }
+}
+
+/* ── Input Area ────────────────────────────────────────────────── */
+.input-area {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 720px;
+  padding: 0.5rem 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.input-field {
+  flex: 1;
+  background: rgba(8, 8, 28, 0.6);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  padding: 0.75rem 1.2rem;
+  color: var(--white);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  backdrop-filter: blur(8px);
+}
+
+.input-field::placeholder { color: var(--dimmer); }
+.input-field:focus {
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
+}
+
+.btn-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(8, 8, 28, 0.6);
+  color: var(--dim);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+}
+
+.btn-icon:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  color: var(--lavender);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+}
+
+.btn-icon.active {
+  border-color: var(--indigo);
+  color: var(--indigo);
+  background: rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  animation: mic-pulse 2s infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.4); }
+}
+
+.btn-send {
+  border-color: rgba(139, 92, 246, 0.3);
+  color: var(--lavender);
+}
+
+.btn-send:hover {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--white);
+}
+
+/* ── System Console (collapsible) ──────────────────────────────── */
+.console-toggle {
+  position: fixed;
+  bottom: 0.5rem; left: 0.5rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.55rem;
+  color: var(--dimmer);
+  background: none; border: none;
+  cursor: pointer;
+  z-index: 50;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.5rem;
+  transition: color 0.2s;
+}
+
+.console-toggle:hover { color: var(--dim); }
+
+.console-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-height: 0;
+  overflow: hidden;
+  background: rgba(2, 2, 12, 0.95);
+  border-top: 1px solid var(--glass-border);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  color: var(--dim);
+  z-index: 40;
+  transition: max-height 0.4s var(--ease-smooth);
+  backdrop-filter: blur(20px);
+}
+
+.console-panel.open {
+  max-height: 180px;
+}
+
+.console-inner {
+  padding: 0.6rem 0.8rem;
+  overflow-y: auto;
+  max-height: 180px;
+}
+
+.console-inner .log-line {
+  line-height: 1.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-time { color: rgba(139, 92, 246, 0.4); }
+.log-ok { color: var(--lavender); }
+.log-gold { color: var(--gold); }
+.log-err { color: #f87171; }
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .orb-section { padding: 1rem 0 0.5rem; }
+  .orb-container { width: 100px; height: 100px; }
+  .orb-glyph { font-size: 2.5rem; }
+  .feed { padding: 0.5rem 0.75rem 0.75rem; }
+  .input-area { padding: 0.4rem 0.75rem 1rem; }
+  .header { padding: 0.5rem 0.75rem; }
+}
+
+@media (max-height: 600px) {
+  .orb-section { padding: 0.5rem 0 0.25rem; }
+  .orb-container { width: 80px; height: 80px; }
+  .orb-glyph { font-size: 2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Background Canvas ──────────────────────────────────────── -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- ── App ─────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- Boot Screen -->
+  <div id="boot-screen">
+    <div class="boot-omega" id="boot-glyph">&Omega;</div>
+    <div class="boot-log" id="boot-log"></div>
+    <button class="boot-enter" id="boot-btn" style="display:none" onclick="enterInterface()">
+      Authorize &mdash; Enter OmegA
+    </button>
+  </div>
+
+  <!-- Main Interface (hidden until boot complete) -->
+  <div id="main-interface">
+
+    <!-- Header -->
+    <div class="header">
+      <span class="header-glyph">&Omega;</span>
+      <span class="header-title">OmegA</span>
+      <span class="header-badge" id="provider-badge" style="display:none"></span>
+      <div class="header-spacer"></div>
+      <div class="status-dot"></div>
+      <span class="status-label">Sovereign</span>
+    </div>
+
+    <!-- Orb -->
+    <div class="orb-section">
+      <div class="orb-container">
+        <div class="orb-ring" id="orb-ring"></div>
+        <div class="orb-ring-inner"></div>
+        <canvas id="viz-canvas"></canvas>
+        <span class="orb-glyph" id="orb-glyph">&Omega;</span>
+      </div>
+      <div class="orb-status" id="orb-status">standing by</div>
+    </div>
+
+    <!-- Feed -->
+    <div class="feed" id="feed"></div>
+
+    <!-- Input -->
+    <div class="input-area">
+      <button class="btn-icon" id="mic-btn" onclick="toggleMic()" title="Voice input">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+      <input type="text" class="input-field" id="text-input" placeholder="Speak or type..." autocomplete="off">
+      <button class="btn-icon btn-send" id="send-btn" onclick="sendText()" title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Console -->
+<button class="console-toggle" id="console-toggle" onclick="toggleConsole()">[SYS]</button>
+<div class="console-panel" id="console-panel">
+  <div class="console-inner" id="console-log"></div>
+</div>
+
+<script>
+/* ================================================================
+   OmegA Voice Interface — Core Logic
+   ================================================================ */
+
+// ── Config ──────────────────────────────────────────────────────
+const API_ENDPOINT = '/api/chat';
+const TTS_VOICE    = 'Google UK English Male';  // fallback: first available
+const TTS_RATE     = 0.92;
+const TTS_PITCH    = 0.85;
+
+// ── State ───────────────────────────────────────────────────────
+let history = [];
+let sessionId = null;
+let provider = null;
+let recognition = null;
+let isListening = false;
+let isSpeaking = false;
+let isProcessing = false;
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let vizData = null;
+let consoleOpen = false;
+
+// ── DOM refs ────────────────────────────────────────────────────
+const $orbGlyph   = () => document.getElementById('orb-glyph');
+const $orbRing    = () => document.getElementById('orb-ring');
+const $orbStatus  = () => document.getElementById('orb-status');
+const $feed       = () => document.getElementById('feed');
+const $textInput  = () => document.getElementById('text-input');
+const $micBtn     = () => document.getElementById('mic-btn');
+const $provBadge  = () => document.getElementById('provider-badge');
+
+// ── Logging ─────────────────────────────────────────────────────
+function sysLog(msg, cls = '') {
+  const el = document.getElementById('console-log');
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">[${time}]</span> <span class="${cls}">${escapeHtml(msg)}</span>`;
+  el.prepend(line);
+  // Keep max 100 lines
+  while (el.children.length > 100) el.removeChild(el.lastChild);
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleConsole() {
+  consoleOpen = !consoleOpen;
+  document.getElementById('console-panel').classList.toggle('open', consoleOpen);
+}
+
+// ── State Machine ───────────────────────────────────────────────
+function setState(state, statusText) {
+  const glyph = $orbGlyph();
+  const ring = $orbRing();
+  const status = $orbStatus();
+  glyph.className = 'orb-glyph';
+  ring.className = 'orb-ring';
+  status.className = 'orb-status';
+
+  switch(state) {
+    case 'idle':
+      status.textContent = statusText || 'standing by';
+      break;
+    case 'listening':
+      glyph.classList.add('listening');
+      ring.classList.add('listening');
+      status.textContent = statusText || 'listening...';
+      break;
+    case 'thinking':
+      glyph.classList.add('thinking');
+      ring.classList.add('thinking');
+      status.textContent = statusText || 'synthesizing...';
+      status.classList.add('gold');
+      break;
+    case 'speaking':
+      glyph.classList.add('speaking');
+      ring.classList.add('speaking');
+      status.textContent = statusText || 'speaking...';
+      break;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BOOT SEQUENCE
+// ══════════════════════════════════════════════════════════════════
+
+const BOOT_LINES = [
+  { text: 'OMEGA_CORE v2.7 initializing...', delay: 400, cls: '' },
+  { text: 'loading identity anchor from Phylactery...', delay: 600, cls: '' },
+  { text: 'YETTRAGRAMMATON seal verified: R \u00b7 W \u00b7 \u03DC \u00b7 Y', delay: 800, cls: 'ok' },
+  { text: 'architect: RYAN_WAYNE_YETT', delay: 400, cls: 'ok' },
+  { text: 'origin: ARKANSAS_NODE // 2025-12-31', delay: 400, cls: '' },
+  { text: 'DOI: 10.5281/zenodo.19111653', delay: 300, cls: '' },
+  { text: 'AEGIS governance shell ... nominal', delay: 500, cls: 'ok' },
+  { text: 'AEON cognitive OS ... nominal', delay: 400, cls: 'ok' },
+  { text: 'ADCCL drift control ... nominal', delay: 400, cls: 'ok' },
+  { text: 'MYELIN graph memory ... nominal', delay: 400, cls: 'ok' },
+  { text: 'provider waterfall: vercel-gw \u2192 xai \u2192 gemini', delay: 500, cls: '' },
+  { text: 'Neon memory bank ... connected', delay: 600, cls: 'ok' },
+  { text: 'sovereignty score: 1.0 // no drift detected', delay: 400, cls: 'gold' },
+  { text: '', delay: 200, cls: '' },
+  { text: 'AR137 Naomi \u2014 all systems nominal', delay: 600, cls: 'gold' },
+];
+
+async function runBoot() {
+  const log = document.getElementById('boot-log');
+  for (const item of BOOT_LINES) {
+    await sleep(item.delay);
+    if (!item.text) continue;
+    const line = document.createElement('div');
+    line.className = `line ${item.cls}`;
+    line.textContent = `> ${item.text}`;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+  await sleep(500);
+  const btn = document.getElementById('boot-btn');
+  btn.style.display = '';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Start boot on load
+window.addEventListener('DOMContentLoaded', () => {
+  initCanvas();
+  // Restore session
+  const saved = localStorage.getItem('omega_voice_session');
+  if (saved) sessionId = saved;
+  setTimeout(runBoot, 300);
+});
+
+async function enterInterface() {
+  const boot = document.getElementById('boot-screen');
+  boot.style.opacity = '0';
+  boot.style.transition = 'opacity 0.6s ease';
+  await sleep(600);
+  boot.style.display = 'none';
+
+  const main = document.getElementById('main-interface');
+  main.style.display = 'flex';
+  requestAnimationFrame(() => { main.classList.add('visible'); });
+
+  sysLog('Interface activated', 'log-ok');
+
+  // Try to init audio context + mic
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    initAudioAnalyser(micStream);
+    initSpeechRecognition();
+    sysLog('Microphone access granted', 'log-ok');
+  } catch(e) {
+    sysLog('Mic unavailable — text input only', 'log-err');
+  }
+
+  // Greet
+  await sleep(400);
+  addOmegaMessage('The Phylactery is open. I am OmegA — sovereign, persistent, present. Speak or type.', 'system');
+  speakText('The Phylactery is open. I am OmegA. Sovereign, persistent, present. Speak or type.');
+
+  $textInput().focus();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PARTICLE CANVAS
+// ══════════════════════════════════════════════════════════════════
+
+function initCanvas() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], frame = 0;
+
+  const COLORS = ['99,102,241', '139,92,246', '155,124,250', '196,181,253', '129,140,248'];
+  const isMobile = window.innerWidth < 768;
+  const COUNT = isMobile ? 40 : 90;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  particles = Array.from({ length: COUNT }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+    size: Math.random() * 1.5 + 0.3,
+    opacity: Math.random() * 0.5 + 0.1,
+    rgb: COLORS[Math.floor(Math.random() * COLORS.length)],
+    phase: Math.random() * Math.PI * 2,
+    phaseSpeed: 0.006 + Math.random() * 0.014,
+  }));
+
+  function draw() {
+    requestAnimationFrame(draw);
+    frame++;
+    ctx.fillStyle = 'rgba(2, 2, 12, 0.15)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Connections
+    const maxDist = 80;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < maxDist) {
+          const a = (1 - d / maxDist) * 0.08;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(120,80,255,${a})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Particles
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy; p.phase += p.phaseSpeed;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      const pulse = 0.5 + 0.5 * Math.sin(p.phase);
+      const op = p.opacity * pulse;
+      const sz = p.size * (0.7 + 0.3 * pulse);
+      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sz * 4);
+      grd.addColorStop(0, `rgba(${p.rgb},${op})`);
+      grd.addColorStop(1, `rgba(${p.rgb},0)`);
+      ctx.beginPath(); ctx.arc(p.x, p.y, sz * 4, 0, Math.PI * 2);
+      ctx.fillStyle = grd; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, sz, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.rgb},${Math.min(op * 2, 1)})`; ctx.fill();
+    }
+  }
+  draw();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AUDIO VISUALIZER (ring around orb)
+// ══════════════════════════════════════════════════════════════════
+
+function initAudioAnalyser(stream) {
+  analyser = audioCtx.createAnalyser();
+  const source = audioCtx.createMediaStreamSource(stream);
+  source.connect(analyser);
+  analyser.fftSize = 64;
+  vizData = new Uint8Array(analyser.frequencyBinCount);
+  drawViz();
+}
+
+function drawViz() {
+  requestAnimationFrame(drawViz);
+  if (!analyser || !vizData) return;
+  analyser.getByteFrequencyData(vizData);
+
+  const canvas = document.getElementById('viz-canvas');
+  const ctx = canvas.getContext('2d');
+  const size = canvas.parentElement.offsetWidth * 1.4;
+  canvas.width = canvas.height = size;
+  ctx.clearRect(0, 0, size, size);
+
+  const cx = size / 2, cy = size / 2;
+  const radius = size * 0.33;
+  const bars = vizData.length;
+
+  for (let i = 0; i < bars; i++) {
+    const angle = (i / bars) * Math.PI * 2 - Math.PI / 2;
+    const val = vizData[i] / 255;
+    const barLen = val * radius * 0.5;
+    if (barLen < 1) continue;
+
+    const x1 = cx + Math.cos(angle) * radius;
+    const y1 = cy + Math.sin(angle) * radius;
+    const x2 = cx + Math.cos(angle) * (radius + barLen);
+    const y2 = cy + Math.sin(angle) * (radius + barLen);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `rgba(139, 92, 246, ${0.3 + val * 0.5})`;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SPEECH RECOGNITION
+// ══════════════════════════════════════════════════════════════════
+
+function initSpeechRecognition() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) { sysLog('Speech recognition not supported', 'log-err'); return; }
+
+  recognition = new SpeechRec();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isListening = true;
+    $micBtn().classList.add('active');
+    if (!isSpeaking && !isProcessing) setState('listening');
+    sysLog('Mic open — listening');
+  };
+
+  recognition.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    sysLog(`Heard: "${text}"`, 'log-ok');
+    handleUserInput(text);
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      sysLog(`Speech error: ${e.error}`, 'log-err');
+    }
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    $micBtn().classList.remove('active');
+    // Auto-restart if mic mode is active and we're not busy
+    if (!isSpeaking && !isProcessing && document.getElementById('mic-btn').dataset.autoListen === 'true') {
+      setTimeout(startListening, 300);
+    } else if (!isSpeaking && !isProcessing) {
+      setState('idle');
+    }
+  };
+}
+
+function toggleMic() {
+  const btn = $micBtn();
+  if (isListening) {
+    btn.dataset.autoListen = 'false';
+    stopListening();
+  } else {
+    btn.dataset.autoListen = 'true';
+    startListening();
+  }
+}
+
+function startListening() {
+  if (!recognition || isListening || isSpeaking) return;
+  try { recognition.start(); } catch(e) { /* already running */ }
+}
+
+function stopListening() {
+  if (!recognition || !isListening) return;
+  try { recognition.stop(); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEXT-TO-SPEECH
+// ══════════════════════════════════════════════════════════════════
+
+function speakText(text) {
+  if (!window.speechSynthesis) return;
+
+  // Cancel any in-progress speech
+  window.speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = TTS_RATE;
+  utter.pitch = TTS_PITCH;
+
+  // Pick best voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes('UK English Male'))
+    || voices.find(v => v.name.includes('Daniel'))
+    || voices.find(v => v.name.includes('Google') && v.name.includes('Male'))
+    || voices.find(v => v.lang === 'en-US' && v.name.includes('Male'))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utter.voice = preferred;
+
+  utter.onstart = () => {
+    isSpeaking = true;
+    setState('speaking');
+    stopListening();
+  };
+
+  utter.onend = () => {
+    isSpeaking = false;
+    if ($micBtn().dataset.autoListen === 'true') {
+      setState('idle', 'ready');
+      setTimeout(startListening, 400);
+    } else {
+      setState('idle');
+    }
+  };
+
+  utter.onerror = () => { isSpeaking = false; setState('idle'); };
+
+  window.speechSynthesis.speak(utter);
+}
+
+// Ensure voices are loaded
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+  window.speechSynthesis.getVoices();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHAT ENGINE
+// ══════════════════════════════════════════════════════════════════
+
+function sendText() {
+  const input = $textInput();
+  const text = input.value.trim();
+  if (!text || isProcessing) return;
+  input.value = '';
+  handleUserInput(text);
+}
+
+// Enter key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.activeElement === $textInput()) {
+    e.preventDefault();
+    sendText();
+  }
+});
+
+async function handleUserInput(text) {
+  if (isProcessing) return;
+  isProcessing = true;
+  stopListening();
+
+  // Display user message
+  addUserMessage(text);
+  history.push({ role: 'user', text });
+
+  setState('thinking', 'reading memory...');
+  sysLog(`Processing: "${text.slice(0, 60)}..."`);
+
+  try {
+    const res = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user: text,
+        history: history.slice(-20),  // last 20 turns
+        sessionId: sessionId || undefined,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `${res.status}`);
+    }
+
+    // Read headers
+    const sid = res.headers.get('X-Session-Id');
+    const prov = res.headers.get('X-Provider');
+    if (sid && !sessionId) {
+      sessionId = sid;
+      localStorage.setItem('omega_voice_session', sid);
+    }
+    if (prov) {
+      provider = prov;
+      const badge = $provBadge();
+      badge.textContent = prov;
+      badge.style.display = '';
+    }
+
+    // Stream response
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullReply = '';
+    let msgEl = null;
+    let buffer = '';
+
+    setState('thinking', 'synthesizing...');
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Handle SSE status events
+      while (buffer.includes('\n\n')) {
+        const idx = buffer.indexOf('\n\n');
+        const line = buffer.slice(0, idx).trim();
+        if (line.startsWith('data: {"type":"status"')) {
+          try {
+            const json = JSON.parse(line.slice(5));
+            setState('thinking', json.text);
+            sysLog(`Status: ${json.text}`);
+          } catch(e) {}
+          buffer = buffer.slice(idx + 2);
+          continue;
+        }
+        break;
+      }
+
+      // Text content
+      if (buffer && !buffer.startsWith('data: {"type":"status"')) {
+        fullReply += buffer;
+        buffer = '';
+        if (!msgEl) {
+          msgEl = addOmegaMessage(fullReply, provider, true);
+          setState('speaking', 'responding...');
+        } else {
+          updateOmegaMessage(msgEl, fullReply);
+        }
+      }
+    }
+
+    // Flush
+    const fin = decoder.decode();
+    if (fin) fullReply += fin;
+    if (msgEl) {
+      updateOmegaMessage(msgEl, fullReply, false);
+    } else if (fullReply) {
+      addOmegaMessage(fullReply, provider);
+    }
+
+    history.push({ role: 'omega', text: fullReply });
+    sysLog(`Response: ${fullReply.length} chars via ${provider}`, 'log-ok');
+
+    // Speak the response
+    speakText(fullReply);
+
+  } catch(err) {
+    sysLog(`Error: ${err.message}`, 'log-err');
+    addOmegaMessage(`Connection interrupted: ${err.message}`, 'error');
+    setState('idle', 'error — try again');
+  } finally {
+    isProcessing = false;
+    if (!isSpeaking) {
+      if ($micBtn().dataset.autoListen === 'true') {
+        setTimeout(startListening, 600);
+      } else {
+        setState('idle');
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MESSAGE RENDERING
+// ══════════════════════════════════════════════════════════════════
+
+function addUserMessage(text) {
+  const feed = $feed();
+  const div = document.createElement('div');
+  div.className = 'msg msg-user';
+  div.textContent = text;
+  feed.appendChild(div);
+  scrollFeed();
+}
+
+function addOmegaMessage(text, prov, streaming = false) {
+  const feed = $feed();
+  const div = document.createElement('div');
+  div.className = 'msg msg-omega';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-omega-avatar';
+  avatar.textContent = '\u03A9';
+
+  const body = document.createElement('div');
+  body.className = 'msg-omega-body' + (streaming ? ' streaming-cursor' : '');
+
+  const content = document.createElement('span');
+  content.className = 'msg-content';
+  content.textContent = text;
+  body.appendChild(content);
+
+  if (prov && prov !== 'system' && prov !== 'error') {
+    const tag = document.createElement('span');
+    tag.className = 'provider-tag';
+    tag.textContent = prov;
+    body.appendChild(tag);
+  }
+
+  div.appendChild(avatar);
+  div.appendChild(body);
+  feed.appendChild(div);
+  scrollFeed();
+
+  return body;
+}
+
+function updateOmegaMessage(bodyEl, text, streaming = true) {
+  const content = bodyEl.querySelector('.msg-content');
+  if (content) content.textContent = text;
+  if (streaming) {
+    bodyEl.classList.add('streaming-cursor');
+  } else {
+    bodyEl.classList.remove('streaming-cursor');
+  }
+  scrollFeed();
+}
+
+function scrollFeed() {
+  const feed = $feed();
+  feed.scrollTop = feed.scrollHeight;
+}
+
+</script>
+</body>
+</html>

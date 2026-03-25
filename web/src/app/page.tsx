@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { chatStream } from "@/lib/api";
 import type { CanvasState } from "@/components/OmegaCanvas";
-import Landing from "@/components/Landing";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import ChatHeader from "@/components/ChatHeader/ChatHeader";
 import UserMessage from "@/components/MessageBubble/UserMessage";
@@ -31,12 +30,16 @@ export default function Home() {
   const [provider, setProvider] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Open sidebar by default on desktop — after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (window.innerWidth >= 768) setSidebarOpen(true);
+  }, []);
   const [sessionList, setSessionList] = useState<{ id: string; created_at: string; preview: string }[]>([]);
   const [showPill, setShowPill] = useState(false);
 
   const feedRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inChatMode = messages.length > 0;
 
   // Load saved session on mount
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function Home() {
     if (!showPill) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, canvasState, showPill]);
 
-  // Core send logic (reusable for both landing and chat input)
+  // Core send logic
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || canvasState === "thinking") return;
@@ -153,6 +156,15 @@ export default function Home() {
     setSidebarOpen(false);
   };
 
+  // Close sidebar when clicking outside on mobile
+  const handleMainClick = () => {
+    if (sidebarOpen && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
+  const hasMessages = messages.length > 0;
+
   // ── Render ──────────────────────────────────────────────────────
   return (
     <>
@@ -168,68 +180,67 @@ export default function Home() {
           onToggle={() => setSidebarOpen((o) => !o)}
         />
 
-        <div className={s.mainArea}>
-          {!inChatMode ? (
-            <Landing
-              onFirstMessage={sendMessage}
-              isThinking={canvasState === "thinking"}
-            />
-          ) : (
-            <>
-              <ChatHeader
-                provider={provider ?? undefined}
-                thinking={canvasState === "thinking"}
-                onToggleSidebar={() => setSidebarOpen((o) => !o)}
-                onNewChat={startNewChat}
-              />
+        <div className={s.mainArea} onClick={handleMainClick}>
+          <ChatHeader
+            provider={provider ?? undefined}
+            thinking={canvasState === "thinking"}
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen((o) => !o)}
+            onNewChat={startNewChat}
+          />
 
-              <div
-                className={s.feed}
-                role="log"
-                aria-live="polite"
-                aria-label="Chat messages"
-                ref={feedRef}
-                onScroll={handleScroll}
-              >
-                {messages.map((msg, i) =>
-                  msg.role === "user" ? (
-                    <UserMessage key={i} text={msg.text} timestamp={msg.timestamp} />
-                  ) : (
-                    <OmegaMessage
-                      key={i}
-                      text={msg.text}
-                      streaming={i === animatingIdx}
-                      timestamp={msg.timestamp}
-                      provider={msg.provider}
-                    />
-                  )
-                )}
-
-                {canvasState === "thinking" && <ThinkingIndicator status={statusText} />}
-
-                {error && (
-                  <div className={s.error} role="alert">
-                    ⚠ {error}
-                  </div>
-                )}
-                <div ref={bottomRef} style={{ height: 1 }} />
+          <div
+            className={s.feed}
+            role="log"
+            aria-live="polite"
+            aria-label="Chat messages"
+            ref={feedRef}
+            onScroll={handleScroll}
+          >
+            {!hasMessages && (
+              <div className={s.emptyState}>
+                <div className={s.emptyOmega}>{"\u03A9"}</div>
+                <div className={s.emptyLabel}>Ask OmegA anything</div>
               </div>
+            )}
 
-              {showPill && (
-                <div className={s.scrollPillWrap}>
-                  <button className={s.scrollPill} onClick={scrollToBottom} aria-label="Scroll to bottom">
-                    ↓ New response
-                  </button>
-                </div>
-              )}
+            {messages.map((msg, i) =>
+              msg.role === "user" ? (
+                <UserMessage key={i} text={msg.text} timestamp={msg.timestamp} />
+              ) : (
+                <OmegaMessage
+                  key={i}
+                  text={msg.text}
+                  streaming={i === animatingIdx}
+                  timestamp={msg.timestamp}
+                  provider={msg.provider}
+                />
+              )
+            )}
 
-              <InputArea
-                onSend={sendMessage}
-                disabled={canvasState === "thinking"}
-                autoFocus
-              />
-            </>
+            {canvasState === "thinking" && <ThinkingIndicator status={statusText} />}
+
+            {error && (
+              <div className={s.error} role="alert">
+                {error}
+              </div>
+            )}
+            <div ref={bottomRef} style={{ height: 1 }} />
+          </div>
+
+          {showPill && (
+            <div className={s.scrollPillWrap}>
+              <button className={s.scrollPill} onClick={scrollToBottom} aria-label="Scroll to bottom">
+                New response
+              </button>
+            </div>
           )}
+
+          <InputArea
+            onSend={sendMessage}
+            disabled={canvasState === "thinking"}
+            autoFocus
+          />
         </div>
       </div>
     </>

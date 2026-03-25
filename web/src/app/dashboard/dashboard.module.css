@@ -1,0 +1,313 @@
+/* ── SID — Sovereign Intelligence Dashboard ────────────────────── */
+
+.root {
+  min-height: 100vh;
+  background: #050505;
+  color: #f1f5f9;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.5rem;
+  background: rgba(5, 5, 5, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.glyph {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00ff80, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.subtitle {
+  font-size: 0.6rem;
+  color: rgba(241, 245, 249, 0.3);
+  letter-spacing: 0.06em;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .subtitle { display: inline; }
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: rgba(241, 245, 249, 0.45);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ff80;
+  box-shadow: 0 0 8px rgba(0, 255, 128, 0.4);
+}
+
+.statusText {
+  letter-spacing: 0.04em;
+}
+
+.refreshTime {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.6rem;
+  opacity: 0.3;
+}
+
+.refreshBtn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(241, 245, 249, 0.3);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.refreshBtn:hover {
+  border-color: rgba(0, 255, 128, 0.3);
+  color: #00ff80;
+}
+
+.borderLine {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 255, 128, 0.2) 20%,
+    rgba(34, 211, 238, 0.25) 50%,
+    rgba(0, 255, 128, 0.2) 80%,
+    transparent
+  );
+}
+
+/* ── Main ──────────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Empty State ───────────────────────────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 50vh;
+  color: rgba(241, 245, 249, 0.25);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.emptyGlyph {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 4rem;
+  font-weight: 900;
+  opacity: 0.08;
+}
+
+.emptyHint {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.6rem;
+  opacity: 0.4;
+}
+
+.errorBar {
+  padding: 0.6rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 0.5rem;
+  color: #fca5a5;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Section ───────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 2rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.categoryBadge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+}
+
+.categoryLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(241, 245, 249, 0.5);
+}
+
+.signalCount {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.55rem;
+  color: rgba(241, 245, 249, 0.2);
+}
+
+/* ── Card Grid ─────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  /* Quartz-angle clip from the blueprint */
+  clip-path: polygon(0 0, 100% 0, 100% 88%, 96% 100%, 0 100%);
+}
+
+.card:hover {
+  border-color: rgba(0, 255, 128, 0.15);
+  box-shadow: 0 0 20px rgba(0, 255, 128, 0.04);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.metricName {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(241, 245, 249, 0.7);
+  letter-spacing: 0.02em;
+}
+
+.source {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.5rem;
+  color: rgba(241, 245, 249, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metricRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.metricValue {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.unit {
+  font-size: 0.65rem;
+  color: rgba(241, 245, 249, 0.3);
+  text-transform: uppercase;
+}
+
+.cardBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timestamp {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.5rem;
+  color: rgba(241, 245, 249, 0.15);
+}
+
+.confidence {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.5rem;
+  color: rgba(255, 200, 50, 0.5);
+}
+
+/* ── Nav ───────────────────────────────────────────────────────── */
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.navLink {
+  font-size: 0.7rem;
+  color: rgba(241, 245, 249, 0.25);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  transition: color 0.2s;
+}
+
+.navLink:hover {
+  color: rgba(241, 245, 249, 0.6);
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .main { padding: 1rem; }
+  .grid { grid-template-columns: 1fr; }
+  .metricValue { font-size: 1.2rem; }
+}

@@ -28,13 +28,6 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <>
-      {/* Mobile hamburger */}
-      {!isOpen && (
-        <button className={s.hamburger} onClick={onToggle} aria-label="Open sidebar">
-          &#9776;
-        </button>
-      )}
-
       {/* Mobile overlay */}
       {isOpen && <div className={s.overlay} onClick={onToggle} />}
 
@@ -71,6 +64,13 @@ export default function Sidebar({
               />
             ))
           )}
+        </div>
+
+        <div className={s.divider} />
+        <div className={s.aboutSection}>
+          <div className={s.sectionLabel}>About OmegA</div>
+          <a href="/about" className={s.aboutLink}>Architecture Overview</a>
+          <a href="https://github.com/Mega-Therion/OmegA-Architecture" target="_blank" rel="noopener noreferrer" className={s.aboutLink}>GitHub Repository</a>
         </div>
       </aside>
     </>

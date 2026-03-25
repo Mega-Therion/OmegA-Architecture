@@ -20,12 +20,50 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--space-5) var(--space-6);
-  padding-bottom: 120px;
+  padding: var(--space-5) 0;
+  padding-bottom: 1rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   scroll-behavior: smooth;
+}
+
+/* Constrain readable width on desktop — messages own their horizontal padding */
+.feed > * {
+  width: 100%;
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* ── Empty State (shown when no messages) ─────────────────────── */
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  user-select: none;
+  pointer-events: none;
+}
+
+.emptyOmega {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(80px, 18vw, 140px);
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  animation: omega-breathe 4s ease-in-out infinite;
+  will-change: filter;
+}
+
+.emptyLabel {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(14px, 2.5vw, 17px);
+  color: var(--dim);
+  letter-spacing: 0.12em;
 }
 
 /* ── Error ──────────────────────────────────────────────────────── */
@@ -72,7 +110,7 @@
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .feed {
-    padding: var(--space-4) var(--space-3);
-    padding-bottom: 100px;
+    padding: var(--space-3) 0;
+    padding-bottom: 0.75rem;
   }
 }

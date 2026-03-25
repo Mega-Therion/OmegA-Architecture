@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>OmegA // Sovereign Neural Presence</title>
+    <meta name="description" content="OmegA — Sovereign AI Architecture by Ryan Wayne Yett">
+    <meta name="theme-color" content="#050505">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%CE%A9</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Fira+Code:wght@300;400&display=swap');
+
+        :root {
+            --accent: #ffffff;
+            --void: #050505;
+            --active-cyan: #22d3ee;
+            --muted: #ff4444;
+            --dim: rgba(255,255,255,0.25);
+            --dimmer: rgba(255,255,255,0.08);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body, html {
+            background-color: var(--void);
+            color: var(--accent);
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0; overflow: hidden;
+            height: 100vh; width: 100vw;
+            height: 100dvh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Three.js Background ─────────────────────────────────── */
+        #canvas-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.1;
+        }
+
+        /* ── Interface Layer ─────────────────────────────────────── */
+        .interface-layer {
+            position: relative; z-index: 10;
+            width: 100%; max-width: 900px;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 1.5rem;
+            padding: 20px;
+            pointer-events: none;
+            height: 100%;
+            justify-content: center;
+        }
+
+        /* ── Core Orb ────────────────────────────────────────────── */
+        .omega-core-container {
+            position: relative;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .omega-core {
+            width: 100px; height: 100px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .omega-core.active {
+            border-color: var(--active-cyan);
+            box-shadow: 0 0 50px rgba(34, 211, 238, 0.2);
+            transform: scale(1.05);
+        }
+
+        .omega-core.muted {
+            border-color: var(--muted);
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.1);
+        }
+
+        .omega-core.processing {
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
+            animation: core-process 1.5s ease-in-out infinite;
+        }
+
+        @keyframes core-process {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        .omega-core.error {
+            border-color: var(--muted);
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.15);
+        }
+
+        #core-pulse {
+            width: 6px; height: 6px;
+            background: white; border-radius: 50%;
+            transition: all 0.5s ease;
+        }
+
+        .omega-core.active #core-pulse {
+            background: var(--active-cyan);
+            box-shadow: 0 0 12px var(--active-cyan);
+        }
+
+        .omega-core.muted #core-pulse {
+            background: var(--muted);
+            box-shadow: 0 0 8px var(--muted);
+        }
+
+        .omega-core.processing #core-pulse {
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 0 16px rgba(255,255,255,0.6); }
+        }
+
+        /* ── Transcript ──────────────────────────────────────────── */
+        #omega-transcript {
+            font-family: 'Instrument Serif', serif;
+            font-size: clamp(1.8rem, 5vw, 3.2rem);
+            line-height: 1.1;
+            text-align: center;
+            min-height: 120px;
+            max-width: 800px;
+            font-style: italic;
+            padding: 0 1rem;
+        }
+
+        #user-feedback {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            color: var(--active-cyan);
+            height: 24px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+
+        /* ── Word Animation ──────────────────────────────────────── */
+        .word {
+            display: inline-block;
+            margin: 0 5px;
+            opacity: 0.05;
+            filter: blur(8px);
+            transform: translateY(5px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .word.active { opacity: 1; filter: blur(0px); transform: translateY(0px); }
+        .word.faded { opacity: 0.25; filter: blur(1px); }
+
+        /* ── Status Badge ────────────────────────────────────────── */
+        .status-badge {
+            font-size: 0.6rem;
+            letter-spacing: 0.8em;
+            text-transform: uppercase;
+            color: #444;
+            transition: color 0.3s;
+        }
+
+        .listening { color: var(--active-cyan); }
+        .speaking { color: #888; }
+        .processing-status { color: #666; }
+
+        /* ── Init Overlay ────────────────────────────────────────── */
+        #init-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--void); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 2rem;
+            cursor: pointer;
+            transition: opacity 0.8s ease;
+        }
+
+        #init-overlay.fading { opacity: 0; pointer-events: none; }
+
+        .init-glyph {
+            font-family: 'Instrument Serif', serif;
+            font-size: 4rem;
+            font-style: italic;
+            opacity: 0.15;
+            animation: init-breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes init-breathe {
+            0%, 100% { opacity: 0.15; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ── Text Input (minimal) ────────────────────────────────── */
+        .input-row {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.25rem;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+            pointer-events: auto;
+            background: linear-gradient(to top, var(--void) 60%, transparent);
+        }
+
+        .input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .text-input {
+            flex: 1;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 2rem;
+            padding: 0.65rem 1.1rem;
+            color: var(--accent);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        .text-input::placeholder { color: rgba(255,255,255,0.15); }
+
+        .text-input:focus {
+            border-color: rgba(34, 211, 238, 0.3);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .input-btn {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: transparent;
+            color: var(--dim);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .input-btn:hover {
+            border-color: rgba(34, 211, 238, 0.3);
+            color: var(--active-cyan);
+        }
+
+        .input-btn.mic-active {
+            border-color: var(--active-cyan);
+            color: var(--active-cyan);
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.15);
+            animation: mic-breathe 2s ease-in-out infinite;
+        }
+
+        @keyframes mic-breathe {
+            0%, 100% { box-shadow: 0 0 15px rgba(34, 211, 238, 0.15); }
+            50% { box-shadow: 0 0 25px rgba(34, 211, 238, 0.3); }
+        }
+
+        /* ── Provider / Session Info ─────────────────────────────── */
+        .meta-line {
+            position: fixed;
+            bottom: 4.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.5rem;
+            color: rgba(255,255,255,0.1);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            pointer-events: none;
+            transition: color 0.3s;
+        }
+
+        /* ── Synthesis Overlay ────────────────────────────────────── */
+        .synthesis-overlay {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            z-index: 30;
+            max-width: 420px;
+            width: 90%;
+            padding: 1.5rem 2rem;
+            background: rgba(5, 5, 5, 0.95);
+            border: 1px solid rgba(34, 211, 238, 0.12);
+            border-radius: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            backdrop-filter: blur(20px);
+        }
+
+        .synthesis-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .synthesis-label {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.5rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--active-cyan);
+            opacity: 0.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .synthesis-directive {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 1.3rem;
+            line-height: 1.3;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+        }
+
+        .synthesis-expansion {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .synthesis-bar {
+            height: 2px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .synthesis-bar-fill {
+            height: 100%;
+            background: var(--active-cyan);
+            border-radius: 1px;
+            transition: width 1s ease;
+        }
+
+        .synthesis-focus {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.5rem;
+            color: rgba(255,255,255,0.2);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+
+        .synthesis-close {
+            position: absolute;
+            top: 0.75rem; right: 0.75rem;
+            background: none; border: none;
+            color: rgba(255,255,255,0.15);
+            cursor: pointer;
+            font-size: 0.7rem;
+            padding: 0.25rem;
+            transition: color 0.2s;
+        }
+
+        .synthesis-close:hover { color: rgba(255,255,255,0.4); }
+
+        /* ── Refine indicator ────────────────────────────────────── */
+        .input-btn.refining {
+            color: var(--active-cyan);
+            animation: refine-spin 1s linear infinite;
+        }
+
+        @keyframes refine-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Scrollbar ───────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 0; }
+
+        /* ── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 640px) {
+            .interface-layer { padding: 15px; gap: 1rem; }
+            .omega-core { width: 80px; height: 80px; }
+            #omega-transcript { min-height: 80px; }
+        }
+
+        @media (max-height: 500px) {
+            #omega-transcript { min-height: 60px; font-size: 1.4rem; }
+            .omega-core { width: 60px; height: 60px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Init Overlay ──────────────────────────────────────── -->
+    <div id="init-overlay" onclick="startSystem()">
+        <div class="init-glyph">&Omega;</div>
+        <div class="text-white text-[10px] tracking-[1.5em] uppercase opacity-40" style="font-family:'Space Grotesk',sans-serif; font-size:10px; letter-spacing:1.5em; text-transform:uppercase; opacity:0.4;">Synchronize Neural Link</div>
+    </div>
+
+    <!-- ── Three.js Container ────────────────────────────────── -->
+    <div id="canvas-container"></div>
+
+    <!-- ── Interface ─────────────────────────────────────────── -->
+    <div class="interface-layer">
+        <div id="status-text" class="status-badge">Standby</div>
+
+        <div class="omega-core-container" onclick="manualReset()">
+            <div id="omega-core" class="omega-core">
+                <div id="core-pulse" style="width: 6px; height: 6px; background: white; border-radius: 50%;"></div>
+            </div>
+        </div>
+
+        <div id="user-feedback">Ready</div>
+        <div id="omega-transcript"></div>
+    </div>
+
+    <!-- ── Provider Meta ─────────────────────────────────────── -->
+    <div class="meta-line" id="meta-line"></div>
+
+    <!-- ── Synthesis Overlay ─────────────────────────────────── -->
+    <div class="synthesis-overlay" id="synthesis-overlay">
+        <button class="synthesis-close" onclick="closeSynthesis()">&times;</button>
+        <div class="synthesis-label">Core Directive</div>
+        <div class="synthesis-directive" id="synth-directive"></div>
+        <div class="synthesis-expansion" id="synth-expansion"></div>
+        <div class="synthesis-bar"><div class="synthesis-bar-fill" id="synth-bar"></div></div>
+        <div class="synthesis-focus" id="synth-focus"></div>
+    </div>
+
+    <!-- ── Input Row ─────────────────────────────────────────── -->
+    <div class="input-row">
+        <div class="input-wrap">
+            <button class="input-btn" id="mic-toggle" onclick="toggleMic()" title="Toggle voice input">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+            </button>
+            <button class="input-btn" id="refine-btn" onclick="refineIntent()" title="Refine input">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/>
+                    <path d="M17.8 11.8 20 14"/><path d="M15 9h0"/>
+                    <path d="M17.8 6.2 20 4"/><path d="m3 21 9-9"/>
+                    <path d="M12.2 6.2 10 4"/>
+                </svg>
+            </button>
+            <input type="text" class="text-input" id="text-input" placeholder="or type here..." autocomplete="off">
+            <button class="input-btn" id="send-btn" onclick="sendText()" title="Send">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+<script>
+/* ================================================================
+   OmegA // Sovereign Neural Presence
+   Canon interface wired to /api/chat + /api/tts
+   ================================================================ */
+
+// ── Config ──────────────────────────────────────────────────────
+const CHAT_ENDPOINT       = '/api/chat';
+const TTS_ENDPOINT        = '/api/tts';
+const REFINE_ENDPOINT     = '/api/refine';
+const SYNTHESIZE_ENDPOINT = '/api/synthesize';
+const RETRY_DELAYS        = [1000, 2000, 4000, 8000];
+
+// ── State ───────────────────────────────────────────────────────
+let recognition        = null;
+let isSpeaking         = false;
+let isProcessing       = false;
+let currentAudio       = null;
+let syncInterval       = null;
+let micPausedBySystem  = false;
+let micEnabled         = false;
+let sessionId          = null;
+let provider           = null;
+let history            = [];
+let threeScene         = null;
+let threeMaterial      = null;
+let threeMesh          = null;
+let threeRenderer      = null;
+let threeCamera        = null;
+
+// ── Restore session ─────────────────────────────────────────────
+(function restoreSession() {
+  const saved = localStorage.getItem('omega_session');
+  if (saved) sessionId = saved;
+})();
+
+// ══════════════════════════════════════════════════════════════════
+// SYSTEM BOOT
+// ══════════════════════════════════════════════════════════════════
+
+function startSystem() {
+  const overlay = document.getElementById('init-overlay');
+  overlay.classList.add('fading');
+  setTimeout(() => { overlay.style.display = 'none'; }, 800);
+
+  initScene();
+  initSpeech();
+  setTranscript('Neural feedback loop active.');
+  updateUIState('listening');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// THREE.JS SCENE
+// ══════════════════════════════════════════════════════════════════
+
+function initScene() {
+  threeScene = new THREE.Scene();
+  threeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  threeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  threeRenderer.setSize(window.innerWidth, window.innerHeight);
+  threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  document.getElementById('canvas-container').appendChild(threeRenderer.domElement);
+
+  const geometry = new THREE.IcosahedronGeometry(2, 1);
+  threeMaterial = new THREE.MeshBasicMaterial({
+    color: 0x22d3ee, wireframe: true, transparent: true, opacity: 0.1
+  });
+  threeMesh = new THREE.Mesh(geometry, threeMaterial);
+  threeScene.add(threeMesh);
+  threeCamera.position.z = 5;
+
+  window.addEventListener('resize', onResize);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const speed = isSpeaking ? 0.05 : isProcessing ? 0.02 : 0.005;
+    threeMesh.rotation.y += speed;
+    threeMesh.rotation.z += 0.002;
+    threeMaterial.opacity = isSpeaking ? 0.3 : isProcessing ? 0.18 : 0.1;
+    threeRenderer.render(threeScene, threeCamera);
+  }
+  animate();
+}
+
+function onResize() {
+  if (!threeCamera || !threeRenderer) return;
+  threeCamera.aspect = window.innerWidth / window.innerHeight;
+  threeCamera.updateProjectionMatrix();
+  threeRenderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SPEECH RECOGNITION
+// ══════════════════════════════════════════════════════════════════
+
+function initSpeech() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    console.warn('Speech recognition not available');
+    return;
+  }
+
+  recognition = new SpeechRec();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (event) => {
+    if (micPausedBySystem) return;
+
+    let interim = '', final = '';
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) final += event.results[i][0].transcript;
+      else interim += event.results[i][0].transcript;
+    }
+
+    if (interim || final) {
+      const fb = document.getElementById('user-feedback');
+      fb.innerText = interim || final;
+      fb.style.color = 'var(--active-cyan)';
+    }
+
+    if (final.trim().length > 0) {
+      handleInput(final.trim());
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.warn('Speech error:', e.error);
+    }
+  };
+
+  recognition.onend = () => {
+    if (!micPausedBySystem && micEnabled) {
+      restartMic();
+    }
+  };
+
+  // Auto-start mic
+  micEnabled = true;
+  document.getElementById('mic-toggle').classList.add('mic-active');
+  recognition.start();
+}
+
+function restartMic() {
+  if (!recognition || !micEnabled) return;
+  try { recognition.start(); } catch(e) { /* already running */ }
+}
+
+function toggleMic() {
+  if (micEnabled) {
+    micEnabled = false;
+    document.getElementById('mic-toggle').classList.remove('mic-active');
+    try { recognition.stop(); } catch(e) {}
+  } else {
+    micEnabled = true;
+    document.getElementById('mic-toggle').classList.add('mic-active');
+    if (!isSpeaking && !isProcessing) restartMic();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEXT INPUT
+// ══════════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('text-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); sendText(); }
+  });
+});
+
+function sendText() {
+  const input = document.getElementById('text-input');
+  const text = input.value.trim();
+  if (!text || isProcessing || isSpeaking) return;
+  input.value = '';
+  handleInput(text);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TRANSCRIPT RENDERING
+// ══════════════════════════════════════════════════════════════════
+
+function setTranscript(text, animate) {
+  const container = document.getElementById('omega-transcript');
+  if (!animate) {
+    container.innerHTML = '<span class="word active" style="opacity: 0.4">' + escapeHtml(text) + '</span>';
+  } else {
+    container.innerHTML = text.split(/\s+/).map(w =>
+      '<span class="word">' + escapeHtml(w) + '</span>'
+    ).join(' ');
+  }
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RETRY WITH EXPONENTIAL BACKOFF
+// ══════════════════════════════════════════════════════════════════
+
+async function fetchWithRetry(url, options, maxRetries = 3) {
+  let lastErr;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
+      // Don't retry 4xx client errors (except 429)
+      if (res.status < 500 && res.status !== 429) return res;
+      throw new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      lastErr = e;
+      if (attempt < maxRetries) {
+        const delay = RETRY_DELAYS[Math.min(attempt, RETRY_DELAYS.length - 1)];
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INTENT REFINEMENT (wand button)
+// ══════════════════════════════════════════════════════════════════
+
+async function refineIntent() {
+  const input = document.getElementById('text-input');
+  const text = input.value.trim();
+  if (!text || isProcessing || isSpeaking) return;
+
+  const btn = document.getElementById('refine-btn');
+  btn.classList.add('refining');
+
+  try {
+    const res = await fetchWithRetry(REFINE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    }, 2);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.refined) {
+        input.value = data.refined;
+        input.focus();
+      }
+    }
+  } catch (e) {
+    console.warn('Refine failed:', e);
+  } finally {
+    btn.classList.remove('refining');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONVERSATION SYNTHESIS (orb long-press or after N exchanges)
+// ══════════════════════════════════════════════════════════════════
+
+let synthesisPending = false;
+
+async function triggerSynthesis() {
+  if (history.length < 4 || synthesisPending || isProcessing || isSpeaking) return;
+  synthesisPending = true;
+
+  try {
+    const res = await fetchWithRetry(SYNTHESIZE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ history: history.slice(-30) }),
+    }, 2);
+
+    if (res.ok) {
+      const data = await res.json();
+      showSynthesis(data);
+    }
+  } catch (e) {
+    console.warn('Synthesis failed:', e);
+  } finally {
+    synthesisPending = false;
+  }
+}
+
+function showSynthesis(data) {
+  const overlay = document.getElementById('synthesis-overlay');
+  document.getElementById('synth-directive').textContent = data.directive || '';
+  document.getElementById('synth-expansion').textContent = data.expansion || '';
+  document.getElementById('synth-bar').style.width = (data.intensity || 50) + '%';
+  document.getElementById('synth-focus').textContent = data.focus || '';
+  overlay.classList.add('visible');
+
+  // Auto-dismiss after 8 seconds
+  setTimeout(() => closeSynthesis(), 8000);
+}
+
+function closeSynthesis() {
+  document.getElementById('synthesis-overlay').classList.remove('visible');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXPAND LAST RESPONSE (click orb when idle)
+// ══════════════════════════════════════════════════════════════════
+
+let lastOmegaResponse = '';
+
+// ══════════════════════════════════════════════════════════════════
+// CORE LOGIC — CHAT + TTS
+// ══════════════════════════════════════════════════════════════════
+
+async function handleInput(text) {
+  if (isProcessing || isSpeaking) return;
+  isProcessing = true;
+  stopVoice();
+
+  // Show user input briefly
+  document.getElementById('user-feedback').innerText = text;
+  document.getElementById('user-feedback').style.color = 'var(--active-cyan)';
+
+  // Add to history
+  history.push({ role: 'user', text });
+
+  updateUIState('analyzing');
+
+  try {
+    // ── 1. Stream response from OmegA's brain ──────────────
+    const fullReply = await streamChat(text);
+
+    if (!fullReply) {
+      throw new Error('Empty response');
+    }
+
+    history.push({ role: 'omega', text: fullReply });
+    lastOmegaResponse = fullReply;
+
+    // ── 2. Speak + animate ──────────────────────────────────
+    await speak(fullReply);
+
+    // ── 3. Auto-synthesize after every 4th exchange ─────────
+    const omegaTurns = history.filter(h => h.role === 'omega').length;
+    if (omegaTurns > 0 && omegaTurns % 4 === 0) {
+      triggerSynthesis();  // non-blocking, fire-and-forget
+    }
+
+  } catch (err) {
+    console.error('OmegA error:', err);
+    isProcessing = false;
+    setTranscript('Link unstable. Try again.');
+    updateUIState('error');
+    setTimeout(() => updateUIState('listening'), 3000);
+  }
+}
+
+async function streamChat(userText) {
+  const res = await fetchWithRetry(CHAT_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user: userText,
+      history: history.slice(-20),
+      sessionId: sessionId || undefined,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(body.error || String(res.status));
+  }
+
+  // Read headers
+  const sid = res.headers.get('X-Session-Id');
+  const prov = res.headers.get('X-Provider');
+  if (sid && !sessionId) {
+    sessionId = sid;
+    localStorage.setItem('omega_session', sid);
+  }
+  if (prov) {
+    provider = prov;
+    document.getElementById('meta-line').textContent = prov;
+  }
+
+  // Stream the text
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Handle SSE status events
+    while (buffer.includes('\n\n')) {
+      const idx = buffer.indexOf('\n\n');
+      const line = buffer.slice(0, idx).trim();
+      if (line.startsWith('data: {"type":"status"')) {
+        try {
+          const json = JSON.parse(line.slice(5));
+          updateUIState('analyzing', json.text);
+        } catch(e) {}
+        buffer = buffer.slice(idx + 2);
+        continue;
+      }
+      break;
+    }
+
+    // Accumulate text content
+    if (buffer && !buffer.startsWith('data: {"type":"status"')) {
+      fullText += buffer;
+      buffer = '';
+    }
+  }
+
+  // Flush
+  fullText += decoder.decode();
+  if (buffer) fullText += buffer;
+
+  return fullText.trim();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TTS + WORD ANIMATION
+// ══════════════════════════════════════════════════════════════════
+
+async function speak(text) {
+  // Gate the mic
+  micPausedBySystem = true;
+  try { recognition && recognition.stop(); } catch(e) {}
+
+  isSpeaking = true;
+  isProcessing = false;
+  updateUIState('speaking');
+  setTranscript(text, true);
+
+  const words = document.querySelectorAll('.word');
+
+  try {
+    // Try server-side TTS first (with retry)
+    const ttsRes = await fetchWithRetry(TTS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    }, 2);
+
+    if (!ttsRes.ok) throw new Error('TTS unavailable');
+
+    const ttsData = await ttsRes.json();
+    if (!ttsData.audio) throw new Error('No audio data');
+
+    // Decode PCM and play
+    const audio = await decodeAndPlay(ttsData.audio);
+    currentAudio = audio;
+
+    // Sync word animation to audio duration
+    const msPerWord = (audio.duration * 1000) / Math.max(words.length, 1);
+    let idx = 0;
+    syncInterval = setInterval(() => {
+      if (idx < words.length) {
+        words[idx].classList.add('active');
+        if (idx > 0) words[idx - 1].classList.add('faded');
+        idx++;
+      } else {
+        clearInterval(syncInterval);
+      }
+    }, msPerWord);
+
+    audio.onended = () => { endSpeech(); };
+
+  } catch (e) {
+    console.warn('TTS fallback to browser speech:', e);
+
+    // Fallback: browser speechSynthesis
+    if (window.speechSynthesis) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.92;
+      utter.pitch = 0.85;
+
+      // Pick a suitable voice
+      const voices = speechSynthesis.getVoices();
+      const voice = voices.find(v => v.name.includes('Daniel'))
+        || voices.find(v => v.name.includes('UK English Male'))
+        || voices.find(v => v.lang.startsWith('en') && v.name.includes('Male'))
+        || voices.find(v => v.lang.startsWith('en'));
+      if (voice) utter.voice = voice;
+
+      // Approximate word timing from text length
+      const estimatedDuration = text.length * 55; // ~55ms per char for speech
+      const msPerWord = estimatedDuration / Math.max(words.length, 1);
+      let idx = 0;
+      syncInterval = setInterval(() => {
+        if (idx < words.length) {
+          words[idx].classList.add('active');
+          if (idx > 0) words[idx - 1].classList.add('faded');
+          idx++;
+        } else {
+          clearInterval(syncInterval);
+        }
+      }, msPerWord);
+
+      utter.onend = () => { endSpeech(); };
+      utter.onerror = () => { endSpeech(); };
+      speechSynthesis.speak(utter);
+
+    } else {
+      // No TTS at all — just reveal all words
+      words.forEach(w => w.classList.add('active'));
+      setTimeout(() => endSpeech(), 2000);
+    }
+  }
+}
+
+function endSpeech() {
+  isSpeaking = false;
+  isProcessing = false;
+  micPausedBySystem = false;
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+  currentAudio = null;
+  updateUIState('listening');
+  if (micEnabled) restartMic();
+}
+
+function stopVoice() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+  isSpeaking = false;
+  micPausedBySystem = false;
+}
+
+function manualReset() {
+  // If idle with a previous response, expand it instead of resetting
+  if (!isSpeaking && !isProcessing && lastOmegaResponse && history.length >= 2) {
+    expandLastResponse();
+    return;
+  }
+  stopVoice();
+  isProcessing = false;
+  document.getElementById('user-feedback').innerText = 'System Reset';
+  setTranscript('Echo-gate active.');
+  updateUIState('listening');
+  if (micEnabled) restartMic();
+}
+
+async function expandLastResponse() {
+  if (isProcessing || isSpeaking || !lastOmegaResponse) return;
+  isProcessing = true;
+  updateUIState('analyzing', 'expanding...');
+
+  try {
+    const res = await fetchWithRetry(CHAT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user: 'Expand your previous response with deeper reasoning and specifics. Go further.',
+        history: history.slice(-20),
+        sessionId: sessionId || undefined,
+      }),
+    });
+
+    if (!res.ok) throw new Error('Expand failed');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let expanded = '';
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Skip SSE status events
+      while (buffer.includes('\n\n')) {
+        const idx = buffer.indexOf('\n\n');
+        const line = buffer.slice(0, idx).trim();
+        if (line.startsWith('data: {"type":"status"')) {
+          buffer = buffer.slice(idx + 2);
+          continue;
+        }
+        break;
+      }
+
+      if (buffer && !buffer.startsWith('data: {"type":"status"')) {
+        expanded += buffer;
+        buffer = '';
+      }
+    }
+    expanded += decoder.decode();
+    if (buffer) expanded += buffer;
+    expanded = expanded.trim();
+
+    if (expanded) {
+      history.push({ role: 'omega', text: expanded });
+      lastOmegaResponse = expanded;
+      await speak(expanded);
+    }
+  } catch (e) {
+    console.error('Expand error:', e);
+    isProcessing = false;
+    updateUIState('listening');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PCM → WAV DECODER
+// ══════════════════════════════════════════════════════════════════
+
+function decodeAndPlay(base64) {
+  const binary = atob(base64);
+  const pcmBytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) pcmBytes[i] = binary.charCodeAt(i);
+
+  const dataLen = pcmBytes.length;
+  const buffer = new ArrayBuffer(44 + dataLen);
+  const v = new DataView(buffer);
+
+  // RIFF header
+  writeStr(v, 0, 'RIFF');
+  v.setUint32(4, 36 + dataLen, true);
+  writeStr(v, 8, 'WAVE');
+
+  // fmt sub-chunk
+  writeStr(v, 12, 'fmt ');
+  v.setUint32(16, 16, true);        // PCM chunk size
+  v.setUint16(20, 1, true);         // audio format: PCM
+  v.setUint16(22, 1, true);         // mono
+  v.setUint32(24, 24000, true);     // sample rate
+  v.setUint32(28, 48000, true);     // byte rate (24000 * 1 * 16/8)
+  v.setUint16(32, 2, true);         // block align (channels * bitsPerSample/8)
+  v.setUint16(34, 16, true);        // bits per sample
+
+  // data sub-chunk
+  writeStr(v, 36, 'data');
+  v.setUint32(40, dataLen, true);
+
+  // Copy PCM data
+  const wav = new Uint8Array(buffer);
+  wav.set(pcmBytes, 44);
+
+  const blob = new Blob([buffer], { type: 'audio/wav' });
+  const audio = new Audio(URL.createObjectURL(blob));
+
+  return new Promise((resolve, reject) => {
+    audio.onloadedmetadata = () => { audio.play().then(() => resolve(audio)).catch(reject); };
+    audio.onerror = reject;
+  });
+}
+
+function writeStr(view, offset, str) {
+  for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// UI STATE MACHINE
+// ══════════════════════════════════════════════════════════════════
+
+function updateUIState(state, detail) {
+  const badge = document.getElementById('status-text');
+  const core = document.getElementById('omega-core');
+  const feedback = document.getElementById('user-feedback');
+
+  // Remove all state classes
+  core.className = 'omega-core';
+
+  switch (state) {
+    case 'listening':
+      badge.innerText = 'Monitoring';
+      badge.className = 'status-badge listening';
+      core.classList.add('active');
+      feedback.innerText = 'Ready';
+      feedback.style.color = 'var(--active-cyan)';
+      break;
+
+    case 'speaking':
+      badge.innerText = 'Projecting';
+      badge.className = 'status-badge speaking';
+      core.classList.add('muted');
+      feedback.innerText = 'Mic Gated';
+      feedback.style.color = '#444';
+      break;
+
+    case 'analyzing':
+      badge.innerText = detail ? detail.toUpperCase() : 'Processing';
+      badge.className = 'status-badge processing-status';
+      core.classList.add('processing');
+      feedback.style.color = '#666';
+      break;
+
+    case 'error':
+      badge.innerText = 'Link Error';
+      badge.className = 'status-badge';
+      badge.style.color = 'var(--muted)';
+      core.classList.add('error');
+      feedback.innerText = 'Reconnecting...';
+      feedback.style.color = 'var(--muted)';
+      break;
+  }
+}
+
+// ── Ensure voices loaded for fallback TTS ───────────────────────
+if (window.speechSynthesis) {
+  speechSynthesis.onvoiceschanged = () => {};
+  speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

@@ -1,27 +1,25 @@
 import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenAI } from '@google/genai';
+import { streamText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 
-const GATEWAY = process.env.OMEGA_API_URL
-  ?? process.env.NEXT_PUBLIC_OMEGA_API_URL
-  ?? 'http://localhost:8787';
+// ── Provider config ───────────────────────────────────────────────────────────
 
-const BEARER = process.env.OMEGA_BEARER_TOKEN
-  ?? process.env.NEXT_PUBLIC_OMEGA_BEARER_TOKEN
-  ?? '';
+const VERCEL_GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1';
 
-/** Timeout for gateway fetch (ms) */
-const GATEWAY_TIMEOUT_MS = 15_000;
+// Gemini key rotation — tries each in order until one works
+const GEMINI_KEYS = [
+  process.env.GEMINI_API_KEY_4,
+  process.env.GEMINI_API_KEY_2,
+  process.env.GEMINI_API_KEY,
+].filter(Boolean) as string[];
 
-/** Number of retries on gateway timeout before surfacing error */
-const GATEWAY_RETRIES = 1;
+// ── DB helpers ────────────────────────────────────────────────────────────────
 
 type Row = Record<string, unknown>;
 
 async function pullIdentityAnchor(db: NeonQueryFunction<false, false>): Promise<string> {
-  // Always load the master RY profile first — this is load-bearing bedrock, not one entry among many.
-  // Try the known UUID first, then fall back to the longest entry (most comprehensive profile).
   let anchor = await db`
     SELECT LEFT(content, 6000) AS content, created_at
     FROM omega_memory_entries
@@ -31,7 +29,6 @@ async function pullIdentityAnchor(db: NeonQueryFunction<false, false>): Promise<
   `.catch(() => [] as Row[]);
 
   if ((anchor as Row[]).length === 0) {
-    // Fall back: largest single entry is almost certainly the master profile
     anchor = await db`
       SELECT LEFT(content, 6000) AS content, created_at
       FROM omega_memory_entries
@@ -95,14 +92,10 @@ async function pullRawContext(userMessage: string): Promise<string> {
   const db = neon(dbUrl);
   const sections: string[] = [];
 
-  // ── BEDROCK: identity anchor loads first, before everything else ──
   const anchor = await pullIdentityAnchor(db);
   if (anchor) sections.push(anchor);
-
-  // ── PROVENANCE SEAL: Yettragrammaton — always present, hardcoded ──
   sections.push(YETTRAGRAMMATON);
 
-  // Recent memory entries — the raw record, not the sanitized version
   const recent = await db`
     SELECT LEFT(content, 2500) AS content, created_at
     FROM omega_memory_entries
@@ -112,12 +105,9 @@ async function pullRawContext(userMessage: string): Promise<string> {
 
   if ((recent as Row[]).length > 0) {
     sections.push('=== RECENT MEMORY ENTRIES ===');
-    for (const r of recent as Row[]) {
-      sections.push(`[${r.created_at}]\n${r.content}`);
-    }
+    for (const r of recent as Row[]) sections.push(`[${r.created_at}]\n${r.content}`);
   }
 
-  // Query-relevant entries — what matches what the person is actually asking about
   const keywords = userMessage
     .toLowerCase()
     .replace(/[^a-z0-9 ]/g, ' ')
@@ -137,46 +127,26 @@ async function pullRawContext(userMessage: string): Promise<string> {
 
     if ((relevant as Row[]).length > 0) {
       sections.push('\n=== QUERY-RELEVANT ENTRIES ===');
-      for (const r of relevant as Row[]) {
-        sections.push(`[${r.created_at}]\n${r.content}`);
-      }
+      for (const r of relevant as Row[]) sections.push(`[${r.created_at}]\n${r.content}`);
     }
   }
 
-  // Marginalia — raw notes and observations logged over time
-  const marginalia = await db`
-    SELECT * FROM marginalia ORDER BY created_at DESC LIMIT 15
-  `.catch(() => [] as Row[]);
-
+  const marginalia = await db`SELECT * FROM marginalia ORDER BY created_at DESC LIMIT 15`.catch(() => [] as Row[]);
   if ((marginalia as Row[]).length > 0) {
     sections.push('\n=== MARGINALIA ===');
-    for (const m of marginalia as Row[]) {
-      sections.push(JSON.stringify(m));
-    }
+    for (const m of marginalia as Row[]) sections.push(JSON.stringify(m));
   }
 
-  // System events — what actually happened and when
-  const events = await db`
-    SELECT * FROM omega_events ORDER BY created_at DESC LIMIT 15
-  `.catch(() => [] as Row[]);
-
+  const events = await db`SELECT * FROM omega_events ORDER BY created_at DESC LIMIT 15`.catch(() => [] as Row[]);
   if ((events as Row[]).length > 0) {
     sections.push('\n=== SYSTEM EVENTS ===');
-    for (const e of events as Row[]) {
-      sections.push(JSON.stringify(e));
-    }
+    for (const e of events as Row[]) sections.push(JSON.stringify(e));
   }
 
-  // System improvements — things noticed and changed over time
-  const improvements = await db`
-    SELECT * FROM system_improvements ORDER BY created_at DESC LIMIT 10
-  `.catch(() => [] as Row[]);
-
+  const improvements = await db`SELECT * FROM system_improvements ORDER BY created_at DESC LIMIT 10`.catch(() => [] as Row[]);
   if ((improvements as Row[]).length > 0) {
     sections.push('\n=== SYSTEM IMPROVEMENTS ===');
-    for (const i of improvements as Row[]) {
-      sections.push(JSON.stringify(i));
-    }
+    for (const i of improvements as Row[]) sections.push(JSON.stringify(i));
   }
 
   return sections.join('\n\n');
@@ -198,39 +168,111 @@ Be direct. Be specific — ground your claims in the actual data. Do not perform
 
 interface Msg { role: "user" | "omega"; text: string; }
 
-/** Fetch the gateway with timeout, AbortController, and 1x retry on timeout */
-async function fetchGateway(body: string): Promise<Response> {
-  let lastError: Error | null = null;
+// ── Provider helpers ──────────────────────────────────────────────────────────
 
-  for (let attempt = 0; attempt <= GATEWAY_RETRIES; attempt++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GATEWAY_TIMEOUT_MS);
+function buildMessages(user: string, history?: Msg[]) {
+  return [
+    ...(history || []).map(h => ({
+      role: (h.role === 'omega' ? 'assistant' : 'user') as 'user' | 'assistant',
+      content: h.text,
+    })),
+    { role: 'user' as const, content: user },
+  ];
+}
 
+async function tryVercelGateway(
+  encoder: TextEncoder,
+  system: string,
+  user: string,
+  history: Msg[] | undefined
+): Promise<ReadableStream> {
+  const key = process.env.VERCEL_AI_GATEWAY_KEY;
+  if (!key) throw new Error('No Vercel AI Gateway key');
+
+  const vercelAI = createOpenAI({ baseURL: VERCEL_GATEWAY_URL, apiKey: key });
+  const result = await streamText({
+    model: vercelAI('xai/grok-3-fast'),
+    system,
+    messages: buildMessages(user, history),
+    maxOutputTokens: 4096,
+    temperature: 0.85,
+  });
+
+  return new ReadableStream({
+    async start(ctrl) {
+      for await (const chunk of result.textStream) {
+        if (chunk) ctrl.enqueue(encoder.encode(chunk));
+      }
+      ctrl.close();
+    }
+  });
+}
+
+async function tryXaiDirect(
+  encoder: TextEncoder,
+  system: string,
+  user: string,
+  history: Msg[] | undefined
+): Promise<ReadableStream> {
+  const key = process.env.XAI_API_KEY;
+  if (!key) throw new Error('No xAI key');
+
+  const xai = createOpenAI({ baseURL: 'https://api.x.ai/v1', apiKey: key });
+  const result = await streamText({
+    model: xai('grok-3-fast'),
+    system,
+    messages: buildMessages(user, history),
+    maxOutputTokens: 4096,
+    temperature: 0.85,
+  });
+
+  return new ReadableStream({
+    async start(ctrl) {
+      for await (const chunk of result.textStream) {
+        if (chunk) ctrl.enqueue(encoder.encode(chunk));
+      }
+      ctrl.close();
+    }
+  });
+}
+
+async function tryGemini(
+  encoder: TextEncoder,
+  system: string,
+  user: string,
+  history: Msg[] | undefined
+): Promise<ReadableStream> {
+  let lastErr: unknown;
+  for (const key of GEMINI_KEYS) {
     try {
-      const res = await fetch(`${GATEWAY}/api/v1/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${BEARER}`,
-        },
-        body,
-        signal: controller.signal,
+      const genai = new GoogleGenAI({ apiKey: key });
+      const geminiHistory = (history || []).map(h => ({
+        role: h.role === 'omega' ? 'model' : 'user',
+        parts: [{ text: h.text }],
+      }));
+      const chat = genai.chats.create({
+        model: 'gemini-2.5-flash',
+        config: { systemInstruction: system, temperature: 0.85, maxOutputTokens: 4096 },
+        history: geminiHistory,
       });
-      clearTimeout(timer);
-      return res;
-    } catch (err) {
-      clearTimeout(timer);
-      lastError = err instanceof Error ? err : new Error(String(err));
-
-      const isTimeout = lastError.name === 'AbortError';
-      // Only retry on timeout, not on other fetch errors
-      if (!isTimeout || attempt >= GATEWAY_RETRIES) break;
-      // else loop for retry
+      const stream = await chat.sendMessageStream({ message: user });
+      return new ReadableStream({
+        async start(ctrl) {
+          for await (const chunk of stream) {
+            const text = chunk.text ?? '';
+            if (text) ctrl.enqueue(encoder.encode(text));
+          }
+          ctrl.close();
+        }
+      });
+    } catch (e) {
+      lastErr = e;
     }
   }
-
-  throw lastError;
+  throw lastErr ?? new Error('All Gemini keys exhausted');
 }
+
+// ── Main route ────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
@@ -243,134 +285,80 @@ export async function POST(req: NextRequest) {
     const dbUrl = process.env.DATABASE_URL;
     let finalSessionId = sessionId;
 
-    // Fast session creation if needed to set the header immediately
     if (dbUrl && !finalSessionId) {
       try {
         const db = neon(dbUrl);
-        const sessionRes = await db`INSERT INTO omega_sessions DEFAULT VALUES RETURNING id`;
-        if (sessionRes && sessionRes.length > 0) {
-          finalSessionId = sessionRes[0].id as string;
-        }
-      } catch (err) {
-        console.error('[OmegA chat] Session creation failed', err);
+        const res = await db`INSERT INTO omega_sessions DEFAULT VALUES RETURNING id`;
+        if (res?.length > 0) finalSessionId = res[0].id as string;
+      } catch (e) {
+        console.error('[OmegA] Session creation failed', e);
       }
     }
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    
-    let provider = "omega-gateway";
+    let provider = 'unknown';
+
     const customStream = new ReadableStream({
       async start(controller) {
         try {
-          // Status: reading memory...
           controller.enqueue(encoder.encode('data: {"type":"status","text":"reading memory..."}\n\n'));
 
-          // 1. Thread context and persistence
           if (dbUrl && finalSessionId) {
-             // Non-blocking log for user message
-             const db = neon(dbUrl);
-             db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'user', ${user})`
-               .catch(e => console.error('[OmegA chat db msg error]', e));
+            const db = neon(dbUrl);
+            db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'user', ${user})`
+              .catch(e => console.error('[OmegA] DB write error', e));
           }
 
-          // 2. Fetch all raw context entries
           let rawContext: string;
           try {
             rawContext = await pullRawContext(user);
-          } catch (dbErr) {
-            console.warn('[OmegA chat] DB pull failed:', dbErr);
+          } catch (e) {
+            console.warn('[OmegA] DB pull failed:', e);
             rawContext = '(Memory bank unreachable — reasoning independently)';
           }
 
-          // Status: synthesizing...
           controller.enqueue(encoder.encode('data: {"type":"status","text":"synthesizing..."}\n\n'));
 
-          // 3. Assemble full OmegA prompt block
-          const conversationContext = history?.length 
-            ? `\n━━━ SESSION CONVERSATION HISTORY ━━━\n\n` + 
+          const conversationContext = history?.length
+            ? `\n━━━ SESSION CONVERSATION HISTORY ━━━\n\n` +
               history.map(m => `[${m.role === 'omega' ? 'OmegA' : 'User'}]: ${m.text}`).join('\n\n') +
               `\n\n━━━ END HISTORY ━━━\n`
             : '';
-          
-          const computeContext = `\n\n[COMPUTE CONTEXT: You are running on ${process.env.ANTHROPIC_API_KEY ? "Claude 3.5 Sonnet (Fallback)" : "OmegA Gateway"}.]`
-          const system = `${SYNTHESIS_DIRECTIVE}${computeContext}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}`;
 
-          // 4. Proxy to gateway (main) or anthropic (fallback)
+          const system = `${SYNTHESIS_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}`;
+
+          // ── Provider waterfall ──────────────────────────────────────────
+          // 1. Vercel AI Gateway (grok-3-fast, $5 free credits)
+          // 2. xAI direct       (grok-3-fast, pure credit, no daily cap)
+          // 3. Gemini Flash     (key rotation across 3 keys, free tier)
+
           let responseStream: ReadableStream;
-          // (provider moved out)
 
-          try {
-            const upstream = await fetchGateway(JSON.stringify({
-              user,
-              history: history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [],
-              namespace: 'synthesis',
-              use_memory: false,
-              temperature: 0.85,
-              mode: 'omega',
-              system,
-              stream: true
-            }));
-            
-            if (!upstream.ok) throw new Error(`Gateway: ${upstream.status}`);
-            if (!upstream.body) throw new Error("Gateway empty body");
-            responseStream = upstream.body;
-            
-          } catch (err) {
-            const geminiKey = process.env.GEMINI_API_KEY ?? process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-            if (geminiKey) {
-              console.warn('[OmegA chat] Gemini fallback active:', err);
-              provider = "gemini-fallback";
-              const genai = new GoogleGenAI({ apiKey: geminiKey });
-              const geminiHistory = (history || []).map(h => ({
-                role: h.role === "omega" ? "model" : "user",
-                parts: [{ text: h.text }],
-              }));
-              const chat = genai.chats.create({
-                model: "gemini-2.5-flash",
-                config: { systemInstruction: system, temperature: 0.85, maxOutputTokens: 4096 },
-                history: geminiHistory,
-              });
-              const geminiStream = await chat.sendMessageStream({ message: user });
-              responseStream = new ReadableStream({
-                async start(ctrl) {
-                  for await (const chunk of geminiStream) {
-                    const text = chunk.text ?? '';
-                    if (text) ctrl.enqueue(encoder.encode(text));
-                  }
-                  ctrl.close();
-                }
-              });
-            } else if (process.env.ANTHROPIC_API_KEY) {
-              console.warn('[OmegA chat] Anthropic fallback active:', err);
-              provider = "anthropic-fallback";
-              const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-              const hist: Anthropic.MessageParam[] = history?.map(h => ({ role: h.role === "omega" ? "assistant" : "user", content: h.text })) || [];
-              hist.push({ role: "user", content: user });
-              const anthRes = await anthropic.messages.create({
-                model: "claude-3-5-sonnet-latest",
-                max_tokens: 4096,
-                system,
-                messages: hist,
-                stream: true
-              });
-              responseStream = new ReadableStream({
-                async start(ctrl) {
-                  for await (const chunk of anthRes) {
-                    if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-                      ctrl.enqueue(encoder.encode(chunk.delta.text));
-                    }
-                  }
-                  ctrl.close();
-                }
-              });
-            } else {
-              throw err;
+          const providers: Array<{ name: string; fn: () => Promise<ReadableStream> }> = [
+            { name: 'vercel-gateway', fn: () => tryVercelGateway(encoder, system, user, history) },
+            { name: 'xai-direct',    fn: () => tryXaiDirect(encoder, system, user, history) },
+            { name: 'gemini-flash',  fn: () => tryGemini(encoder, system, user, history) },
+          ];
+
+          let lastErr: unknown;
+          responseStream = null!;
+
+          for (const p of providers) {
+            try {
+              responseStream = await p.fn();
+              provider = p.name;
+              break;
+            } catch (e) {
+              console.warn(`[OmegA] ${p.name} failed:`, e);
+              lastErr = e;
             }
           }
 
-          // 5. Pipe tokens through and capture for persistent history
-          let fullResponse = "";
+          if (!responseStream) throw lastErr ?? new Error('All providers failed');
+
+          // ── Pipe & persist ───────────────────────────────────────────────
+          let fullResponse = '';
           const reader = responseStream.getReader();
           while (true) {
             const { value, done } = await reader.read();
@@ -380,16 +368,15 @@ export async function POST(req: NextRequest) {
           }
           fullResponse += decoder.decode();
 
-          // Save history asynchronously
           if (dbUrl && finalSessionId && fullResponse) {
             const db = neon(dbUrl);
             db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'omega', ${fullResponse})`
-              .catch(e => console.error('[OmegA chat db end error]', e));
+              .catch(e => console.error('[OmegA] DB save error', e));
           }
 
           controller.close();
         } catch (err) {
-          console.error('[OmegA chat stream error]', err);
+          console.error('[OmegA] Stream error', err);
           controller.error(err);
         }
       }
@@ -399,13 +386,12 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Session-Id': finalSessionId || '',
-        'X-Provider': provider
+        'X-Provider': provider,
       }
     });
 
   } catch (err) {
-    console.error('[OmegA chat POST error]', err);
+    console.error('[OmegA] POST error', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
-
