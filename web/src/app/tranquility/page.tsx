@@ -216,7 +216,8 @@ export default function Tranquility() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
     if (!SR) return;
-    const r = new SR() as SpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const r = new SR() as any;
     r.continuous = false;
     r.interimResults = true;
     r.lang = 'en-US';
