@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { chatStream } from '@/lib/api';
 import { useVoiceEngine } from '@/hooks/useVoiceEngine';
 import Sidebar from '@/components/Sidebar/Sidebar';
@@ -41,6 +42,7 @@ export default function Home() {
   const [textInput, setTextInput]     = useState('');
   const [showText, setShowText]       = useState(false);
   const [processing, setProcessing]   = useState(false);
+  const [voiceMode, setVoiceMode]     = useState(true);
 
   const pendingTTS = useRef<string | null>(null);
   const feedRef    = useRef<HTMLDivElement>(null);
@@ -76,7 +78,7 @@ export default function Home() {
     let fullReply = '';
     try {
       const res = await chatStream(
-        { user: text, history, sessionId: sessionId ?? undefined },
+        { user: text, history, sessionId: sessionId ?? undefined, voiceMode },
         chunk => {
           fullReply += chunk;
           setMessages(prev => {
@@ -114,7 +116,7 @@ export default function Home() {
     }
   }, [processing, sessionId, refreshSessions]);
 
-  const voice = useVoiceEngine({ onTranscript: sendMessage });
+  const voice = useVoiceEngine({ onTranscript: sendMessage, useWhisper: true });
   const speakTextRef = useRef(voice.speakText);
   speakTextRef.current = voice.speakText;
 
@@ -183,6 +185,12 @@ export default function Home() {
             <span className={s.brandName}>OmegA</span>
           </div>
           <div className={s.topRight}>
+            <Link href="/tranquility" style={{ fontSize: '0.75rem', color: 'var(--dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
+              TRANQUILITY
+            </Link>
+            <Link href="/research" style={{ fontSize: '0.75rem', color: 'var(--dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
+              RESEARCH
+            </Link>
             {lastProvider && <span className={s.badge}>{lastProvider.split('-')[0]}</span>}
             <span className={`${s.dot} ${vs === 'thinking' ? s.dotThink : vs !== 'dormant' ? s.dotLive : ''}`} />
           </div>
@@ -240,6 +248,14 @@ export default function Home() {
               <button className={s.typeBtn} onClick={() => setShowText(true)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Type
+              </button>
+              <button
+                className={s.typeBtn}
+                onClick={() => setVoiceMode(v => !v)}
+                title={voiceMode ? 'Voice mode on' : 'Voice mode off'}
+                style={{ opacity: voiceMode ? 1 : 0.5 }}
+              >
+                {voiceMode ? '🎙 Voice' : '💬 Text'}
               </button>
               <button className={`${s.micBtn} ${vs !== 'dormant' ? s.micActive : ''}`} onClick={voice.toggle} aria-label="Toggle voice">
                 {vs === 'dormant'

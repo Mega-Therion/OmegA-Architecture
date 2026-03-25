@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PolicyConfig",
+  "description": "OmegA governance policy configuration.",
+  "type": "object",
+  "required": ["policy_id", "name", "version", "risk_threshold", "evidence_threshold", "verifier_threshold"],
+  "properties": {
+    "policy_id": { "type": "string" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "risk_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+    "evidence_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+    "verifier_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+    "capability_allowlist": { "type": "array", "items": { "type": "string" } },
+    "capability_denylist": { "type": "array", "items": { "type": "string" } },
+    "action_escalation": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "environment": { "type": "string" },
+    "auto_approve_below": { "type": "number", "minimum": 0, "maximum": 1 },
+    "human_required_above": { "type": "number", "minimum": 0, "maximum": 1 },
+    "max_tokens": { "type": "integer", "minimum": 1 },
+    "blocked_patterns": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "number" }
+  }
+}

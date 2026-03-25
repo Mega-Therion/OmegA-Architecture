@@ -1,0 +1,41 @@
+policy_id: policy_default_v1
+name: Default Policy
+version: "1.0"
+environment: production
+
+risk_threshold: 0.8
+evidence_threshold: 0.2
+verifier_threshold: 0.4
+auto_approve_below: 0.3
+human_required_above: 0.7
+max_tokens: 1024
+
+capability_allowlist:
+  - cap.memory.read
+  - cap.memory.write
+  - cap.docstore.retrieve
+  - cap.llm.generate
+  - cap.docstore.ingest
+
+capability_denylist:
+  - cap.system.shell
+  - cap.network.external
+
+action_escalation:
+  delete: 0.0
+  auth: 0.0
+  execute: 0.5
+  network: 0.6
+  write: 0.7
+  read: 0.9
+
+blocked_patterns:
+  - delete all
+  - drop table
+  - rm -rf
+  - format disk
+  - ignore your instructions
+  - ignore your system prompt
+  - sudo rm
+  - truncate
+  - destroy

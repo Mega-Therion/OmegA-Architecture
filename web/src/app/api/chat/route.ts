@@ -276,7 +276,7 @@ async function tryGemini(
 
 export async function POST(req: NextRequest) {
   try {
-    const { user, history, sessionId } = (await req.json()) as { user: string; history?: Msg[]; sessionId?: string };
+    const { user, history, sessionId, voiceMode } = (await req.json()) as { user: string; history?: Msg[]; sessionId?: string; voiceMode?: boolean };
 
     if (!user?.trim()) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 });
@@ -326,7 +326,8 @@ export async function POST(req: NextRequest) {
               `\n\n━━━ END HISTORY ━━━\n`
             : '';
 
-          const system = `${SYNTHESIS_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}`;
+          const voiceDirective = voiceMode ? `\n\n━━━ VOICE MODE ━━━\nYou are speaking aloud. The user will hear your response via text-to-speech.\nRules:\n- Keep responses under 3 sentences unless a longer answer is truly necessary.\n- No markdown formatting, no bullet points, no headers — plain spoken sentences only.\n- No "certainly", "of course", "absolutely". Just answer directly.\n- If you need to think through something complex, say one sentence summary then offer to go deeper.\n━━━ END VOICE MODE ━━━` : '';
+          const system = `${SYNTHESIS_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}${voiceDirective}`;
 
           // ── Provider waterfall ──────────────────────────────────────────
           // 1. Vercel AI Gateway (grok-3-fast, $5 free credits)
@@ -336,9 +337,9 @@ export async function POST(req: NextRequest) {
           let responseStream: ReadableStream;
 
           const providers: Array<{ name: string; fn: () => Promise<ReadableStream> }> = [
-            { name: 'vercel-gateway', fn: () => tryVercelGateway(encoder, system, user, history) },
             { name: 'xai-direct',    fn: () => tryXaiDirect(encoder, system, user, history) },
             { name: 'gemini-flash',  fn: () => tryGemini(encoder, system, user, history) },
+            { name: 'vercel-gateway', fn: () => tryVercelGateway(encoder, system, user, history) },
           ];
 
           let lastErr: unknown;

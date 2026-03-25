@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RunMetrics",
+  "description": "Aggregated metrics extracted from a single OmegA runtime execution.",
+  "type": "object",
+  "required": ["run_id", "total_latency_ms"],
+  "properties": {
+    "run_id": { "type": "string" },
+    "total_latency_ms": { "type": "number" },
+    "stage_latencies": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "retrieval_score": { "type": "number" },
+    "verification_V": { "type": "number" },
+    "provider": { "type": "string" },
+    "token_count": { "type": "integer" },
+    "gate_allowed": { "type": "boolean" }
+  }
+}

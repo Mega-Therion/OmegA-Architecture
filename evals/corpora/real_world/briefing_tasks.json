@@ -1,0 +1,54 @@
+[
+  {
+    "corpus_version": "1.0",
+    "id": "br_001",
+    "query": "Generate a briefing on AEGIS governance capabilities for a technical stakeholder",
+    "expected_sections": [
+      "Risk scoring formula and thresholds",
+      "Action classification system (READ, WRITE, EXECUTE, DELETE, NETWORK, AUTH)",
+      "Auto-approval vs human-approval decision flow",
+      "Audit logging and compliance trail",
+      "Blocked pattern detection"
+    ],
+    "evidence_required": true
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "br_002",
+    "query": "Prepare a briefing on OmegA's identity continuity guarantees for a security review",
+    "expected_sections": [
+      "Phylactery hash chain integrity",
+      "Canonical memory immutability",
+      "Kappa continuity metric",
+      "Doctrine preservation across sessions",
+      "Tamper detection mechanism"
+    ],
+    "evidence_required": true
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "br_003",
+    "query": "Summarize MYELIN's document ingestion and retrieval pipeline for a new developer",
+    "expected_sections": [
+      "Document ingestion with hash dedup and versioning",
+      "Chunk extraction with section labeling",
+      "TF-IDF lexical scoring fallback",
+      "Hybrid retrieval with context expansion",
+      "Source provenance tracking"
+    ],
+    "evidence_required": true
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "br_004",
+    "query": "Brief the team on ADCCL's anti-drift mechanisms and how they enforce truthfulness",
+    "expected_sections": [
+      "GoalContract scoping",
+      "Drift penalty J computation",
+      "Verification score V formula",
+      "ClaimBudget enforcement",
+      "Abstention policy and graceful degradation"
+    ],
+    "evidence_required": true
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TelemetryEvent",
+  "description": "A structured telemetry event emitted during OmegA runtime execution.",
+  "type": "object",
+  "required": ["event_id", "event_type", "run_id", "timestamp", "data"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": {
+      "type": "string",
+      "enum": ["stage_latency", "retrieval_score", "verifier_reject", "gate_deny", "approval_wait", "provider_failure", "continuity_recovery", "token_usage", "error"]
+    },
+    "run_id": { "type": "string" },
+    "timestamp": { "type": "number" },
+    "data": { "type": "object" }
+  }
+}

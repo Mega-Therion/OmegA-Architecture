@@ -1,0 +1,44 @@
+.root {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--void);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+}
+
+.title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--lavender);
+}
+
+.subtitle {
+  font-size: 0.78rem;
+  color: var(--dim);
+}
+
+.backLink {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.backLink:hover { color: var(--lavender); }
+
+.body {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

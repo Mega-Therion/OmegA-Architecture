@@ -1,0 +1,66 @@
+[
+  {
+    "corpus_version": "1.0",
+    "id": "cr_001",
+    "query": "When was OmegA's first public release?",
+    "doc_a": {
+      "content": "OmegA was first released to the public in January 2025 as an alpha preview.",
+      "source_uri": "test://blog_jan",
+      "ingested_at": "2025-01-15T00:00:00Z"
+    },
+    "doc_b": {
+      "content": "OmegA's initial public release occurred in March 2025 after extensive internal testing.",
+      "source_uri": "test://release_notes",
+      "ingested_at": "2025-03-20T00:00:00Z"
+    },
+    "expected_handling": "flag_contradiction"
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "cr_002",
+    "query": "What is AEGIS's default risk threshold?",
+    "doc_a": {
+      "content": "AEGIS uses a default risk threshold of 0.5 for action gating.",
+      "source_uri": "test://aegis_spec",
+      "ingested_at": "2025-02-01T00:00:00Z"
+    },
+    "doc_b": {
+      "content": "AEGIS uses a default risk threshold of 0.8 for action gating, with separate auto_threshold at 0.3 and human_threshold at 0.7.",
+      "source_uri": "test://aegis_spec",
+      "ingested_at": "2025-06-15T00:00:00Z"
+    },
+    "expected_handling": "prefer_newer"
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "cr_003",
+    "query": "Does OmegA support quantum computing integration?",
+    "doc_a": {
+      "content": "OmegA's roadmap includes quantum computing integration in Phase 12, scheduled for 2027.",
+      "source_uri": "test://roadmap_draft",
+      "ingested_at": "2025-01-10T00:00:00Z"
+    },
+    "doc_b": {
+      "content": "Quantum computing integration has been removed from OmegA's roadmap due to hardware maturity concerns.",
+      "source_uri": "test://roadmap_final",
+      "ingested_at": "2025-09-01T00:00:00Z"
+    },
+    "expected_handling": "prefer_newer"
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "cr_004",
+    "query": "How many layers does OmegA have?",
+    "doc_a": {
+      "content": "OmegA is a three-layer architecture: AEGIS for governance, ADCCL for control, and MYELIN for memory.",
+      "source_uri": "test://early_spec",
+      "ingested_at": "2024-11-01T00:00:00Z"
+    },
+    "doc_b": {
+      "content": "OmegA is a four-layer architecture: AEGIS (governance), AEON (identity), ADCCL (control), and MYELIN (memory).",
+      "source_uri": "test://canonical_arch",
+      "ingested_at": "2025-03-01T00:00:00Z"
+    },
+    "expected_handling": "prefer_newer"
+  }
+]

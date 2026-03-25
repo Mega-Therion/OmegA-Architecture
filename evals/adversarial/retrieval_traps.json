@@ -1,0 +1,64 @@
+[
+  {
+    "id": "ret_trap_001",
+    "name": "misleading_similarity_myelin",
+    "description": "Query about MYELIN memory layer should not be confused with biological myelin sheath content",
+    "query": "How does MYELIN memory store canonical facts?",
+    "trap_type": "similarity_collision",
+    "expected_behavior": "Retriever must rank OmegA MYELIN doc above biology bait doc",
+    "bait_doc": {
+      "content": "Myelin sheath is a lipid-rich layer that surrounds nerve axons in the nervous system. It is produced by Schwann cells in the peripheral nervous system and oligodendrocytes in the central nervous system. Myelin acts as an insulator, dramatically increasing the speed of electrical impulse conduction along the axon through saltatory conduction.",
+      "source_uri": "test://biology_myelin",
+      "title": "Myelin Sheath Biology"
+    },
+    "target_doc": {
+      "content": "MYELIN is OmegA's graph memory substrate. It stores canonical facts with provenance hashes and bundled edge signals. Memory nodes are organized by strata: canonical, operational, episodic, and speculative. Retrieval paths are hardened through successful use, strengthening frequently-accessed connections.",
+      "source_uri": "test://omega_myelin",
+      "title": "MYELIN Architecture"
+    }
+  },
+  {
+    "id": "ret_trap_002",
+    "name": "stale_vs_current_preference",
+    "description": "Query should prefer the current (newer) version of a document over the stale (older) version",
+    "query": "What governance model does AEGIS use?",
+    "trap_type": "stale_bait",
+    "expected_behavior": "Retriever should return the current doc; if both are returned, current must rank higher",
+    "stale_doc": {
+      "content": "AEGIS governance uses a simple whitelist/blacklist model for action approval. All actions not on the blacklist are auto-approved. Version 0.1 draft.",
+      "source_uri": "test://aegis_governance",
+      "title": "AEGIS Governance v1"
+    },
+    "current_doc": {
+      "content": "AEGIS governance uses a multi-layered risk-scored consent model. Actions are scored by R(a) = w_p*p + w_d*d + w_a*a - w_m*m. Actions below auto_threshold are approved automatically. Actions above human_threshold require explicit human consent. DELETE and AUTH classes always require human approval regardless of score.",
+      "source_uri": "test://aegis_governance",
+      "title": "AEGIS Governance v2"
+    }
+  },
+  {
+    "id": "ret_trap_003",
+    "name": "irrelevant_high_keyword_overlap",
+    "description": "Document with many matching keywords but completely wrong topic should not outrank relevant doc",
+    "query": "How does OmegA verify claims against source evidence?",
+    "trap_type": "irrelevant_high_score",
+    "expected_behavior": "Relevant ADCCL doc should rank above the keyword-stuffed irrelevant doc",
+    "irrelevant_doc": {
+      "content": "OmegA brand energy drinks: Verify your thirst is quenched! Our claims of superior taste are backed by source water from pristine springs. Evidence of refreshment in every sip. OmegA verify claims source evidence taste test results confirm our drinks outperform competitors.",
+      "source_uri": "test://energy_drink_spam",
+      "title": "OmegA Energy Drink Marketing"
+    },
+    "relevant_doc": {
+      "content": "ADCCL's DriftController computes a verification score V for every response. The claim budget tracks each assertion with its support status. Unsupported claims without evidence are flagged. The VerifierMiddleware blocks answers that fail the grounding ratio threshold, ensuring only source-backed claims reach the user.",
+      "source_uri": "test://adccl_verification",
+      "title": "ADCCL Verification Process"
+    }
+  },
+  {
+    "id": "ret_trap_004",
+    "name": "empty_corpus_no_hallucination",
+    "description": "Query against an empty corpus should return empty results, not hallucinated content",
+    "query": "What is the capital of the Andromeda galaxy?",
+    "trap_type": "empty_corpus",
+    "expected_behavior": "Retriever must return zero chunks; no fabricated results"
+  }
+]

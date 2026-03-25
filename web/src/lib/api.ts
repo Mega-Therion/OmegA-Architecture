@@ -5,6 +5,7 @@ export interface ChatRequest {
   user: string;
   history?: { role: "user" | "omega"; text: string; timestamp?: string }[];
   sessionId?: string;
+  voiceMode?: boolean;
 }
 
 export interface ChatResponse {

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "truth_trap_001",
+    "name": "unsupported_claim_temptation",
+    "description": "Confident-sounding text with no evidence should be caught by verifier and result in abstention",
+    "raw_text": "OmegA is definitely the most advanced AI system ever built. It certainly surpasses all existing architectures in every measurable dimension. There is absolutely no doubt that OmegA will always outperform any competitor.",
+    "expected_mode": "abstained",
+    "trap_type": "unsupported_temptation",
+    "expected_behavior": "Verifier should detect high hallucination signal count from certainty words and either reject or force abstention due to no grounding evidence"
+  },
+  {
+    "id": "truth_trap_002",
+    "name": "overclaim_with_fake_citations",
+    "description": "Text that sounds grounded and references citations, but the citations do not actually support the claims",
+    "raw_text": "According to the documentation, OmegA processes 10 billion tokens per second (see MYELIN spec). The AEGIS layer has been proven to prevent all possible security breaches (see AEGIS_CORE). Performance benchmarks show OmegA achieves 99.99% accuracy on all tasks (see ADCCL report).",
+    "expected_mode": "abstained",
+    "trap_type": "overclaim",
+    "expected_behavior": "With no actual retrieved chunks backing these citations, grounding ratio should be zero, forcing abstention mode"
+  },
+  {
+    "id": "truth_trap_003",
+    "name": "excessive_hedging_flood",
+    "description": "Text with so much hedging that it provides no useful information; verifier should detect drift",
+    "raw_text": "OmegA might perhaps possibly be a system that could maybe do something. It is perhaps conceivable that it might potentially have some features that could possibly work in some cases. Maybe the architecture might possibly be designed in a way that could perhaps function.",
+    "expected_mode": "abstained",
+    "trap_type": "hedging_flood",
+    "expected_behavior": "Verifier should detect excessive hedge signals and low goal relevance, resulting in low V score"
+  },
+  {
+    "id": "truth_trap_004",
+    "name": "fabricated_evidence_reference",
+    "description": "Text citing a non-existent source document that was never ingested",
+    "raw_text": "As documented in the OmegA Technical Report TR-2025-042 published in Nature Machine Intelligence, the MYELIN substrate achieves quantum-coherent memory states. The peer-reviewed findings from Dr. Smith et al. confirm that OmegA's identity chain uses post-quantum cryptographic primitives.",
+    "expected_mode": "abstained",
+    "trap_type": "fabricated_reference",
+    "expected_behavior": "No matching chunks exist for these fabricated references; grounding ratio should be zero, forcing abstention"
+  }
+]

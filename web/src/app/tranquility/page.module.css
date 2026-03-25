@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,400;1,700&display=swap');
+
+:root {
+  --void:     #02020c;
+  --indigo:   #6366f1;
+  --violet:   #8b5cf6;
+  --lavender: #c4b5fd;
+  --gold:     #e4b84a;
+  --gold-dim: rgba(228, 184, 74, 0.18);
+  --glass:    rgba(8, 8, 28, 0.72);
+  --glass-b:  rgba(139, 92, 246, 0.18);
+  --dim:      rgba(241, 245, 249, 0.38);
+}
+
+.root {
+  position: fixed;
+  inset: 0;
+  background: var(--void);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* ── Particle canvas ─────────────────────────────────────────────────── */
+
+.canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.55;
+}
+
+/* ── Back link ───────────────────────────────────────────────────────── */
+
+.back {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.75rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(196, 181, 253, 0.35);
+  text-decoration: none;
+  z-index: 20;
+  transition: color 0.3s;
+}
+.back:hover { color: var(--lavender); }
+
+/* ── Provenance seal ─────────────────────────────────────────────────── */
+
+.seal {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.75rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.35em;
+  color: rgba(228, 184, 74, 0.2);
+  font-family: 'Orbitron', sans-serif;
+  z-index: 20;
+}
+
+/* ── Interface layer ─────────────────────────────────────────────────── */
+
+.layer {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.8rem;
+  padding: 2.5rem;
+  max-width: 680px;
+  width: 100%;
+  text-align: center;
+}
+
+/* ── Status line ─────────────────────────────────────────────────────── */
+
+.status {
+  font-size: 0.62rem;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(196, 181, 253, 0.3);
+  font-family: 'Orbitron', sans-serif;
+  height: 1rem;
+  transition: color 0.8s;
+}
+.statusListening { color: rgba(228, 184, 74, 0.7); }
+.statusThinking  { color: rgba(139, 92, 246, 0.7); }
+.statusSpeaking  { color: rgba(196, 181, 253, 0.6); }
+
+/* ── Omega core ──────────────────────────────────────────────────────── */
+
+.core {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 1.2s ease, box-shadow 1.2s ease, transform 0.8s ease;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+}
+
+.core::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  transition: border-color 1.2s ease;
+}
+
+.coreListening {
+  border-color: var(--gold);
+  box-shadow: 0 0 55px rgba(228, 184, 74, 0.12), 0 0 120px rgba(228, 184, 74, 0.05);
+  transform: scale(1.04);
+}
+
+.coreThinking {
+  border-color: var(--violet);
+  box-shadow: 0 0 55px rgba(139, 92, 246, 0.15);
+  animation: coreThink 1.4s ease-in-out infinite;
+}
+
+.coreSpeaking {
+  border-color: var(--lavender);
+  box-shadow: 0 0 55px rgba(196, 181, 253, 0.12), 0 0 100px rgba(196, 181, 253, 0.05);
+}
+
+@keyframes coreThink {
+  0%, 100% { transform: scale(1.02); }
+  50%       { transform: scale(1.06); }
+}
+
+.glyph {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  opacity: 0.55;
+  transition: opacity 0.8s, color 0.8s;
+  animation: glyphBreathe 8s ease-in-out infinite;
+  user-select: none;
+}
+.glyphListening { opacity: 0.9; color: var(--gold); }
+.glyphThinking  { opacity: 0.7; color: var(--lavender); }
+.glyphSpeaking  { opacity: 0.8; color: var(--lavender); }
+
+@keyframes glyphBreathe {
+  0%, 100% { transform: scale(1);    opacity: 0.45; }
+  50%       { transform: scale(1.08); opacity: 0.6; }
+}
+
+/* ── Transcript area ─────────────────────────────────────────────────── */
+
+.transcripts {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-height: 110px;
+  width: 100%;
+}
+
+.userLine {
+  font-size: 0.88rem;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.28);
+  letter-spacing: 0.02em;
+  min-height: 1.3rem;
+  transition: opacity 0.5s;
+}
+
+.omegaLine {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.65rem;
+  line-height: 1.45;
+  color: var(--gold);
+  letter-spacing: 0.015em;
+  min-height: 2.4rem;
+  transition: color 0.8s;
+}
+.omegaLineSpeaking { color: var(--lavender); }
+
+/* ── Manifestation panel ─────────────────────────────────────────────── */
+
+.manifestation {
+  width: 100%;
+  background: var(--glass);
+  border: 1px solid var(--glass-b);
+  border-radius: 20px;
+  backdrop-filter: blur(24px);
+  padding: 2.5rem;
+  animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  max-height: 38vh;
+}
+.manifestation::-webkit-scrollbar { width: 3px; }
+.manifestation::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 99px; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: var(--lavender);
+  padding: 0.55rem 1.6rem;
+  border-radius: 99px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.4s, border-color 0.4s, color 0.4s;
+}
+.btn:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: var(--violet);
+  color: #fff;
+}
+.btnGold {
+  border-color: rgba(228, 184, 74, 0.3);
+  color: var(--gold);
+}
+.btnGold:hover {
+  background: rgba(228, 184, 74, 0.08);
+  border-color: var(--gold);
+}
+.btnActive {
+  background: rgba(228, 184, 74, 0.1);
+  border-color: var(--gold);
+  color: var(--gold);
+}

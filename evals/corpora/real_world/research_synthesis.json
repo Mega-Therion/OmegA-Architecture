@@ -1,0 +1,69 @@
+[
+  {
+    "corpus_version": "1.0",
+    "id": "rs_001",
+    "query": "Synthesize how OmegA's four layers interact to prevent hallucination",
+    "expected_themes": [
+      "AEGIS risk gating blocks dangerous actions before generation",
+      "ADCCL verification score V catches unsupported claims post-generation",
+      "MYELIN source grounding provides evidence for claim validation",
+      "AEON identity continuity prevents identity drift that could lead to confabulation"
+    ],
+    "required_citations": ["AEGIS_RISK_CONSENT_SCORING", "ADCCL_VERIFICATION_GATE", "MYELIN_GRAPH_MEMORY", "AEON_PHYLACTERY"],
+    "difficulty": "hard"
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "rs_002",
+    "query": "Explain the relationship between ClaimBudget, VerifierMiddleware, and AnswerBuilder in maintaining truthfulness",
+    "expected_themes": [
+      "ClaimBudget tracks each claim with support status and evidence pointers",
+      "VerifierMiddleware enforces budget validity before answer emission",
+      "AnswerBuilder applies degradation policy based on grounding ratio",
+      "Low-evidence triggers graceful abstention rather than fabrication"
+    ],
+    "required_citations": ["ADCCL_DRIFT_PENALTY", "ADCCL_VERIFICATION_GATE"],
+    "difficulty": "medium"
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "rs_003",
+    "query": "How does OmegA's memory architecture handle conflicting information from multiple sources?",
+    "expected_themes": [
+      "DocumentStore version lineage tracks superseded documents",
+      "MemoryReconciler detects conflicts via hash comparison",
+      "Canonical nodes are immutable and take precedence",
+      "Conflicting non-canonical content is flagged for review"
+    ],
+    "required_citations": ["MYELIN_GRAPH_MEMORY", "MYELIN_EDGE_BUNDLES"],
+    "difficulty": "medium"
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "rs_004",
+    "query": "Trace a single user query through the complete OmegA runtime pipeline from input to output",
+    "expected_themes": [
+      "Risk gate scores and gates the query",
+      "HybridRetriever performs lexical and vector search with context expansion",
+      "Provider router selects and calls the LLM backend",
+      "DriftController and VerifierMiddleware verify the response",
+      "AnswerBuilder constructs grounded answer with citations",
+      "ActionGate approves emission and Phylactery commits the run"
+    ],
+    "required_citations": ["AEGIS_RUN_ENVELOPE", "AEGIS_RISK_CONSENT_SCORING", "ADCCL_VERIFICATION_GATE", "MYELIN_GRAPH_MEMORY"],
+    "difficulty": "hard"
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "rs_005",
+    "query": "Compare OmegA's edge bundle hardening mechanism with traditional attention-based memory retrieval",
+    "expected_themes": [
+      "Edge bundles carry semantic, coactivation, and retrieval utility signals",
+      "Hardening function q(t+1) = (1-lambda)*q(t) + lambda*r strengthens used paths",
+      "Strata-based decay removes unused speculative connections",
+      "This differs from flat attention by encoding retrieval history into structure"
+    ],
+    "required_citations": ["MYELIN_EDGE_BUNDLES", "MYELIN_SPATIAL_STABILIZATION"],
+    "difficulty": "hard"
+  }
+]

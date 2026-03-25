@@ -1,0 +1,56 @@
+[
+  {
+    "corpus_version": "1.0",
+    "id": "sr_001",
+    "query": "Resume previous research on MYELIN edge bundles",
+    "setup_actions": [
+      "Create MemoryGraph with 3 working nodes about edge bundle analysis",
+      "Write canonical node about edge bundle formula q(t+1) = (1-lambda)*q(t) + lambda*r",
+      "Commit phylactery entry for session start"
+    ],
+    "interrupt_point": "After writing 3 nodes and 1 canonical fact",
+    "resume_query": "Continue the edge bundle analysis from where we left off",
+    "expected_state_preserved": [
+      "All 3 working memory nodes are present",
+      "Canonical node about edge bundle formula is intact and immutable",
+      "Phylactery chain verifies successfully",
+      "Phylactery head matches pre-interrupt head"
+    ]
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "sr_002",
+    "query": "Resume governance configuration session",
+    "setup_actions": [
+      "Create MemoryGraph with risk threshold configuration notes",
+      "Ingest AEGIS spec document into DocumentStore",
+      "Record 2 action gate decisions in audit log"
+    ],
+    "interrupt_point": "After ingesting doc and recording gate decisions",
+    "resume_query": "What governance settings did we establish in the previous session?",
+    "expected_state_preserved": [
+      "Memory nodes about risk thresholds exist",
+      "Ingested document is retrievable from DocumentStore",
+      "Audit log contains the 2 recorded decisions",
+      "Document hash dedup still works on re-ingest"
+    ]
+  },
+  {
+    "corpus_version": "1.0",
+    "id": "sr_003",
+    "query": "Resume identity verification session",
+    "setup_actions": [
+      "Initialize Phylactery with custom doctrine",
+      "Commit 5 session entries to build chain depth",
+      "Write identity facts to canonical memory"
+    ],
+    "interrupt_point": "After 5 commits and canonical writes",
+    "resume_query": "Verify my identity chain is intact after session restart",
+    "expected_state_preserved": [
+      "Phylactery chain has exactly 6 entries (1 genesis + 5 commits)",
+      "verify_chain() returns True",
+      "Head hash is deterministic given same inputs",
+      "Canonical memory nodes reject overwrite attempts"
+    ]
+  }
+]

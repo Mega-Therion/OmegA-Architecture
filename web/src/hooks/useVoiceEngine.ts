@@ -11,6 +11,7 @@ export interface VoiceEngineOptions {
   followUpWindowMs?: number;
   ttsUrl?: string;
   autoStart?: boolean;
+  useWhisper?: boolean;
 }
 
 export interface VoiceEngineReturn {
@@ -53,6 +54,7 @@ export function useVoiceEngine({
   followUpWindowMs = FOLLOW_UP_MS,
   ttsUrl = '/api/tts',
   autoStart = true,
+  useWhisper = false,
 }: VoiceEngineOptions): VoiceEngineReturn {
   const [voiceState, setVoiceState] = useState<VoiceState>('dormant');
   const [interim, setInterim] = useState('');
@@ -73,6 +75,11 @@ export function useVoiceEngine({
   const ttsAnimRef = useRef<number | null>(null);
   const mutedRef = useRef(false);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Whisper recording refs (only used when useWhisper=true)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stale-closure avoidance: callbacks read stateRef instead of voiceState
   const setState = useCallback((s: VoiceState) => {
@@ -291,6 +298,81 @@ export function useVoiceEngine({
     try { r.start(); } catch { /* already running */ }
   }, [stopRecognition, stopMicAnalyzer, setState, startMicAnalyzer, onTranscript, clearFollowUp]);
 
+  // ── Whisper recording ─────────────────────────────────────────────────────
+  const startWhisperRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunksRef.current = [];
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        audioChunksRef.current = [];
+        if (blob.size < 1000) { setState('listening'); startWhisperRecording(); return; }
+
+        setState('thinking');
+        const form = new FormData();
+        form.append('audio', blob, 'recording.webm');
+        try {
+          const res = await fetch('/api/stt', { method: 'POST', body: form });
+          const data = await res.json();
+          if (data.text?.trim()) {
+            onTranscript(data.text.trim());
+          } else {
+            setState('listening');
+            startWhisperRecording();
+          }
+        } catch {
+          setState('listening');
+          startWhisperRecording();
+        }
+      };
+
+      recorder.start(100); // collect chunks every 100ms
+
+      // Silence detection via analyser
+      const ctx = getAudioCtx();
+      const src = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      src.connect(analyser);
+      analyserRef.current = analyser;
+      startLevelTick(analyser, setMicLevel, micAnimRef);
+
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      const checkSilence = () => {
+        analyser.getByteFrequencyData(buf);
+        const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
+        if (avg < 5) {
+          if (!silenceTimerRef.current) {
+            silenceTimerRef.current = setTimeout(() => {
+              silenceTimerRef.current = null;
+              if (mediaRecorderRef.current?.state === 'recording') {
+                stopMicAnalyzer();
+                mediaRecorderRef.current.stop();
+              }
+            }, 1500);
+          }
+        } else {
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+          }
+        }
+        if (stateRef.current === 'listening') requestAnimationFrame(checkSilence);
+      };
+      requestAnimationFrame(checkSilence);
+    } catch (e) {
+      console.warn('[VoiceEngine] Whisper recording failed:', e);
+    }
+  }, [getAudioCtx, onTranscript, setState, stopMicAnalyzer]);
+
   // ── Public controls ───────────────────────────────────────────────────────
   const wakeUp = useCallback(() => {
     clearFollowUp();
@@ -301,25 +383,59 @@ export function useVoiceEngine({
   const toggle = useCallback(() => {
     if (stateRef.current === 'dormant') {
       mutedRef.current = false;
-      wakeUp();
-      startRecognition();
+      if (useWhisper) {
+        setState('listening');
+        startWhisperRecording();
+      } else {
+        wakeUp();
+        startRecognition();
+      }
     } else {
       mutedRef.current = true;
-      stopRecognition();
+      if (useWhisper) {
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+        if (mediaRecorderRef.current?.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        mediaRecorderRef.current = null;
+      } else {
+        stopRecognition();
+      }
       stopSpeaking();
       stopMicAnalyzer();
       clearFollowUp();
       setState('dormant');
     }
-  }, [wakeUp, startRecognition, stopRecognition, stopSpeaking, stopMicAnalyzer, clearFollowUp, setState]);
+  }, [useWhisper, wakeUp, startRecognition, startWhisperRecording, stopRecognition, stopSpeaking, stopMicAnalyzer, clearFollowUp, setState]);
 
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hasSR = typeof window !== 'undefined' &&
       !!((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition);
-    setSupported(hasSR);
-    if (!hasSR || !autoStart) return;
+    setSupported(useWhisper ? true : hasSR);
+    if (!autoStart) return;
+
+    if (useWhisper) {
+      const t = setTimeout(() => {
+        mutedRef.current = false;
+        setState('listening');
+        startWhisperRecording();
+      }, 800);
+      return () => {
+        clearTimeout(t);
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+        mutedRef.current = true;
+        stopMicAnalyzer();
+        clearFollowUp();
+      };
+    }
+
+    if (!hasSR) return;
 
     const t = setTimeout(() => {
       mutedRef.current = false;
@@ -340,10 +456,10 @@ export function useVoiceEngine({
   }, []);
 
   useEffect(() => {
-    if (voiceState === 'listening' || voiceState === 'followup') {
+    if (!useWhisper && (voiceState === 'listening' || voiceState === 'followup')) {
       if (!recogRef.current) startRecognition();
     }
-  }, [voiceState, startRecognition]);
+  }, [useWhisper, voiceState, startRecognition]);
 
   return { voiceState, interim, micLevel, ttsLevel, supported, toggle, speakText, stopSpeaking, wakeUp };
 }

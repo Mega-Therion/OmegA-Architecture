@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ApprovalDecision",
+  "description": "A human or policy decision on an approval request.",
+  "type": "object",
+  "required": ["decision_id", "request_id", "status", "decided_by", "decided_at"],
+  "properties": {
+    "decision_id": { "type": "string", "format": "uuid" },
+    "request_id": { "type": "string", "format": "uuid" },
+    "status": { "type": "string", "enum": ["approved", "denied"] },
+    "decided_by": { "type": "string" },
+    "reason": { "type": "string" },
+    "modifications": { "type": "object" },
+    "decided_at": { "type": "number" }
+  }
+}
