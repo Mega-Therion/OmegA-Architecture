@@ -1,0 +1,33 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "summary": "OmegA — Sovereign AI by Ryan Wayne Yett",
+          "examplePhrases": [
+            "Alexa, ask OmegA what is the Phylactery",
+            "Alexa, ask OmegA about nuclear energy",
+            "Alexa, open OmegA"
+          ],
+          "name": "OmegA",
+          "description": "OmegA is a sovereign AI architecture. Ask it anything."
+        }
+      },
+      "isAvailableWorldwide": false,
+      "testingInstructions": "Say 'Alexa, open OmegA' or 'Alexa, ask OmegA' followed by a question.",
+      "category": "KNOWLEDGE_AND_TRIVIA",
+      "distributionCountries": ["US"]
+    },
+    "apis": {
+      "custom": {}
+    },
+    "manifestVersion": "1.0",
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "isChildDirected": false,
+      "usesPersonalInfo": false
+    }
+  }
+}

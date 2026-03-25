@@ -1,0 +1,49 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "omega",
+      "intents": [
+        {
+          "name": "AskOmegaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "{query}",
+            "ask {query}",
+            "tell me {query}",
+            "what is {query}",
+            "what do you think about {query}",
+            "explain {query}",
+            "who is {query}",
+            "how does {query}",
+            "what about {query}",
+            "talk to me about {query}",
+            "I want to know about {query}",
+            "can you tell me {query}",
+            "omega {query}"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ]
+    }
+  }
+}
