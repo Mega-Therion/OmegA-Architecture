@@ -122,7 +122,8 @@ function playPCM(base64: string) {
 export default function Tranquility() {
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const stateRef   = useRef<VoiceState>('dormant');
-  const recogRef   = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recogRef   = useRef<any>(null);
   const audioRef   = useRef<HTMLAudioElement | null>(null);
 
   const [voiceState, setVoiceState]         = useState<VoiceState>('dormant');
