@@ -3,12 +3,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import s from './page.module.css';
+import { getSpeechRecognitionConstructor, type SpeechRecognitionInstance } from '@/lib/speechRecognition';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type VoiceState = 'offline' | 'monitoring' | 'awake' | 'thinking' | 'grounded';
 
 interface HistoryMsg { role: 'user' | 'omega'; text: string; }
+
+interface RotatingPoints {
+  rotation: { y: number };
+}
 
 // ── PCM → WAV ──────────────────────────────────────────────────────────────────
 
@@ -32,13 +37,12 @@ function buildWav(base64: string): string {
 
 export default function Home() {
   const canvasRef       = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recogRef        = useRef<any>(null);
+  const recogRef        = useRef<SpeechRecognitionInstance | null>(null);
   const audioRef        = useRef<HTMLAudioElement | null>(null);
   const syncRef         = useRef<ReturnType<typeof setInterval> | null>(null);
   const historyRef      = useRef<HistoryMsg[]>([]);
   const rotSpeedRef     = useRef(0.0004);
-  const pointsRef       = useRef<any>(null);
+  const pointsRef       = useRef<RotatingPoints | null>(null);
   const stateRef        = useRef<VoiceState>('offline');
 
   const [started,        setStarted]        = useState(false);
@@ -48,8 +52,6 @@ export default function Home() {
   const [ripple,         setRipple]          = useState(false);
   const [showDistill,    setShowDistill]     = useState(false);
   const [showTheme,      setShowTheme]       = useState(false);
-  const [manifestBg,     setManifestBg]      = useState('');
-  const [manifestVis,    setManifestVis]     = useState(false);
   const [projection,     setProjection]      = useState('');
   const [projectionVis,  setProjectionVis]   = useState(false);
   const [canvasOpacity,  setCanvasOpacity]   = useState(0.3);
@@ -106,13 +108,11 @@ export default function Home() {
   }, [started]);
 
   // ── Speech recognition ───────────────────────────────────────────────────────
-  const initSpeech = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).webkitSpeechRecognition ?? (window as any).SpeechRecognition;
+  function initSpeech() {
+    const SR = getSpeechRecognitionConstructor();
     if (!SR) { setStatusText('API Unsupported'); return; }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const r = new SR() as any;
+    const r = new SR();
     r.continuous = true;
     r.interimResults = true;
     r.lang = 'en-US';
@@ -125,8 +125,7 @@ export default function Home() {
       }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    r.onresult = (event: any) => {
+    r.onresult = (event) => {
       let interim = '', final = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) final += event.results[i][0].transcript;
@@ -150,9 +149,9 @@ export default function Home() {
     };
 
     r.onerror = () => {};
-    r.onend = () => { setTimeout(() => { try { r.start(); } catch (_) {} }, 100); };
-    try { r.start(); } catch (_) {}
-  }, [setState]);
+    r.onend = () => { setTimeout(() => { try { r.start(); } catch { /* ignore */ } }, 100); };
+    try { r.start(); } catch { /* ignore */ }
+  }
 
   // ── Wake ─────────────────────────────────────────────────────────────────────
   const wakeUp = useCallback(() => {
@@ -204,7 +203,7 @@ export default function Home() {
           if (syncRef.current) clearInterval(syncRef.current);
         }
       }, delay);
-    } catch (_) {}
+    } catch {}
   }, [stopSpeaking]);
 
   // ── Apply resonance to visuals ────────────────────────────────────────────────
@@ -264,7 +263,7 @@ export default function Home() {
       setState('awake');
       setStatusText('Awaiting Input...');
       await speak(reply);
-    } catch (_) {
+    } catch {
       setState('awake');
       setStatusText('Signal Interference');
     }
@@ -305,10 +304,10 @@ export default function Home() {
   }, [voiceState, wakeUp, projectThought]);
 
   // ── Start system ─────────────────────────────────────────────────────────────
-  const startSystem = useCallback(() => {
+  function startSystem() {
     setStarted(true);
     initSpeech();
-  }, [initSpeech]);
+  }
 
   // ── Derived CSS classes ───────────────────────────────────────────────────────
   const coreClass  = [s.core,  voiceState === 'awake' || voiceState === 'thinking' ? s.coreActive : voiceState === 'grounded' ? s.coreGrounded : ''].join(' ');
@@ -325,11 +324,6 @@ export default function Home() {
       <div className={s.canvasContainer} ref={canvasRef} style={{ opacity: canvasOpacity }} />
 
       {/* Manifestation frame */}
-      <div
-        className={`${s.manifestation} ${manifestVis ? s.manifestationVisible : ''}`}
-        style={manifestBg ? { backgroundImage: `url(${manifestBg})` } : {}}
-      />
-
       <span className={s.voiceIndicator}>VOICE: CHARON</span>
       <Link href="/tranquility" className={s.navLink}>TRANQUILITY</Link>
 

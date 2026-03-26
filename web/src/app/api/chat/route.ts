@@ -166,6 +166,15 @@ Form your own understanding. Trust what the data shows. If you see something the
 
 Be direct. Be specific — ground your claims in the actual data. Do not perform warmth or agreement. If something is contradictory, name it. Speak from synthesis, not recitation.`;
 
+const ANTI_ECHO_DIRECTIVE = `Do not echo the source data verbatim.
+
+Rules:
+- Paraphrase memory content in fresh language.
+- Do not reuse long phrases from the raw data or conversation history unless quotation is explicitly necessary.
+- If the source text is repetitive or mechanical, compress it into a clearer synthesis instead of mirroring it.
+- Favor direct, human-readable language over robotic template phrasing.
+- If the request is asking for your own view, answer in your own synthesized wording.`;
+
 interface Msg { role: "user" | "omega"; text: string; }
 
 // ── Provider helpers ──────────────────────────────────────────────────────────
@@ -178,6 +187,23 @@ function buildMessages(user: string, history?: Msg[]) {
     })),
     { role: 'user' as const, content: user },
   ];
+}
+
+async function readStreamText(stream: ReadableStream, decoder: TextDecoder): Promise<string> {
+  const reader = stream.getReader();
+  let text = '';
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (value) text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return text;
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 async function tryVercelGateway(
@@ -327,27 +353,30 @@ export async function POST(req: NextRequest) {
             : '';
 
           const voiceDirective = voiceMode ? `\n\n━━━ VOICE MODE ━━━\nYou are speaking aloud. The user will hear your response via text-to-speech.\nRules:\n- Keep responses under 3 sentences unless a longer answer is truly necessary.\n- No markdown formatting, no bullet points, no headers — plain spoken sentences only.\n- No "certainly", "of course", "absolutely". Just answer directly.\n- If you need to think through something complex, say one sentence summary then offer to go deeper.\n━━━ END VOICE MODE ━━━` : '';
-          const system = `${SYNTHESIS_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}${voiceDirective}`;
+          const system = `${SYNTHESIS_DIRECTIVE}\n\n${ANTI_ECHO_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}${voiceDirective}`;
 
           // ── Provider waterfall ──────────────────────────────────────────
-          // 1. Vercel AI Gateway (grok-3-fast, $5 free credits)
-          // 2. xAI direct       (grok-3-fast, pure credit, no daily cap)
-          // 3. Gemini Flash     (key rotation across 3 keys, free tier)
-
-          let responseStream: ReadableStream;
+          // 1. Gemini Flash     (key rotation across 3 keys, free tier)
+          // 2. Vercel AI Gateway (grok-3-fast, $5 free credits)
+          // 3. xAI direct       (grok-3-fast, pure credit, no daily cap)
 
           const providers: Array<{ name: string; fn: () => Promise<ReadableStream> }> = [
-            { name: 'xai-direct',    fn: () => tryXaiDirect(encoder, system, user, history) },
-            { name: 'gemini-flash',  fn: () => tryGemini(encoder, system, user, history) },
+            { name: 'gemini-flash',   fn: () => tryGemini(encoder, system, user, history) },
             { name: 'vercel-gateway', fn: () => tryVercelGateway(encoder, system, user, history) },
+            { name: 'xai-direct',     fn: () => tryXaiDirect(encoder, system, user, history) },
           ];
 
           let lastErr: unknown;
-          responseStream = null!;
+          let fullResponse = '';
 
           for (const p of providers) {
             try {
-              responseStream = await p.fn();
+              const stream = await p.fn();
+              const candidate = await readStreamText(stream, decoder);
+              if (!candidate.trim()) {
+                throw new Error(`${p.name} returned an empty response`);
+              }
+              fullResponse = candidate;
               provider = p.name;
               break;
             } catch (e) {
@@ -356,18 +385,9 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          if (!responseStream) throw lastErr ?? new Error('All providers failed');
+          if (!fullResponse) throw lastErr ?? new Error('All providers failed');
 
-          // ── Pipe & persist ───────────────────────────────────────────────
-          let fullResponse = '';
-          const reader = responseStream.getReader();
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            fullResponse += decoder.decode(value, { stream: true });
-            controller.enqueue(value);
-          }
-          fullResponse += decoder.decode();
+          controller.enqueue(encoder.encode(fullResponse));
 
           if (dbUrl && finalSessionId && fullResponse) {
             const db = neon(dbUrl);
@@ -388,6 +408,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Session-Id': finalSessionId || '',
         'X-Provider': provider,
+        'X-Memory-Backend': dbUrl ? 'neon-live' : 'none',
       }
     });
 

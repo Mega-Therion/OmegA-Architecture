@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import s from './page.module.css';
+import { getSpeechRecognitionConstructor, type SpeechRecognitionInstance } from '@/lib/speechRecognition';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -122,14 +123,12 @@ function playPCM(base64: string) {
 export default function Tranquility() {
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const stateRef   = useRef<VoiceState>('dormant');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recogRef   = useRef<any>(null);
+  const recogRef   = useRef<SpeechRecognitionInstance | null>(null);
   const audioRef   = useRef<HTMLAudioElement | null>(null);
 
   const [voiceState, setVoiceState]         = useState<VoiceState>('dormant');
   const [userLine, setUserLine]             = useState('Speak when you are ready...');
   const [manifest, setManifest]             = useState<string | null>(null);
-  const [seed, setSeed]                     = useState<string | null>(null);
   const [lastExchange, setLastExchange]     = useState({ user: '', omega: '' });
 
   const { text: omegaText, type: typeOmega } = useTypewriter();
@@ -169,6 +168,29 @@ export default function Tranquility() {
       setState('dormant');
     }
   }, [setState, typeOmega]);
+
+  // ── Visual manifestation ─────────────────────────────────────────────────────
+  async function generateManifestation(query: string, reply: string) {
+    const prompt = `For the user query "${query.slice(0, 200)}" and response "${reply.slice(0, 400)}", create a minimal elegant HTML structure with Tailwind CSS classes. Champagne gold and soft lavender palette. Playfair Display for headings, clean whitespace, no boxes. Output only inner HTML, no code fences.`;
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: prompt, voiceMode: false }),
+      });
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let html = '';
+      if (reader) {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          html += decoder.decode(value, { stream: true });
+        }
+      }
+      setManifest(html.replace(/data: \{.*?\}\n\n/g, '').replace(/```html?|```/g, '').trim());
+    } catch { /* silent */ }
+  }
 
   // ── Chat via /api/chat (voiceMode) ───────────────────────────────────────────
   const processInput = useCallback(async (text: string) => {
@@ -213,19 +235,16 @@ export default function Tranquility() {
 
   // ── Speech recognition ───────────────────────────────────────────────────────
   const startListening = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+    const SR = getSpeechRecognitionConstructor();
     if (!SR) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const r = new SR() as any;
+    const r = new SR();
     r.continuous = false;
     r.interimResults = true;
     r.lang = 'en-US';
     recogRef.current = r;
 
     r.onstart = () => setState('listening');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    r.onresult = (e: any) => {
+    r.onresult = (e) => {
       let t = '';
       for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
       setUserLine(`"${t}"`);
@@ -306,7 +325,6 @@ OmegA replied: "${lastExchange.omega}"`;
         }
       }
       const clean = raw.replace(/data: \{.*?\}\n\n/g, '').trim().replace(/^"+|"+$/g, '');
-      setSeed(clean);
       setManifest(`<div style="text-align:center;padding:2.5rem 0">
         <div style="font-size:0.62rem;letter-spacing:0.45em;text-transform:uppercase;opacity:0.35;margin-bottom:1.5rem;font-family:'Space Grotesk',sans-serif">Seed of Wisdom</div>
         <div style="font-family:'Playfair Display',serif;font-size:1.5rem;line-height:1.6;font-style:italic;color:#e4b84a">"${clean}"</div>
@@ -315,29 +333,6 @@ OmegA replied: "${lastExchange.omega}"`;
       await speakText('I have distilled our time together into a single seed of wisdom.');
     } catch { /* silent */ }
   }, [lastExchange, speakText]);
-
-  // ── Visual manifestation ─────────────────────────────────────────────────────
-  const generateManifestation = useCallback(async (query: string, reply: string) => {
-    const prompt = `For this response: "${reply.slice(0, 400)}", create a minimal elegant HTML structure with Tailwind CSS classes. Champagne gold and soft lavender palette. Playfair Display for headings, clean whitespace, no boxes. Output only inner HTML, no code fences.`;
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: prompt, voiceMode: false }),
-      });
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      let html = '';
-      if (reader) {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          html += decoder.decode(value, { stream: true });
-        }
-      }
-      setManifest(html.replace(/data: \{.*?\}\n\n/g, '').replace(/```html?|```/g, '').trim());
-    } catch { /* silent */ }
-  }, []);
 
   // ── State-driven class names ──────────────────────────────────────────────────
   const coreClass = [

@@ -1,27 +1,37 @@
 # Repository Guidelines
 
-## Canonical Scope
-- This repository is the canonical OmegA source of truth going forward.
-- It is a publication and architecture repo, not the older implementation monorepo.
-- Historical OmegA material lives in `/home/mega/ATTIC/OmegA-cutover-20260319-233802` and should be treated as archive-only unless explicitly requested.
+## Project Structure & Module Organization
+This repository is a multi-part system. Keep work in the matching area:
+- `web/` - Next.js app, UI, API routes, shared components, hooks, and lib code.
+- `mcp/` - TypeScript MCP server entrypoint and build output.
+- `runtime/` - Rust workspace for gateway, CLI, memory, provider, and trace crates.
+- `evals/` - Python-based tests, conformance checks, and benchmark fixtures.
+- `scripts/`, `docs/`, `policies/`, `assets/`, and `tools/` - supporting material and automation.
 
-## Main Contents
-- `README.md`: architecture overview and canonical framing.
-- `ORIGIN.md`: canonical origin document.
-- `papers/`: formal paper series and addenda.
-- `assets/`: publication figures and graphics.
-- `omega_equation_knowledge_graph.json`: graph data artifact.
-- `omega_kg_explorer.py`: local utility for graph exploration.
+## Build, Test, and Development Commands
+Run commands from the relevant subproject directory:
+- `cd web && npm run dev` - start the Next.js app locally.
+- `cd web && npm run build` - create a production build.
+- `cd web && npm run lint` - run ESLint checks.
+- `cd mcp && npm run dev` - run the MCP server in watch mode.
+- `cd mcp && npm run build` - compile the MCP server to `dist/`.
+- `cd runtime && make build|test|check|fmt|clippy` - build, test, verify, format, or lint the Rust workspace.
+- `pytest evals/` - run Python evals and conformance tests.
 
-## Working Priorities
-- Improve clarity, rigor, consistency, and publication quality.
-- Preserve canonical terminology across papers and overview docs.
-- Keep changes aligned with the repo’s role as the publication/reference source, not as a staging ground for reviving archived runtime code.
+## Coding Style & Naming Conventions
+Use the style already present in each subsystem. TypeScript follows the existing Next.js and ESLint setup in `web/`; prefer clear component and hook names such as `VoiceOrb` and `useVoiceEngine`. Rust code in `runtime/` should stay `cargo fmt` clean and pass `clippy`. Python eval files use `snake_case` names like `test_runtime.py`.
 
-## Change Style
-- Prefer small, defensible edits.
-- Keep prose precise and internally consistent.
-- When making structural changes across papers, ensure terminology and equations stay aligned.
+## Testing Guidelines
+Add or update tests alongside behavior changes. Prefer focused evals in `evals/` for orchestration and runtime behavior, and component or API-level checks in the relevant subproject. When you change UI behavior, include a build or lint run and, if needed, a screenshot or reproduction note.
 
-## Shell Protocol
-- When giving shell commands to the user, write them to a file first and provide one copy-paste line to run.
+## Commit & Pull Request Guidelines
+History uses short Conventional Commit-style messages such as `feat: ...`, `fix: ...`, and `perf: ...`. Keep commits scoped to one change. PRs should summarize the change, list the affected subsystem, note the commands you ran, and include screenshots for visible UI updates.
+
+## Security & Configuration Tips
+Treat `VAULT/` and any `.env` or key material as sensitive. Do not log secrets or copy them into docs. Use the canonical workspace paths in `OMEGA_WORKSPACE/` and avoid editing archived or generated outputs unless the task explicitly requires it.
+
+## Deployment & Verification
+- Use Lovable only for exploratory UI prototyping; commit production work in `web/` and ship through Vercel.
+- Before declaring an app ready, verify the local route with `web/scripts/omega-smoke.mjs` using `web/.env.local`.
+- Production smoke tests must confirm a real session ID, `x-memory-backend: neon-live`, and a persisted message round trip.
+- If Vercel Deployment Protection is enabled, test with an approved bypass or temporarily disable protection in the dashboard.

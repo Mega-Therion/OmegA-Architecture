@@ -1,7 +1,9 @@
+// Next.js 16: proxy.ts replaces middleware.ts
+// See: https://nextjs.org/docs/app/api-reference/file-conventions/proxy
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   // Check if auth is required
   const authRequired = process.env.OMEGA_UI_PASSWORD;
   if (!authRequired) return NextResponse.next();

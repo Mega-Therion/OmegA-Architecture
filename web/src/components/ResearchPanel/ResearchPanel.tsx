@@ -61,7 +61,7 @@ function CitationCard({ citation }: { citation: Citation }) {
           relevance {(citation.relevance * 100).toFixed(1)}%
         </span>
       </div>
-      <div className={styles.citationExcerpt}>"{citation.excerpt}"</div>
+      <div className={styles.citationExcerpt}>&quot;{citation.excerpt}&quot;</div>
     </div>
   );
 }

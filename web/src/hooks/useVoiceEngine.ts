@@ -1,6 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  getSpeechRecognitionConstructor,
+  type SpeechRecognitionInstance,
+  type SpeechRecognitionEventLike,
+  type SpeechRecognitionErrorEventLike,
+} from '@/lib/speechRecognition';
 
 export type VoiceState = 'dormant' | 'listening' | 'thinking' | 'speaking' | 'followup';
 
@@ -63,8 +69,7 @@ export function useVoiceEngine({
   const [supported, setSupported] = useState(false);
 
   const stateRef = useRef<VoiceState>('dormant');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recogRef = useRef<any>(null);
+  const recogRef = useRef<SpeechRecognitionInstance | null>(null);
   const followUpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
@@ -207,10 +212,7 @@ export function useVoiceEngine({
   }, []);
 
   const startRecognition = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (typeof window !== 'undefined')
-      ? ((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition)
-      : null;
+    const SR = getSpeechRecognitionConstructor();
     if (!SR) return;
 
     stopRecognition();
@@ -240,8 +242,7 @@ export function useVoiceEngine({
       }, SILENCE_COMMIT_MS);
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    r.onresult = (e: any) => {
+    r.onresult = (e: SpeechRecognitionEventLike) => {
       let interimText = '';
       let newFinal = '';
 
@@ -278,8 +279,7 @@ export function useVoiceEngine({
       }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    r.onerror = (e: any) => {
+    r.onerror = (e: SpeechRecognitionErrorEventLike) => {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
       console.warn('[VoiceEngine] Recognition error:', e.error);
     };
@@ -413,9 +413,8 @@ export function useVoiceEngine({
 
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hasSR = typeof window !== 'undefined' &&
-      !!((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition);
+      !!getSpeechRecognitionConstructor();
     setSupported(useWhisper ? true : hasSR);
     if (!autoStart) return;
 

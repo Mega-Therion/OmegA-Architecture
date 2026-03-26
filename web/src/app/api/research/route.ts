@@ -238,7 +238,6 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Stage 1: Risk Gate ────────────────────────────────────────
-    const t1 = Date.now();
     const risk = riskGate(query);
     recordStage('risk_gate', risk.allowed ? 'pass' : 'blocked', { score: risk.score, allowed: risk.allowed });
 
@@ -252,7 +251,6 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Stage 2: Retrieve ─────────────────────────────────────────
-    const t2 = Date.now();
     const retrieved = retrieve(query, documents, 5);
     const citations: Citation[] = retrieved.map(r => ({
       source: r.doc.source,
@@ -272,7 +270,6 @@ export async function POST(req: NextRequest) {
     const system = `You are OmegA, a governed research assistant. Answer the user's research question based ONLY on the provided source documents. If the evidence is insufficient, say so explicitly. Do not fabricate information. Be precise and cite sources by name.`;
     const prompt = `Research question: ${query}\n\nSource documents:\n${contextText}\n\nProvide a well-reasoned answer based on the evidence above.`;
 
-    const t3 = Date.now();
     const { text: rawText, provider: llmProvider } = await callLLM(system, prompt);
     recordStage('generate', rawText ? 'done' : 'error', { provider: llmProvider, chars: rawText.length });
 
@@ -285,12 +282,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Stage 4: Verify ───────────────────────────────────────────
-    const t4 = Date.now();
     const verif = verify(rawText, query);
     recordStage('verify', verif.passed ? 'pass' : 'uncertain', { V: verif.V, outcome: verif.outcome });
 
     // ── Stage 5: Answer Build ─────────────────────────────────────
-    const t5 = Date.now();
     const { text, mode, confidence } = applyAnswerPolicy(rawText, groundingRatio, verif.passed);
 
     // Extract unresolved questions (simple heuristic)
@@ -305,7 +300,6 @@ export async function POST(req: NextRequest) {
     recordStage('answer_build', 'done', { mode, confidence, citationCount: citations.length });
 
     // ── Stage 6: Action Gate ──────────────────────────────────────
-    const t6 = Date.now();
     const gate = actionGate(risk.score, verif.outcome);
     recordStage('action_gate', gate.approved ? 'approved' : gate.pending ? 'pending' : 'denied', {
       approved: gate.approved, pending: gate.pending, reason: gate.reason,

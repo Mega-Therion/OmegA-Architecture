@@ -24,8 +24,11 @@ export default function VoiceOrb({
   // Live values updated via refs so the rAF loop doesn't restart
   const stateRef = useRef(voiceState);
   const levelRef = useRef(0);
-  stateRef.current = voiceState;
-  levelRef.current = voiceState === 'speaking' ? ttsLevel : micLevel;
+
+  useEffect(() => {
+    stateRef.current = voiceState;
+    levelRef.current = voiceState === 'speaking' ? ttsLevel : micLevel;
+  }, [voiceState, micLevel, ttsLevel]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,14 +103,15 @@ export default function VoiceOrb({
         const points = 128;
         ctx.beginPath();
         for (let p = 0; p < points; p++) {
-          const angle = (p / points) * Math.PI * 2 - Math.PI / 2;
-          const wave = Math.sin(angle * 8 + ph * 3) * lv * R * 0.18
-                     + Math.sin(angle * 5 - ph * 2) * lv * R * 0.10;
-          const r = waveR + wave;
-          const x = C + Math.cos(angle) * r;
-          const y = C + Math.sin(angle) * r;
-          p === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
+        const angle = (p / points) * Math.PI * 2 - Math.PI / 2;
+        const wave = Math.sin(angle * 8 + ph * 3) * lv * R * 0.18
+                   + Math.sin(angle * 5 - ph * 2) * lv * R * 0.10;
+        const r = waveR + wave;
+        const x = C + Math.cos(angle) * r;
+        const y = C + Math.sin(angle) * r;
+        if (p === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
         ctx.closePath();
         const waveAlpha = 0.4 + lv * 0.4;
         ctx.strokeStyle = thinking

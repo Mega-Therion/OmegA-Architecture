@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import s from './dashboard.module.css';
 
 interface Signal {
@@ -160,8 +161,8 @@ export default function Dashboard() {
 
       {/* Nav back to OmegA */}
       <nav className={s.nav}>
-        <a href="/" className={s.navLink}>&larr; OmegA Chat</a>
-        <a href="/omega.html" className={s.navLink}>Voice Interface &rarr;</a>
+        <Link href="/" className={s.navLink}>&larr; OmegA Chat</Link>
+        <Link href="/omega.html" className={s.navLink}>Voice Interface &rarr;</Link>
       </nav>
     </div>
   );
