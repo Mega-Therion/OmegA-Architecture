@@ -100,10 +100,14 @@ export default function Home() {
       const finalWords = fullReply.replace(/\*/g, '').split(/\s+/).filter(w => w.length > 0);
       setWords(finalWords.map(w => ({ text: w, cls: `${s.word} ${s.wordActive}` })));
 
-      // TTS — speak the full response
+      // TTS — speak the full response (speakText → enterFollowUp → restarts recognition via useEffect)
       setStatusText('Speaking...');
       await voiceRef.current?.speakText(fullReply);
       setStatusText('Awaiting Input...');
+      // Safety net: ensure we're back in listening state after TTS
+      if (voiceRef.current && voiceRef.current.voiceState === 'dormant') {
+        voiceRef.current.wakeUp();
+      }
     } catch {
       setStatusText('Signal Interference');
     }
@@ -181,10 +185,11 @@ export default function Home() {
   // ── Start system ───────────────────────────────────────────────────────────
   function startSystem() {
     setStarted(true);
+    // Small delay to let Three.js initialise before mic request fires
     setTimeout(() => {
-      voice.toggle();
-      setStatusText('Monitoring...');
-    }, 500);
+      voice.wakeUp();       // state → 'listening', kicks the useEffect → startRecognition
+      setStatusText('Listening...');
+    }, 600);
   }
 
   // ── Status text from voice state ───────────────────────────────────────────

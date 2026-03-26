@@ -454,9 +454,12 @@ export function useVoiceEngine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Restart recognition whenever we enter listening or followup.
+  // recogRef is never nulled after first start, so we can't use it as a
+  // "is running" guard — always restart to ensure the mic is live.
   useEffect(() => {
     if (!useWhisper && (voiceState === 'listening' || voiceState === 'followup')) {
-      if (!recogRef.current) startRecognition();
+      startRecognition();
     }
   }, [useWhisper, voiceState, startRecognition]);
 
