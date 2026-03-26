@@ -1,272 +1,372 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { chatStream } from '@/lib/api';
-import { useVoiceEngine } from '@/hooks/useVoiceEngine';
-import Sidebar from '@/components/Sidebar/Sidebar';
 import s from './page.module.css';
 
-const VoiceOrb = dynamic(() => import('@/components/VoiceOrb/VoiceOrb'), { ssr: false });
+// ── Types ──────────────────────────────────────────────────────────────────────
 
-interface Msg {
-  role: 'user' | 'omega';
-  text: string;
-  timestamp?: string;
-  provider?: string;
+type VoiceState = 'offline' | 'monitoring' | 'awake' | 'thinking' | 'grounded';
+
+interface HistoryMsg { role: 'user' | 'omega'; text: string; }
+
+// ── PCM → WAV ──────────────────────────────────────────────────────────────────
+
+function buildWav(base64: string): string {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const hdr = new ArrayBuffer(44);
+  const v = new DataView(hdr);
+  v.setUint32(0, 0x52494646, false); v.setUint32(4, 36 + bytes.length, true);
+  v.setUint32(8, 0x57415645, false); v.setUint32(12, 0x666d7420, false);
+  v.setUint16(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 24000, true); v.setUint32(28, 48000, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  v.setUint32(36, 0x64617461, false); v.setUint32(40, bytes.length, true);
+  const blob = new Blob([hdr, bytes], { type: 'audio/wav' });
+  return URL.createObjectURL(blob);
 }
 
-const STATE_LABELS: Record<string, string> = {
-  dormant:   'Say "Mega" to wake',
-  listening: 'Listening...',
-  thinking:  'Thinking...',
-  speaking:  'Speaking...',
-  followup:  "I'm here — go ahead",
-};
-
-const STATE_CLASSES: Record<string, string> = {
-  dormant:   s.sl_dormant,
-  listening: s.sl_listening,
-  thinking:  s.sl_thinking,
-  speaking:  s.sl_speaking,
-  followup:  s.sl_followup,
-};
+// ── Main ───────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [messages, setMessages]       = useState<Msg[]>([]);
-  const [error, setError]             = useState<string | null>(null);
-  const [sessionId, setSessionId]     = useState<string | null>(null);
-  const [sessionList, setSessionList] = useState<{id:string;created_at:string;preview:string}[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [textInput, setTextInput]     = useState('');
-  const [showText, setShowText]       = useState(false);
-  const [processing, setProcessing]   = useState(false);
-  const [voiceMode, setVoiceMode]     = useState(true);
+  const canvasRef       = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recogRef        = useRef<any>(null);
+  const audioRef        = useRef<HTMLAudioElement | null>(null);
+  const syncRef         = useRef<ReturnType<typeof setInterval> | null>(null);
+  const historyRef      = useRef<HistoryMsg[]>([]);
+  const rotSpeedRef     = useRef(0.0004);
+  const pointsRef       = useRef<any>(null);
+  const stateRef        = useRef<VoiceState>('offline');
 
-  const pendingTTS = useRef<string | null>(null);
-  const feedRef    = useRef<HTMLDivElement>(null);
-  const messagesRef = useRef(messages);
-  messagesRef.current = messages;
+  const [started,        setStarted]        = useState(false);
+  const [voiceState,     setVoiceState]      = useState<VoiceState>('offline');
+  const [statusText,     setStatusText]      = useState('System Offline');
+  const [words,          setWords]           = useState<{ text: string; cls: string }[]>([{ text: 'Awaiting voice command...', cls: s.wordActive }]);
+  const [ripple,         setRipple]          = useState(false);
+  const [showDistill,    setShowDistill]     = useState(false);
+  const [showTheme,      setShowTheme]       = useState(false);
+  const [manifestBg,     setManifestBg]      = useState('');
+  const [manifestVis,    setManifestVis]     = useState(false);
+  const [projection,     setProjection]      = useState('');
+  const [projectionVis,  setProjectionVis]   = useState(false);
+  const [canvasOpacity,  setCanvasOpacity]   = useState(0.3);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('omega_session');
-    if (saved) setSessionId(saved);
+  // keep stateRef in sync
+  const setState = useCallback((st: VoiceState) => {
+    stateRef.current = st;
+    setVoiceState(st);
   }, []);
 
-  const refreshSessions = useCallback(() => {
-    fetch('/api/sessions').then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setSessionList(d); })
-      .catch(console.error);
+  // ── Three.js particle field ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!started || !canvasRef.current) return;
+    let animId: number;
+
+    import('three').then(THREE => {
+      const scene    = new THREE.Scene();
+      const camera   = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      canvasRef.current!.appendChild(renderer.domElement);
+
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(1500 * 3);
+      for (let i = 0; i < 4500; i++) pos[i] = (Math.random() - 0.5) * 12;
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({ color: 0x555555, size: 0.015 });
+      const pts = new THREE.Points(geo, mat);
+      pointsRef.current = pts;
+      scene.add(pts);
+      camera.position.z = 5;
+
+      const tick = () => {
+        animId = requestAnimationFrame(tick);
+        pts.rotation.y += rotSpeedRef.current;
+        renderer.render(scene, camera);
+      };
+      tick();
+
+      const onResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener('resize', onResize);
+      return () => {
+        cancelAnimationFrame(animId);
+        window.removeEventListener('resize', onResize);
+        renderer.dispose();
+      };
+    });
+
+    return () => cancelAnimationFrame(animId);
+  }, [started]);
+
+  // ── Speech recognition ───────────────────────────────────────────────────────
+  const initSpeech = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR = (window as any).webkitSpeechRecognition ?? (window as any).SpeechRecognition;
+    if (!SR) { setStatusText('API Unsupported'); return; }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const r = new SR() as any;
+    r.continuous = true;
+    r.interimResults = true;
+    r.lang = 'en-US';
+    recogRef.current = r;
+
+    r.onstart = () => {
+      if (stateRef.current === 'offline') {
+        setState('monitoring');
+        setStatusText('Monitoring...');
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    r.onresult = (event: any) => {
+      let interim = '', final = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) final += event.results[i][0].transcript;
+        else interim += event.results[i][0].transcript;
+      }
+      const full = (interim + final).toLowerCase();
+
+      if (stateRef.current === 'monitoring') {
+        if (['hey omega', 'mega', 'hey mega'].some(w => full.includes(w))) {
+          wakeUp();
+          return;
+        }
+      }
+      if (stateRef.current === 'awake' && audioRef.current && !audioRef.current.paused && interim.trim().length > 2) {
+        stopSpeaking();
+        setStatusText('Listening...');
+      }
+      if (stateRef.current === 'awake' && final.trim().length > 0) {
+        handleInput(final.trim());
+      }
+    };
+
+    r.onerror = () => {};
+    r.onend = () => { setTimeout(() => { try { r.start(); } catch (_) {} }, 100); };
+    try { r.start(); } catch (_) {}
+  }, [setState]);
+
+  // ── Wake ─────────────────────────────────────────────────────────────────────
+  const wakeUp = useCallback(() => {
+    setState('awake');
+    setStatusText('Neural Link Active');
+    setRipple(true);
+    setWords([{ text: 'I am here.', cls: s.wordActive }]);
+  }, [setState]);
+
+  // ── Stop speaking ─────────────────────────────────────────────────────────────
+  const stopSpeaking = useCallback(() => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (syncRef.current) { clearInterval(syncRef.current); syncRef.current = null; }
   }, []);
 
-  useEffect(() => { refreshSessions(); }, [refreshSessions]);
+  // ── Speak via /api/tts ────────────────────────────────────────────────────────
+  const speak = useCallback(async (text: string) => {
+    stopSpeaking();
+    const clean = text.replace(/\*/g, '');
+    const ws = clean.split(' ').map(w => ({ text: w, cls: s.word }));
+    setWords(ws);
 
-  useEffect(() => {
-    feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, processing]);
-
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || processing) return;
-    setError(null);
-    setProcessing(true);
-    pendingTTS.current = null;
-
-    const history = [...messagesRef.current];
-    setMessages(prev => [...prev, { role: 'user', text, timestamp: new Date().toISOString() }]);
-
-    let fullReply = '';
     try {
-      const res = await chatStream(
-        { user: text, history, sessionId: sessionId ?? undefined, voiceMode },
-        chunk => {
-          fullReply += chunk;
-          setMessages(prev => {
-            const u = [...prev];
-            const last = u[u.length - 1];
-            if (last.role === 'user') {
-              u.push({ role: 'omega', text: chunk, timestamp: new Date().toISOString() });
-            } else {
-              u[u.length - 1] = { ...last, text: last.text + chunk };
-            }
-            return u;
-          });
-        },
-        () => {}
-      );
-      if (res.sessionId && !sessionId) {
-        setSessionId(res.sessionId);
-        localStorage.setItem('omega_session', res.sessionId);
-      }
-      // Annotate provider in a single update
-      if (res.provider) {
-        setMessages(prev => {
-          const u = [...prev];
-          const last = u[u.length - 1];
-          if (last.role === 'omega') u[u.length - 1] = { ...last, provider: res.provider };
-          return u;
-        });
-      }
-      refreshSessions();
-      pendingTTS.current = fullReply;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setProcessing(false);
-    }
-  }, [processing, sessionId, refreshSessions]);
-
-  const voice = useVoiceEngine({ onTranscript: sendMessage, useWhisper: true });
-  const speakTextRef = useRef(voice.speakText);
-  speakTextRef.current = voice.speakText;
-
-  useEffect(() => {
-    if (!processing && pendingTTS.current) {
-      const t = pendingTTS.current;
-      pendingTTS.current = null;
-      speakTextRef.current(t);
-    }
-  }, [processing]);
-
-  const handleTextSend = useCallback(() => {
-    const t = textInput.trim();
-    if (!t) return;
-    setTextInput('');
-    setShowText(false);
-    sendMessage(t);
-  }, [textInput, sendMessage]);
-
-  const loadSession = async (id: string) => {
-    try {
-      const res = await fetch(`/api/sessions/${id}`);
+      const res  = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
       const data = await res.json();
-      if (Array.isArray(data)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setMessages(data.map((m: any) => ({ role: m.role, text: m.content, timestamp: m.created_at })));
-        setSessionId(id);
-        localStorage.setItem('omega_session', id);
-        setSidebarOpen(false);
+      if (!data.audio) return;
+
+      const url  = buildWav(data.audio);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      await new Promise<void>(resolve => {
+        audio.onloadedmetadata = () => {
+          audio.play();
+          resolve();
+        };
+      });
+
+      const delay = (audio.duration * 1000) / ws.length;
+      let idx = 0;
+      syncRef.current = setInterval(() => {
+        if (idx < ws.length) {
+          setWords(prev => prev.map((w, i) =>
+            i === idx ? { ...w, cls: `${s.word} ${s.wordActive}` } :
+            i < idx   ? { ...w, cls: `${s.word} ${s.wordFaded}` } : w
+          ));
+          idx++;
+        } else {
+          if (syncRef.current) clearInterval(syncRef.current);
+        }
+      }, delay);
+    } catch (_) {}
+  }, [stopSpeaking]);
+
+  // ── Apply resonance to visuals ────────────────────────────────────────────────
+  const applyResonance = useCallback((mood: string) => {
+    const map: Record<string, { speed: number; opacity: number }> = {
+      CALM:      { speed: 0.0004, opacity: 0.2 },
+      ENERGETIC: { speed: 0.005,  opacity: 0.5 },
+      MELANCHOLY:{ speed: 0.0001, opacity: 0.1 },
+      TENSE:     { speed: 0.015,  opacity: 0.4 },
+    };
+    const cfg = map[mood.toUpperCase()] ?? map.CALM;
+    rotSpeedRef.current = cfg.speed;
+    setCanvasOpacity(cfg.opacity);
+  }, []);
+
+  // ── Main input handler → /api/chat ────────────────────────────────────────────
+  const handleInput = useCallback(async (text: string) => {
+    setState('thinking');
+    setStatusText('Processing...');
+    historyRef.current.push({ role: 'user', text });
+    if (historyRef.current.length > 2) { setShowDistill(true); setShowTheme(true); }
+
+    try {
+      // Quick resonance check
+      const moodWords = text.toLowerCase();
+      if (/urgent|critical|alert|danger/.test(moodWords)) applyResonance('TENSE');
+      else if (/calm|peace|relax|quiet/.test(moodWords)) applyResonance('CALM');
+      else if (/excit|amazing|great|awesome/.test(moodWords)) applyResonance('ENERGETIC');
+      else if (/sad|miss|lost|alone/.test(moodWords)) applyResonance('MELANCHOLY');
+
+      // Stream from /api/chat
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: text, history: historyRef.current.slice(0, -1), voiceMode: true }),
+      });
+
+      let reply = '';
+      const reader = res.body!.getReader();
+      const dec    = new TextDecoder();
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = dec.decode(value, { stream: true });
+        // Strip SSE status lines
+        if (chunk.startsWith('data: {"type":"status"')) continue;
+        reply += chunk;
       }
-    } catch (err) { console.error(err); }
-  };
+      reply = reply.trim();
+      if (!reply || reply.toUpperCase().includes('IGNORE')) {
+        setState('awake');
+        setStatusText('Awaiting Input...');
+        return;
+      }
 
-  const startNewChat = () => {
-    setMessages([]);
-    setSessionId(null);
-    localStorage.removeItem('omega_session');
-    setSidebarOpen(false);
-  };
+      historyRef.current.push({ role: 'omega', text: reply });
+      setState('awake');
+      setStatusText('Awaiting Input...');
+      await speak(reply);
+    } catch (_) {
+      setState('awake');
+      setStatusText('Signal Interference');
+    }
+  }, [setState, applyResonance, speak]);
 
-  const vs = processing ? 'thinking' : voice.voiceState;
-  const stateLabel = processing ? 'Thinking...' : (STATE_LABELS[voice.voiceState] ?? '');
-  const lastProvider = messagesRef.current.findLast(m => m.role === 'omega')?.provider;
+  // ── Distill session ───────────────────────────────────────────────────────────
+  const distillSession = useCallback(async () => {
+    if (!historyRef.current.length) return;
+    setStatusText('Distilling Essence...');
+    const summary = historyRef.current.map(m => `${m.role}: ${m.text}`).join('\n');
+    await handleInput(`Provide a 2-sentence poetic analysis of our conversation so far:\n${summary}`);
+  }, [handleInput]);
+
+  // ── Sync atmosphere ───────────────────────────────────────────────────────────
+  const syncAtmosphere = useCallback(() => {
+    const moods = ['CALM', 'ENERGETIC', 'MELANCHOLY', 'TENSE'];
+    const recent = historyRef.current.slice(-4).map(m => m.text).join(' ').toLowerCase();
+    if (/calm|peace|slow/.test(recent)) applyResonance('CALM');
+    else if (/fast|excit|energy/.test(recent)) applyResonance('ENERGETIC');
+    else if (/sad|lost|dark/.test(recent)) applyResonance('MELANCHOLY');
+    else applyResonance(moods[Math.floor(Math.random() * moods.length)]);
+  }, [applyResonance]);
+
+  // ── Cognitive projection ──────────────────────────────────────────────────────
+  const projectThought = useCallback(async () => {
+    if (!historyRef.current.length) return;
+    setProjection('Analyzing neural patterns...');
+    setProjectionVis(true);
+    const prompt = `Based on: "${historyRef.current.slice(-2).map(m => m.text).join(' ')}" — predict my next thought in 5 words or less.`;
+    await handleInput(prompt);
+    setTimeout(() => setProjectionVis(false), 5000);
+  }, [handleInput]);
+
+  // ── Core click ────────────────────────────────────────────────────────────────
+  const handleCoreClick = useCallback(() => {
+    if (voiceState === 'monitoring' || voiceState === 'offline') wakeUp();
+    else projectThought();
+  }, [voiceState, wakeUp, projectThought]);
+
+  // ── Start system ─────────────────────────────────────────────────────────────
+  const startSystem = useCallback(() => {
+    setStarted(true);
+    initSpeech();
+  }, [initSpeech]);
+
+  // ── Derived CSS classes ───────────────────────────────────────────────────────
+  const coreClass  = [s.core,  voiceState === 'awake' || voiceState === 'thinking' ? s.coreActive : voiceState === 'grounded' ? s.coreGrounded : ''].join(' ');
+  const badgeClass = [s.badge, voiceState === 'awake' || voiceState === 'thinking' ? s.badgeActive : voiceState === 'grounded' ? s.badgeGrounded : ''].join(' ');
 
   return (
     <div className={s.root}>
-      <div className={s.stars} aria-hidden />
+      {!started && (
+        <div className={s.startOverlay} onClick={startSystem}>
+          <span className={s.startLabel}>Initialize Neural Link</span>
+        </div>
+      )}
 
-      <Sidebar
-        sessions={sessionList}
-        activeSessionId={sessionId}
-        onNewChat={startNewChat}
-        onSelectSession={loadSession}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(o => !o)}
+      <div className={s.canvasContainer} ref={canvasRef} style={{ opacity: canvasOpacity }} />
+
+      {/* Manifestation frame */}
+      <div
+        className={`${s.manifestation} ${manifestVis ? s.manifestationVisible : ''}`}
+        style={manifestBg ? { backgroundImage: `url(${manifestBg})` } : {}}
       />
 
-      <div className={`${s.main} ${sidebarOpen ? s.mainShifted : ''}`}>
+      <span className={s.voiceIndicator}>VOICE: CHARON</span>
+      <Link href="/tranquility" className={s.navLink}>TRANQUILITY</Link>
 
-        <header className={s.topBar}>
-          <button className={s.menuBtn} onClick={() => setSidebarOpen(o => !o)} aria-label="History">
-            <span /><span /><span />
-          </button>
-          <div className={s.brand}>
-            <span className={s.brandGlyph}>Ω</span>
-            <span className={s.brandName}>OmegA</span>
+      <div className={s.layer}>
+        <div className={s.statusWrap}>
+          <span className={badgeClass}>{statusText}</span>
+          <div className={s.featurePill}>
+            RESONANCE · VISION MANIFEST · INSIGHT<br />
+            QUANTUM GROUNDING · ATMOSPHERE · COGNITIVE PROJECTION
           </div>
-          <div className={s.topRight}>
-            <Link href="/tranquility" style={{ fontSize: '0.75rem', color: 'var(--dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
-              TRANQUILITY
-            </Link>
-            <Link href="/research" style={{ fontSize: '0.75rem', color: 'var(--dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
-              RESEARCH
-            </Link>
-            {lastProvider && <span className={s.badge}>{lastProvider.split('-')[0]}</span>}
-            <span className={`${s.dot} ${vs === 'thinking' ? s.dotThink : vs !== 'dormant' ? s.dotLive : ''}`} />
-          </div>
-        </header>
-
-        <div className={s.stage}>
-          <div className={s.orbClick} onClick={voice.toggle} title="Toggle voice">
-            <VoiceOrb
-              voiceState={voice.voiceState}
-              micLevel={voice.micLevel}
-              ttsLevel={voice.ttsLevel}
-            />
-          </div>
-          <p className={`${s.stateLabel} ${STATE_CLASSES[vs] ?? ''}`}>{stateLabel}</p>
-          {voice.interim && (
-            <div className={s.interim}>{voice.interim}</div>
-          )}
         </div>
 
-        {(messages.length > 0 || processing) && (
-          <div className={s.feed} ref={feedRef}>
-            {messages.map((m, i) => (
-              <div key={i} className={`${s.msg} ${m.role === 'user' ? s.msgUser : s.msgOmega}`}>
-                {m.role === 'omega' && <span className={s.msgGlyph}>Ω</span>}
-                <span className={s.msgText}>{m.text}</span>
-              </div>
-            ))}
-            {processing && (
-              <div className={`${s.msg} ${s.msgOmega}`}>
-                <span className={s.msgGlyph}>Ω</span>
-                <span className={s.dots}><span /><span /><span /></span>
-              </div>
-            )}
-            {error && <div className={s.errMsg}>{error}</div>}
+        <div className={coreClass} onClick={handleCoreClick}>
+          <div className={`${s.projection} ${projectionVis ? s.projectionVisible : ''}`}>
+            {projection}
           </div>
-        )}
+          <div className={`${s.ripple} ${ripple ? s.rippleAnimate : ''}`} />
+          <div className={s.coreDot} />
+        </div>
 
-        <div className={s.bottom}>
-          {showText ? (
-            <div className={s.textRow}>
-              <textarea
-                className={s.textArea}
-                value={textInput}
-                onChange={e => setTextInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend(); } }}
-                placeholder="Type a message..."
-                rows={1}
-                autoFocus
-              />
-              <button className={s.sendBtn} onClick={handleTextSend} disabled={!textInput.trim() || processing}>›</button>
-              <button className={s.closeBtn} onClick={() => setShowText(false)}>✕</button>
-            </div>
-          ) : (
-            <div className={s.actions}>
-              <button className={s.typeBtn} onClick={() => setShowText(true)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Type
-              </button>
-              <button
-                className={s.typeBtn}
-                onClick={() => setVoiceMode(v => !v)}
-                title={voiceMode ? 'Voice mode on' : 'Voice mode off'}
-                style={{ opacity: voiceMode ? 1 : 0.5 }}
-              >
-                {voiceMode ? '🎙 Voice' : '💬 Text'}
-              </button>
-              <button className={`${s.micBtn} ${vs !== 'dormant' ? s.micActive : ''}`} onClick={voice.toggle} aria-label="Toggle voice">
-                {vs === 'dormant'
-                  ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                  : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                }
-              </button>
-            </div>
-          )}
+        <div className={s.transcript}>
+          {words.map((w, i) => (
+            <span key={i} className={w.cls}>{w.text} </span>
+          ))}
         </div>
       </div>
+
+      {showTheme && (
+        <button className={`${s.floatingBtn} ${s.btnLeft}`} onClick={syncAtmosphere}>
+          ✦ Sync Atmosphere
+        </button>
+      )}
+      {showDistill && (
+        <button className={`${s.floatingBtn} ${s.btnRight}`} onClick={distillSession}>
+          ✦ Distill Session
+        </button>
+      )}
     </div>
   );
 }
