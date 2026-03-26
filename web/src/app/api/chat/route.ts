@@ -189,22 +189,7 @@ function buildMessages(user: string, history?: Msg[]) {
   ];
 }
 
-async function readStreamText(stream: ReadableStream, decoder: TextDecoder): Promise<string> {
-  const reader = stream.getReader();
-  let text = '';
-
-  try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (value) text += decoder.decode(value, { stream: true });
-    }
-    text += decoder.decode();
-    return text;
-  } finally {
-    reader.releaseLock();
-  }
-}
+// Removed readStreamText — we now pipe chunks directly to the client for true streaming
 
 async function tryVercelGateway(
   encoder: TextEncoder,
@@ -355,7 +340,7 @@ export async function POST(req: NextRequest) {
           const voiceDirective = voiceMode ? `\n\n━━━ VOICE MODE ━━━\nYou are speaking aloud. The user will hear your response via text-to-speech.\nRules:\n- Keep responses under 3 sentences unless a longer answer is truly necessary.\n- No markdown formatting, no bullet points, no headers — plain spoken sentences only.\n- No "certainly", "of course", "absolutely". Just answer directly.\n- If you need to think through something complex, say one sentence summary then offer to go deeper.\n━━━ END VOICE MODE ━━━` : '';
           const system = `${SYNTHESIS_DIRECTIVE}\n\n${ANTI_ECHO_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}${voiceDirective}`;
 
-          // ── Provider waterfall ──────────────────────────────────────────
+          // ── Provider waterfall (true streaming) ─────────────────────────
           // 1. Gemini Flash     (key rotation across 3 keys, free tier)
           // 2. Vercel AI Gateway (grok-3-fast, $5 free credits)
           // 3. xAI direct       (grok-3-fast, pure credit, no daily cap)
@@ -367,16 +352,11 @@ export async function POST(req: NextRequest) {
           ];
 
           let lastErr: unknown;
-          let fullResponse = '';
+          let providerStream: ReadableStream | null = null;
 
           for (const p of providers) {
             try {
-              const stream = await p.fn();
-              const candidate = await readStreamText(stream, decoder);
-              if (!candidate.trim()) {
-                throw new Error(`${p.name} returned an empty response`);
-              }
-              fullResponse = candidate;
+              providerStream = await p.fn();
               provider = p.name;
               break;
             } catch (e) {
@@ -385,9 +365,20 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          if (!fullResponse) throw lastErr ?? new Error('All providers failed');
+          if (!providerStream) throw lastErr ?? new Error('All providers failed');
 
-          controller.enqueue(encoder.encode(fullResponse));
+          // Pipe chunks directly to client as they arrive
+          const reader = providerStream.getReader();
+          let fullResponse = '';
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            const text = decoder.decode(value, { stream: true });
+            if (text) {
+              fullResponse += text;
+              controller.enqueue(encoder.encode(text));
+            }
+          }
 
           if (dbUrl && finalSessionId && fullResponse) {
             const db = neon(dbUrl);
