@@ -55,24 +55,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No text' }, { status: 400 });
     }
 
+    const providerAttempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
     const providers = [
-      () => tryVercelGateway(text),
-      () => tryGemini(text),
+      { name: 'vercel-gateway', fn: () => tryVercelGateway(text) },
+      { name: 'gemini-flash', fn: () => tryGemini(text) },
     ];
 
     let lastErr: unknown;
-    for (const fn of providers) {
+    for (const p of providers) {
       try {
-        const refined = await fn();
+        const refined = await p.fn();
         if (refined?.trim()) {
-          return NextResponse.json({ refined: refined.trim() });
+          providerAttempts.push({ name: p.name, status: 'selected' });
+          return NextResponse.json({ refined: refined.trim(), provider: p.name, providerAttempts });
         }
       } catch (e) {
+        providerAttempts.push({ name: p.name, status: 'failed', error: e instanceof Error ? e.message : String(e) });
         lastErr = e;
       }
     }
 
-    throw lastErr ?? new Error('All providers failed');
+    throw lastErr ?? new Error(`All providers failed (${providerAttempts.map(p => p.name).join(' -> ')})`);
   } catch (err) {
     console.error('[OmegA Refine]', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

@@ -80,24 +80,27 @@ export async function POST(req: NextRequest) {
 
     const prompt = `Analyze this conversation:\n\n${historyStr}`;
 
+    const providerAttempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
     const providers = [
-      () => tryVercelGateway(prompt),
-      () => tryGemini(prompt),
+      { name: 'vercel-gateway', fn: () => tryVercelGateway(prompt) },
+      { name: 'gemini-flash', fn: () => tryGemini(prompt) },
     ];
 
     let lastErr: unknown;
-    for (const fn of providers) {
+    for (const p of providers) {
       try {
-        const raw = await fn();
+        const raw = await p.fn();
         // Validate it's parseable JSON
         const parsed = JSON.parse(raw);
-        return NextResponse.json(parsed);
+        providerAttempts.push({ name: p.name, status: 'selected' });
+        return NextResponse.json({ ...parsed, provider: p.name, providerAttempts });
       } catch (e) {
+        providerAttempts.push({ name: p.name, status: 'failed', error: e instanceof Error ? e.message : String(e) });
         lastErr = e;
       }
     }
 
-    throw lastErr ?? new Error('All providers failed');
+    throw lastErr ?? new Error(`All providers failed (${providerAttempts.map(p => p.name).join(' -> ')})`);
   } catch (err) {
     console.error('[OmegA Synthesize]', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

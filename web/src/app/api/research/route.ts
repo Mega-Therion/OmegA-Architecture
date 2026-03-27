@@ -39,6 +39,8 @@ interface ResearchResponse {
   answer: string;
   mode: 'grounded' | 'inferred' | 'abstained' | 'blocked';
   confidence: number;
+  provider?: string;
+  providerAttempts?: Array<{ name: string; status: 'failed' | 'selected'; error?: string }>;
   citations: Citation[];
   unresolved: string[];
   verified: boolean;
@@ -158,15 +160,22 @@ const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY,
 ].filter(Boolean) as string[];
 
-async function callLLM(system: string, prompt: string): Promise<{ text: string; provider: string }> {
+async function callLLM(system: string, prompt: string): Promise<{ text: string; provider: string; attempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> }> {
+  const attempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
+
   // Try Vercel Gateway
   const gatewayKey = process.env.VERCEL_AI_GATEWAY_KEY;
   if (gatewayKey) {
     try {
       const provider = createOpenAI({ baseURL: 'https://ai-gateway.vercel.sh/v1', apiKey: gatewayKey });
       const result = await generateText({ model: provider('xai/grok-3-fast'), system, prompt, maxOutputTokens: 1024, temperature: 0.3 });
-      if (result.text) return { text: result.text, provider: 'vercel-gateway' };
-    } catch { /* fall through */ }
+      if (result.text) return { text: result.text, provider: 'vercel-gateway', attempts: [...attempts, { name: 'vercel-gateway', status: 'selected' }] };
+      attempts.push({ name: 'vercel-gateway', status: 'failed', error: 'empty response' });
+    } catch (e) {
+      attempts.push({ name: 'vercel-gateway', status: 'failed', error: e instanceof Error ? e.message : String(e) });
+    }
+  } else {
+    attempts.push({ name: 'vercel-gateway', status: 'failed', error: 'missing gateway key' });
   }
 
   // Try xAI direct
@@ -175,8 +184,13 @@ async function callLLM(system: string, prompt: string): Promise<{ text: string; 
     try {
       const xai = createOpenAI({ baseURL: 'https://api.x.ai/v1', apiKey: xaiKey });
       const result = await generateText({ model: xai('grok-3-fast'), system, prompt, maxOutputTokens: 1024, temperature: 0.3 });
-      if (result.text) return { text: result.text, provider: 'xai-direct' };
-    } catch { /* fall through */ }
+      if (result.text) return { text: result.text, provider: 'xai-direct', attempts: [...attempts, { name: 'xai-direct', status: 'selected' }] };
+      attempts.push({ name: 'xai-direct', status: 'failed', error: 'empty response' });
+    } catch (e) {
+      attempts.push({ name: 'xai-direct', status: 'failed', error: e instanceof Error ? e.message : String(e) });
+    }
+  } else {
+    attempts.push({ name: 'xai-direct', status: 'failed', error: 'missing xAI key' });
   }
 
   // Try Gemini
@@ -189,11 +203,14 @@ async function callLLM(system: string, prompt: string): Promise<{ text: string; 
         contents: prompt,
       });
       const text = res.text ?? '';
-      if (text) return { text, provider: 'gemini-flash' };
-    } catch { /* try next key */ }
+      if (text) return { text, provider: 'gemini-flash', attempts: [...attempts, { name: 'gemini-flash', status: 'selected' }] };
+      attempts.push({ name: 'gemini-flash', status: 'failed', error: 'empty response' });
+    } catch (e) {
+      attempts.push({ name: 'gemini-flash', status: 'failed', error: e instanceof Error ? e.message : String(e) });
+    }
   }
 
-  return { text: '', provider: 'none' };
+  return { text: '', provider: 'none', attempts };
 }
 
 // ── Action Gate ───────────────────────────────────────────────────────────────
@@ -270,15 +287,15 @@ export async function POST(req: NextRequest) {
     const system = `You are OmegA, a governed research assistant. Answer the user's research question based ONLY on the provided source documents. If the evidence is insufficient, say so explicitly. Do not fabricate information. Be precise and cite sources by name.`;
     const prompt = `Research question: ${query}\n\nSource documents:\n${contextText}\n\nProvide a well-reasoned answer based on the evidence above.`;
 
-    const { text: rawText, provider: llmProvider } = await callLLM(system, prompt);
-    recordStage('generate', rawText ? 'done' : 'error', { provider: llmProvider, chars: rawText.length });
+    const { text: rawText, provider: llmProvider, attempts } = await callLLM(system, prompt);
+    recordStage('generate', rawText ? 'done' : 'error', { provider: llmProvider, chars: rawText.length, attempts });
 
     if (!rawText) {
       return NextResponse.json({
         runId, answer: '[PROVIDER ERROR] No LLM response available.',
         mode: 'abstained', confidence: 0, citations, unresolved: [query],
-        verified: false, riskScore: risk.score, stageTrace: stages,
-      } satisfies ResearchResponse);
+        verified: false, riskScore: risk.score, provider: llmProvider, providerAttempts: attempts, stageTrace: stages,
+      } satisfies ResearchResponse, { status: 500 });
     }
 
     // ── Stage 4: Verify ───────────────────────────────────────────
@@ -310,6 +327,8 @@ export async function POST(req: NextRequest) {
       answer: text,
       mode: mode as ResearchResponse['mode'],
       confidence: Math.round(confidence * 1000) / 1000,
+      provider: llmProvider,
+      providerAttempts: attempts,
       citations,
       unresolved,
       verified: verif.passed,
