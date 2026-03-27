@@ -99,47 +99,47 @@ impl LlmProvider for FailingProvider {
 
 /// Build a test config with a known token and all provider keys empty.
 pub fn test_config() -> GatewayConfig {
-    GatewayConfig {
-        omega_api_bearer_token: "test-secret-token".to_string(),
-        omega_openai_api_key: String::new(),
-        omega_openai_base_url: "https://api.openai.com/v1".to_string(),
-        omega_model: "gpt-4o".to_string(),
-        omega_local_base_url: "http://localhost:11434/v1".to_string(),
-        omega_local_model: "llama3.2:3b".to_string(),
-        omega_codex_cli_path: "/home/mega/.nvm/versions/node/v22.22.0/bin/codex".to_string(),
-        omega_codex_cli_model: String::new(),
-        omega_claude_cli_path: "/home/mega/.local/bin/claude".to_string(),
-        omega_claude_cli_model: String::new(),
-        omega_gemini_cli_path: "/home/mega/.nvm/versions/node/v22.22.0/bin/gemini".to_string(),
-        omega_gemini_cli_model: String::new(),
-        omega_cli_home_dir: "/home/mega".to_string(),
-        omega_cli_timeout_secs: 120,
-        omega_anthropic_api_key: String::new(),
-        omega_anthropic_model: "claude-3-5-haiku-20241022".to_string(),
-        omega_anthropic_base_url: "https://api.anthropic.com".to_string(),
-        omega_gemini_api_key: String::new(),
-        omega_gemini_model: "gemini-1.5-pro".to_string(),
-        omega_gemini_base_url: "https://generativelanguage.googleapis.com".to_string(),
-        omega_perplexity_api_key: String::new(),
-        omega_perplexity_model: "llama-3-sonar-large-32k-online".to_string(),
-        omega_perplexity_base_url: "https://api.perplexity.ai".to_string(),
-        omega_deepseek_api_key: String::new(),
-        omega_deepseek_base_url: "https://api.deepseek.com".to_string(),
-        omega_deepseek_model: "deepseek-chat".to_string(),
-        omega_xai_api_key: String::new(),
-        omega_xai_base_url: "https://api.x.ai/v1".to_string(),
-        omega_xai_model: "grok-beta".to_string(),
-        omega_db_url: "sqlite:///test.db".to_string(),
-        omega_log_level: "ERROR".to_string(),
-        omega_brain_base_url: "http://localhost:8080".to_string(),
-        omega_bridge_base_url: None,
-        omega_internal_token: String::new(),
-        omega_port: 8787,
-        omega_timeout_secs: 30,
-        omega_system_prompt_path: String::new(),
-        omega_identity_yaml_path: String::new(),
-        omega_trace_db_url: "sqlite::memory:".to_string(),
-    }
+    let mut cfg = GatewayConfig::load().expect("gateway config");
+    cfg.omega_api_bearer_token = "test-secret-token".to_string();
+    cfg.omega_openai_api_key = String::new();
+    cfg.omega_openai_base_url = "https://api.openai.com/v1".to_string();
+    cfg.omega_model = "gpt-4o".to_string();
+    cfg.omega_local_base_url = "http://localhost:11434/v1".to_string();
+    cfg.omega_local_model = "llama3.2:3b".to_string();
+    cfg.omega_codex_cli_path = "/home/mega/.nvm/versions/node/v22.22.0/bin/codex".to_string();
+    cfg.omega_codex_cli_model = String::new();
+    cfg.omega_claude_cli_path = "/home/mega/.local/bin/claude".to_string();
+    cfg.omega_claude_cli_model = String::new();
+    cfg.omega_gemini_cli_path = "/home/mega/.nvm/versions/node/v22.22.0/bin/gemini".to_string();
+    cfg.omega_gemini_cli_model = String::new();
+    cfg.omega_cli_home_dir = "/home/mega".to_string();
+    cfg.omega_cli_timeout_secs = 120;
+    cfg.omega_anthropic_api_key = String::new();
+    cfg.omega_anthropic_model = "claude-3-5-haiku-20241022".to_string();
+    cfg.omega_anthropic_base_url = "https://api.anthropic.com".to_string();
+    cfg.omega_gemini_api_key = String::new();
+    cfg.omega_gemini_model = "gemini-1.5-pro".to_string();
+    cfg.omega_gemini_base_url = "https://generativelanguage.googleapis.com".to_string();
+    cfg.omega_perplexity_api_key = String::new();
+    cfg.omega_perplexity_model = "llama-3-sonar-large-32k-online".to_string();
+    cfg.omega_perplexity_base_url = "https://api.perplexity.ai".to_string();
+    cfg.omega_deepseek_api_key = String::new();
+    cfg.omega_deepseek_base_url = "https://api.deepseek.com".to_string();
+    cfg.omega_deepseek_model = "deepseek-chat".to_string();
+    cfg.omega_xai_api_key = String::new();
+    cfg.omega_xai_base_url = "https://api.x.ai/v1".to_string();
+    cfg.omega_xai_model = "grok-beta".to_string();
+    cfg.omega_db_url = "sqlite:///test.db".to_string();
+    cfg.omega_log_level = "ERROR".to_string();
+    cfg.omega_brain_base_url = "http://localhost:8080".to_string();
+    cfg.omega_bridge_base_url = None;
+    cfg.omega_internal_token = String::new();
+    cfg.omega_port = 8787;
+    cfg.omega_timeout_secs = 30;
+    cfg.omega_system_prompt_path = String::new();
+    cfg.omega_identity_yaml_path = String::new();
+    cfg.omega_trace_db_url = "sqlite::memory:".to_string();
+    cfg
 }
 
 /// Build a test config with auth disabled (empty token).

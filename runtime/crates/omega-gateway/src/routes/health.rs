@@ -13,7 +13,7 @@ pub async fn root_handler() -> impl IntoResponse {
         Json(json!({
             "service": "OMEGA Gateway",
             "version": "0.1",
-            "status": "AR137 NAOMI"
+            "status": "operational"
         })),
     )
 }

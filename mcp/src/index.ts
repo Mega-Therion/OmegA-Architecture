@@ -5,9 +5,15 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { execFileSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const GATEWAY = process.env.OMEGA_API_URL ?? "http://localhost:8787";
 const BEARER  = process.env.OMEGA_BEARER_TOKEN ?? "";
+const SOURCE_DIR = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(SOURCE_DIR, "..", "..");
+const POLYGLOT_VALIDATOR = resolve(REPO_ROOT, "tools", "polyglot_runtime.py");
 
 const headers = () => ({
   "Content-Type": "application/json",
@@ -91,6 +97,30 @@ const TOOLS = [
       properties: {},
     },
   },
+  {
+    name: "omega_polyglot_validate",
+    description:
+      "Run the polyglot runtime validator. It checks Rust, TypeScript, Python, and R integration and returns a structured build/validation report.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        build: {
+          type: "boolean",
+          description: "Run build steps for the runtime stack.",
+          default: true,
+        },
+        test: {
+          type: "boolean",
+          description: "Run Rust workspace tests as part of the validation pass.",
+          default: false,
+        },
+        gatewayUrl: {
+          type: "string",
+          description: "Optional gateway URL to probe after the local validation completes.",
+        },
+      },
+    },
+  },
 ];
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
@@ -164,6 +194,47 @@ async function handleProviders() {
     .join("\n") || "No providers found.";
 }
 
+async function handlePolyglotValidate(args: Record<string, unknown>) {
+  const flags = ["--json"];
+  if (args.build !== false) flags.push("--build");
+  if (args.test === true) flags.push("--test");
+  const gatewayUrl = typeof args.gatewayUrl === "string" && args.gatewayUrl.trim() ? args.gatewayUrl.trim() : null;
+  if (gatewayUrl) {
+    flags.push("--gateway-url", gatewayUrl);
+  }
+
+  try {
+    const stdout = execFileSync(
+      "python3",
+      [POLYGLOT_VALIDATOR, ...flags],
+      {
+        cwd: REPO_ROOT,
+        env: process.env,
+        encoding: "utf8",
+        maxBuffer: 10 * 1024 * 1024,
+      },
+    );
+    return stdout.trim();
+  } catch (error) {
+    const err = error as {
+      stdout?: string | Buffer;
+      stderr?: string | Buffer;
+      message?: string;
+    };
+    const stdout = typeof err.stdout === "string" ? err.stdout : err.stdout?.toString("utf8") ?? "";
+    const stderr = typeof err.stderr === "string" ? err.stderr : err.stderr?.toString("utf8") ?? "";
+    throw new Error(
+      [
+        `Polyglot validation failed: ${err.message ?? "unknown error"}`,
+        stdout.trim(),
+        stderr.trim(),
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }
+}
+
 // ── Server ────────────────────────────────────────────────────────────────────
 
 const server = new Server(
@@ -185,6 +256,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "omega_memory_query":  text = await handleMemoryQuery(a); break;
       case "omega_health":        text = await handleHealth();       break;
       case "omega_providers":     text = await handleProviders();    break;
+      case "omega_polyglot_validate": text = await handlePolyglotValidate(a); break;
       default:
         return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
     }

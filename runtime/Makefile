@@ -21,3 +21,6 @@ run-gateway:
 
 run-cli:
 	cargo run --bin omega-cli -- $(ARGS)
+
+polyglot-validate:
+	python3 ../tools/polyglot_runtime.py --build --test --json

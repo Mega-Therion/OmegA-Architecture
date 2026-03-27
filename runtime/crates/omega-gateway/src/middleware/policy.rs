@@ -187,51 +187,52 @@ mod tests {
         );
         trace_store.migrate().await.expect("trace migrate");
 
+        let mut gateway_config = crate::config::GatewayConfig::load().expect("gateway config");
+        gateway_config.omega_api_bearer_token = "test-secret-token".to_string();
+        gateway_config.omega_openai_api_key = String::new();
+        gateway_config.omega_openai_base_url = "https://api.openai.com/v1".to_string();
+        gateway_config.omega_model = "gpt-4o".to_string();
+        gateway_config.omega_local_base_url = "http://localhost:11434/v1".to_string();
+        gateway_config.omega_local_model = "llama3.2:3b".to_string();
+        gateway_config.omega_codex_cli_path =
+            "/home/mega/.nvm/versions/node/v22.22.0/bin/codex".to_string();
+        gateway_config.omega_codex_cli_model = String::new();
+        gateway_config.omega_claude_cli_path = "/home/mega/.local/bin/claude".to_string();
+        gateway_config.omega_claude_cli_model = String::new();
+        gateway_config.omega_gemini_cli_path =
+            "/home/mega/.nvm/versions/node/v22.22.0/bin/gemini".to_string();
+        gateway_config.omega_gemini_cli_model = String::new();
+        gateway_config.omega_cli_home_dir = "/home/mega".to_string();
+        gateway_config.omega_cli_timeout_secs = 120;
+        gateway_config.omega_anthropic_api_key = String::new();
+        gateway_config.omega_anthropic_model = "claude-3-5-haiku-20241022".to_string();
+        gateway_config.omega_anthropic_base_url = "https://api.anthropic.com".to_string();
+        gateway_config.omega_gemini_api_key = String::new();
+        gateway_config.omega_gemini_model = "gemini-1.5-pro".to_string();
+        gateway_config.omega_gemini_base_url = "https://generativelanguage.googleapis.com".to_string();
+        gateway_config.omega_perplexity_api_key = String::new();
+        gateway_config.omega_perplexity_model = "llama-3-sonar-large-32k-online".to_string();
+        gateway_config.omega_perplexity_base_url = "https://api.perplexity.ai".to_string();
+        gateway_config.omega_deepseek_api_key = String::new();
+        gateway_config.omega_deepseek_base_url = "https://api.deepseek.com".to_string();
+        gateway_config.omega_deepseek_model = "deepseek-chat".to_string();
+        gateway_config.omega_xai_api_key = String::new();
+        gateway_config.omega_xai_base_url = "https://api.x.ai/v1".to_string();
+        gateway_config.omega_xai_model = "grok-beta".to_string();
+        gateway_config.omega_db_url = "sqlite:///test.db".to_string();
+        gateway_config.omega_log_level = "ERROR".to_string();
+        gateway_config.omega_brain_base_url = "http://localhost:8080".to_string();
+        gateway_config.omega_bridge_base_url = None;
+        gateway_config.omega_internal_token = String::new();
+        gateway_config.omega_port = 8787;
+        gateway_config.omega_timeout_secs = 30;
+        gateway_config.omega_system_prompt_path = String::new();
+        gateway_config.omega_identity_yaml_path = String::new();
+        gateway_config.omega_trace_db_url = "sqlite::memory:".to_string();
+
         let mut state = crate::state::AppState::new(
             router,
-            crate::config::GatewayConfig {
-                omega_api_bearer_token: "test-secret-token".to_string(),
-                omega_openai_api_key: String::new(),
-                omega_openai_base_url: "https://api.openai.com/v1".to_string(),
-                omega_model: "gpt-4o".to_string(),
-                omega_local_base_url: "http://localhost:11434/v1".to_string(),
-                omega_local_model: "llama3.2:3b".to_string(),
-                omega_codex_cli_path: "/home/mega/.nvm/versions/node/v22.22.0/bin/codex"
-                    .to_string(),
-                omega_codex_cli_model: String::new(),
-                omega_claude_cli_path: "/home/mega/.local/bin/claude".to_string(),
-                omega_claude_cli_model: String::new(),
-                omega_gemini_cli_path: "/home/mega/.nvm/versions/node/v22.22.0/bin/gemini"
-                    .to_string(),
-                omega_gemini_cli_model: String::new(),
-                omega_cli_home_dir: "/home/mega".to_string(),
-                omega_cli_timeout_secs: 120,
-                omega_anthropic_api_key: String::new(),
-                omega_anthropic_model: "claude-3-5-haiku-20241022".to_string(),
-                omega_anthropic_base_url: "https://api.anthropic.com".to_string(),
-                omega_gemini_api_key: String::new(),
-                omega_gemini_model: "gemini-1.5-pro".to_string(),
-                omega_gemini_base_url: "https://generativelanguage.googleapis.com".to_string(),
-                omega_perplexity_api_key: String::new(),
-                omega_perplexity_model: "llama-3-sonar-large-32k-online".to_string(),
-                omega_perplexity_base_url: "https://api.perplexity.ai".to_string(),
-                omega_deepseek_api_key: String::new(),
-                omega_deepseek_base_url: "https://api.deepseek.com".to_string(),
-                omega_deepseek_model: "deepseek-chat".to_string(),
-                omega_xai_api_key: String::new(),
-                omega_xai_base_url: "https://api.x.ai/v1".to_string(),
-                omega_xai_model: "grok-beta".to_string(),
-                omega_db_url: "sqlite:///test.db".to_string(),
-                omega_log_level: "ERROR".to_string(),
-                omega_brain_base_url: "http://localhost:8080".to_string(),
-                omega_bridge_base_url: None,
-                omega_internal_token: String::new(),
-                omega_port: 8787,
-                omega_timeout_secs: 30,
-                omega_system_prompt_path: String::new(),
-                omega_identity_yaml_path: String::new(),
-                omega_trace_db_url: "sqlite::memory:".to_string(),
-            },
+            gateway_config,
             memory_store,
             economy_store,
             trace_store,
