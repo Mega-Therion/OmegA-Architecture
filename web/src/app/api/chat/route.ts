@@ -225,6 +225,34 @@ async function tryVercelGateway(
   });
 }
 
+async function tryOpenAIDirect(
+  encoder: TextEncoder,
+  system: string,
+  user: string,
+  history: Msg[] | undefined
+): Promise<ReadableStream> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error('No OpenAI key');
+
+  const openai = createOpenAI({ apiKey: key });
+  const result = await streamText({
+    model: openai('gpt-4o-mini'),
+    system,
+    messages: buildMessages(user, history),
+    maxOutputTokens: 4096,
+    temperature: 0.85,
+  });
+
+  return new ReadableStream({
+    async start(ctrl) {
+      for await (const chunk of result.textStream) {
+        if (chunk) ctrl.enqueue(encoder.encode(chunk));
+      }
+      ctrl.close();
+    }
+  });
+}
+
 async function tryXaiDirect(
   encoder: TextEncoder,
   system: string,
@@ -344,6 +372,7 @@ export async function POST(req: NextRequest) {
     const providerHealth = getProviderHealthSnapshot();
     const providerFns: Record<ProviderName, () => Promise<ReadableStream>> = {
       'vercel-gateway': () => tryVercelGateway(encoder, system, user, history),
+      'openai-direct': () => tryOpenAIDirect(encoder, system, user, history),
       'xai-direct': () => tryXaiDirect(encoder, system, user, history),
       'gemini-flash': () => tryGemini(encoder, system, user, history),
     };

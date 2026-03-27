@@ -32,6 +32,20 @@ async function tryVercelGateway(text: string): Promise<string> {
   return result.text;
 }
 
+async function tryOpenAIDirect(text: string): Promise<string> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error('No OpenAI key');
+  const openai = createOpenAI({ apiKey: key });
+  const result = await generateText({
+    model: openai('gpt-4o-mini'),
+    system: SYSTEM,
+    prompt: text,
+    maxOutputTokens: 512,
+    temperature: 0.6,
+  });
+  return result.text;
+}
+
 async function tryXaiDirect(text: string): Promise<string> {
   const key = process.env.XAI_API_KEY;
   if (!key) throw new Error('No xAI key');
@@ -74,6 +88,7 @@ export async function POST(req: NextRequest) {
     const providerAttempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
     const providers = [
       { name: 'vercel-gateway', fn: () => tryVercelGateway(text) },
+      { name: 'openai-direct', fn: () => tryOpenAIDirect(text) },
       { name: 'xai-direct', fn: () => tryXaiDirect(text) },
       { name: 'gemini-flash', fn: () => tryGemini(text) },
     ];

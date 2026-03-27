@@ -1,4 +1,4 @@
-export type ProviderName = 'vercel-gateway' | 'xai-direct' | 'gemini-flash';
+export type ProviderName = 'vercel-gateway' | 'openai-direct' | 'xai-direct' | 'gemini-flash';
 
 export type ProviderAttempt = {
   name: ProviderName;
@@ -12,6 +12,11 @@ export type ProviderHealthSnapshot = {
     available: boolean;
     reason: string | null;
     url: string;
+  };
+  openai: {
+    configured: boolean;
+    available: boolean;
+    reason: string | null;
   };
   xai: {
     configured: boolean;
@@ -29,6 +34,7 @@ export type ProviderHealthSnapshot = {
 
 export const DEFAULT_PROVIDER_ORDER: ProviderName[] = [
   'vercel-gateway',
+  'openai-direct',
   'xai-direct',
   'gemini-flash',
 ];
@@ -41,6 +47,7 @@ const GEMINI_KEYS = [
 
 export function getProviderHealthSnapshot(): ProviderHealthSnapshot {
   const gatewayConfigured = Boolean(process.env.VERCEL_AI_GATEWAY_KEY);
+  const openaiConfigured = Boolean(process.env.OPENAI_API_KEY);
   const xaiConfigured = Boolean(process.env.XAI_API_KEY);
   const geminiConfigured = GEMINI_KEYS.length > 0;
 
@@ -50,6 +57,11 @@ export function getProviderHealthSnapshot(): ProviderHealthSnapshot {
       available: gatewayConfigured,
       reason: gatewayConfigured ? null : 'missing gateway key',
       url: 'https://ai-gateway.vercel.sh/v1',
+    },
+    openai: {
+      configured: openaiConfigured,
+      available: openaiConfigured,
+      reason: openaiConfigured ? null : 'missing OpenAI key',
     },
     xai: {
       configured: xaiConfigured,
