@@ -180,21 +180,6 @@ async function callLLM(system: string, prompt: string): Promise<{ text: string; 
     attempts.push({ name: 'vercel-gateway', status: 'failed', error: 'missing gateway key' });
   }
 
-  // Try OpenAI direct
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (openaiKey) {
-    try {
-      const openai = createOpenAI({ apiKey: openaiKey });
-      const result = await generateText({ model: openai('gpt-4o-mini'), system, prompt, maxOutputTokens: 1024, temperature: 0.3 });
-      if (result.text) return { text: result.text, provider: 'openai-direct', attempts: [...attempts, { name: 'openai-direct', status: 'selected' }] };
-      attempts.push({ name: 'openai-direct', status: 'failed', error: 'empty response' });
-    } catch (e) {
-      attempts.push({ name: 'openai-direct', status: 'failed', error: e instanceof Error ? e.message : String(e) });
-    }
-  } else {
-    attempts.push({ name: 'openai-direct', status: 'failed', error: 'missing OpenAI key' });
-  }
-
   // Try xAI direct
   const xaiKey = process.env.XAI_API_KEY;
   if (xaiKey) {
@@ -225,6 +210,21 @@ async function callLLM(system: string, prompt: string): Promise<{ text: string; 
     } catch (e) {
       attempts.push({ name: 'gemini-flash', status: 'failed', error: e instanceof Error ? e.message : String(e) });
     }
+  }
+
+  // Try OpenAI direct as the final emergency fallback.
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    try {
+      const openai = createOpenAI({ apiKey: openaiKey });
+      const result = await generateText({ model: openai('gpt-4o-mini'), system, prompt, maxOutputTokens: 1024, temperature: 0.3 });
+      if (result.text) return { text: result.text, provider: 'openai-direct', attempts: [...attempts, { name: 'openai-direct', status: 'selected' }] };
+      attempts.push({ name: 'openai-direct', status: 'failed', error: 'empty response' });
+    } catch (e) {
+      attempts.push({ name: 'openai-direct', status: 'failed', error: e instanceof Error ? e.message : String(e) });
+    }
+  } else {
+    attempts.push({ name: 'openai-direct', status: 'failed', error: 'missing OpenAI key' });
   }
 
   return { text: '', provider: 'none', attempts };

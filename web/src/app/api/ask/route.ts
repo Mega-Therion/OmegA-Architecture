@@ -116,9 +116,9 @@ export async function POST(req: NextRequest) {
 
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [
       { name: 'vercel-gateway', fn: () => tryVercelGateway(system, text) },
-      { name: 'openai-direct', fn: () => tryOpenAIDirect(system, text) },
       { name: 'xai-direct', fn: () => tryXaiDirect(system, text) },
       { name: 'gemini-flash', fn: () => tryGemini(system, text) },
+      { name: 'openai-direct', fn: () => tryOpenAIDirect(system, text) },
     ];
 
     let lastErr: unknown;

@@ -34,9 +34,9 @@ export type ProviderHealthSnapshot = {
 
 export const DEFAULT_PROVIDER_ORDER: ProviderName[] = [
   'vercel-gateway',
-  'openai-direct',
   'xai-direct',
   'gemini-flash',
+  'openai-direct',
 ];
 
 const GEMINI_KEYS = [
