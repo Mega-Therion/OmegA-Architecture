@@ -209,7 +209,8 @@ mod tests {
         gateway_config.omega_anthropic_base_url = "https://api.anthropic.com".to_string();
         gateway_config.omega_gemini_api_key = String::new();
         gateway_config.omega_gemini_model = "gemini-1.5-pro".to_string();
-        gateway_config.omega_gemini_base_url = "https://generativelanguage.googleapis.com".to_string();
+        gateway_config.omega_gemini_base_url =
+            "https://generativelanguage.googleapis.com".to_string();
         gateway_config.omega_perplexity_api_key = String::new();
         gateway_config.omega_perplexity_model = "llama-3-sonar-large-32k-online".to_string();
         gateway_config.omega_perplexity_base_url = "https://api.perplexity.ai".to_string();

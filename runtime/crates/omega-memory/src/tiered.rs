@@ -96,10 +96,16 @@ impl TieredMemoryStore {
     }
 
     fn ordered_stores(&self) -> Vec<Arc<dyn MemoryStore>> {
-        [self.s1.clone(), self.s2.clone(), self.s3.clone(), self.n1.clone(), self.n2.clone()]
-            .into_iter()
-            .flatten()
-            .collect()
+        [
+            self.s1.clone(),
+            self.s2.clone(),
+            self.s3.clone(),
+            self.n1.clone(),
+            self.n2.clone(),
+        ]
+        .into_iter()
+        .flatten()
+        .collect()
     }
 
     fn should_promote(&self, entry: &MemoryEntry, target: TierId) -> bool {
@@ -153,11 +159,41 @@ impl MemoryStore for TieredMemoryStore {
         let n2 = self.n2.clone();
 
         let (r1, r2, r3, r4, r5) = tokio::join!(
-            async { if let Some(s) = s1 { s.search(query, limit).await.ok() } else { Some(vec![]) } },
-            async { if let Some(s) = s2 { s.search(query, limit).await.ok() } else { Some(vec![]) } },
-            async { if let Some(s) = s3 { s.search(query, limit).await.ok() } else { Some(vec![]) } },
-            async { if let Some(s) = n1 { s.search(query, limit).await.ok() } else { Some(vec![]) } },
-            async { if let Some(s) = n2 { s.search(query, limit).await.ok() } else { Some(vec![]) } },
+            async {
+                if let Some(s) = s1 {
+                    s.search(query, limit).await.ok()
+                } else {
+                    Some(vec![])
+                }
+            },
+            async {
+                if let Some(s) = s2 {
+                    s.search(query, limit).await.ok()
+                } else {
+                    Some(vec![])
+                }
+            },
+            async {
+                if let Some(s) = s3 {
+                    s.search(query, limit).await.ok()
+                } else {
+                    Some(vec![])
+                }
+            },
+            async {
+                if let Some(s) = n1 {
+                    s.search(query, limit).await.ok()
+                } else {
+                    Some(vec![])
+                }
+            },
+            async {
+                if let Some(s) = n2 {
+                    s.search(query, limit).await.ok()
+                } else {
+                    Some(vec![])
+                }
+            },
         );
 
         let mut seen: HashSet<String> = HashSet::new();

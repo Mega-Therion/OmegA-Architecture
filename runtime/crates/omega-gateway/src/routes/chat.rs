@@ -71,11 +71,7 @@ async fn reinforce_memory_hits(
 
         updated.importance = boosted;
         let target_tier = target_tier_from_importance(boosted, thresholds);
-        let current_rank = updated
-            .tier
-            .as_deref()
-            .map(tier_rank)
-            .unwrap_or(0);
+        let current_rank = updated.tier.as_deref().map(tier_rank).unwrap_or(0);
         let target_rank = tier_rank(target_tier);
         if target_rank > current_rank {
             updated.tier = Some(target_tier.to_string());
@@ -328,8 +324,24 @@ fn detect_injection(prompt: &str) -> bool {
 
 fn retrieval_queries(user: &str, state: &AppState) -> Vec<String> {
     const STOP_WORDS: &[&str] = &[
-        "the", "and", "for", "that", "with", "from", "this", "what", "when", "where", "does",
-        "know", "about", "your", "have", "please", "summarize", "memory",
+        "the",
+        "and",
+        "for",
+        "that",
+        "with",
+        "from",
+        "this",
+        "what",
+        "when",
+        "where",
+        "does",
+        "know",
+        "about",
+        "your",
+        "have",
+        "please",
+        "summarize",
+        "memory",
     ];
 
     let trimmed = user.trim();
