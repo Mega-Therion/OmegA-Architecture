@@ -1,36 +1,36 @@
 {
   "suite": "OmegA Deployed Route Isolation",
-  "base_url": "https://omega-sovereign-hmd91pzie-megas-projects-1fcf4ba6.vercel.app",
-  "timestamp_utc": "2026-03-27T19:44:51+00:00",
+  "base_url": "https://omega-sovereign-hs0k2h1x3-megas-projects-1fcf4ba6.vercel.app",
+  "timestamp_utc": "2026-03-27T19:55:41+00:00",
   "total": 4,
   "usable": 0,
   "collapsed": 4,
-  "mean_latency_ms": 8876.8,
+  "mean_latency_ms": 35189.0,
   "first_collapse_route": "chat",
   "routes": {
     "chat": {
       "usable": false,
       "provider": "unknown",
       "status": 500,
-      "latency_ms": 15092.6
+      "latency_ms": 49120.5
     },
     "research": {
       "usable": false,
       "provider": "unknown",
       "status": 500,
-      "latency_ms": 6852.9
+      "latency_ms": 32866.0
     },
     "synthesize": {
       "usable": false,
       "provider": "unknown",
       "status": 500,
-      "latency_ms": 6677.1
+      "latency_ms": 29998.7
     },
     "refine": {
       "usable": false,
       "provider": "unknown",
       "status": 500,
-      "latency_ms": 6884.7
+      "latency_ms": 28770.9
     }
   },
   "results": [
@@ -40,9 +40,9 @@
       "ok": false,
       "usable": false,
       "provider": "unknown",
-      "latency_ms": 15092.6,
+      "latency_ms": 49120.5,
       "status": 500,
-      "response": "{\"error\":\"ApiError: {\\\"error\\\":{\\\"message\\\":\\\"{\\\\n  \\\\\\\"error\\\\\\\": {\\\\n    \\\\\\\"code\\\\\\\": 429,\\\\n    \\\\\\\"message\\\\\\\": \\\\\\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\\\\\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\\\\\\\nPlease retry in 28.956690611s.\\\\\\\",\\\\n    \\\\\\\"status\\\\\\\": \\\\\\\"RESOURCE_EXHAUSTED\\\\\\\",\\\\n    \\\\\\\"details\\\\\\\": [\\\\n      {\\\\n        \\\\\\\"@type\\\\\\\": \\\\\\\"type.googleapis.com/google.rpc.Help\\\\\\\",\\\\n        \\\\\\\"links\\\\\\\": [\\\\n          {\\\\n            \\\\\\\"description\\\\\\\": \\\\\\\"Learn more about Gemini API quotas\\\\\\\",\\\\n            \\\\\\\"url\\\\\\\": \\\\\\\"https://ai.google.dev/gemini-api/docs/rate-limits\\\\\\\"\\\\n          }\\\\n        ]\\\\n      },\\\\n      {\\\\n        \\\\\\\"@type\\\\\\\": \\\\\\\"type.googleapis.com/google.rpc.QuotaFailure\\\\\\\",\\\\n        \\\\\\\"violations\\\\\\\": [\\\\n          {\\\\n            \\\\\\\"quotaMetric\\\\\\\": \\\\\\\"generativelanguage.googleapis.com/generate_content_free_tier_requests\\\\\\\",\\\\n            \\\\\\\"quotaId\\\\\\\": \\\\\\\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\\\\\\\",\\\\n            \\\\\\\"quotaDimensions\\\\\\\": {\\\\n              \\\\\\\"location\\\\\\\": \\\\\\\"global\\\\\\\",\\\\n              \\\\\\\"model\\\\\\\": \\\\\\\"gemini-2.5-flash\\\\\\\"\\\\n            },\\\\n            \\\\\\\"quotaValue\\\\\\\": \\\\\\\"20\\\\\\\"\\\\n          }\\\\n        ]\\\\n      },\\\\n      {\\\\n        \\\\\\\"@type\\\\\\\": \\\\\\\"type.googleapis.com/google.rpc.RetryInfo\\\\\\\",\\\\n        \\\\\\\"retryDelay\\\\\\\": \\\\\\\"28s\\\\\\\"\\\\n      }\\\\n    ]\\\\n  }\\\\n}\\\\n\\\",\\\"code\\\":429,\\\"status\\\":\\\"Too Many Requests\\\"}}\"}",
+      "response": "{\"error\":\"ApiError: {\\\"error\\\":{\\\"message\\\":\\\"{\\\\n  \\\\\\\"error\\\\\\\": {\\\\n    \\\\\\\"code\\\\\\\": 429,\\\\n    \\\\\\\"message\\\\\\\": \\\\\\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\\\\\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\\\\\\\nPlease retry in 50.247578151s.\\\\\\\",\\\\n    \\\\\\\"status\\\\\\\": \\\\\\\"RESOURCE_EXHAUSTED\\\\\\\",\\\\n    \\\\\\\"details\\\\\\\": [\\\\n      {\\\\n        \\\\\\\"@type\\\\\\\": \\\\\\\"type.googleapis.com/google.rpc.Help\\\\\\\",\\\\n        \\\\\\\"links\\\\\\\": [\\\\n          {\\\\n            \\\\\\\"description\\\\\\\": \\\\\\\"Learn more about Gemini API quotas\\\\\\\",\\\\n            \\\\\\\"url\\\\\\\": \\\\\\\"https://ai.google.dev/gemini-api/docs/rate-limits\\\\\\\"\\\\n          }\\\\n        ]\\\\n      },\\\\n      {\\\\n        \\\\\\\"@type\\\\\\\": \\\\\\\"type.googleapis.com/google.rpc.QuotaFailure\\\\\\\",\\\\n        \\\\\\\"violations\\\\\\\": [\\\\n          {\\\\n            \\\\\\\"quotaMetric\\\\\\\": \\\\\\\"generativelanguage.googleapis.com/generate_content_free_tier_requests\\\\\\\",\\\\n            \\\\\\\"quotaId\\\\\\\": \\\\\\\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\\\\\\\",\\\\n            \\\\\\\"quotaDimensions\\\\\\\": {\\\\n              \\\\\\\"location\\\\\\\": \\\\\\\"global\\\\\\\",\\\\n              \\\\\\\"model\\\\\\\": \\\\\\\"gemini-2.5-flash\\\\\\\"\\\\n            },\\\\n            \\\\\\\"quotaValue\\\\\\\": \\\\\\\"20\\\\\\\"\\\\n          }\\\\n        ]\\\\n      },\\\\n      {\\\\n        \\\\\\\"@type\\\\\\\": \\\\\\\"type.googleapis.com/google.rpc.RetryInfo\\\\\\\",\\\\n        \\\\\\\"retryDelay\\\\\\\": \\\\\\\"50s\\\\\\\"\\\\n      }\\\\n    ]\\\\n  }\\\\n}\\\\n\\\",\\\"code\\\":429,\\\"status\\\":\\\"Too Many Requests\\\"}}\"}",
       "response_excerpt": "{\"error\":\"ApiError: {\\\"error\\\":{\\\"message\\\":\\\"{\\\\n  \\\\\\\"error\\\\\\\": {\\\\n    \\\\\\\"code\\\\\\\": 429,\\\\n    \\\\\\\"message\\\\\\\": \\\\\\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head t",
       "details": {
         "provider_header": "unknown",
@@ -57,10 +57,10 @@
       "ok": false,
       "usable": false,
       "provider": "unknown",
-      "latency_ms": 6852.9,
+      "latency_ms": 32866.0,
       "status": 500,
-      "response": "{\"runId\":\"run_mn9b8hyx\",\"answer\":\"[PROVIDER ERROR] No LLM response available.\",\"mode\":\"abstained\",\"confidence\":0,\"citations\":[],\"unresolved\":[\"Reply with exactly one word: OK.\"],\"verified\":false,\"riskScore\":0.1,\"provider\":\"none\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"failed\",\"error\":\"missing gateway key\"},{\"name\":\"xai-direct\",\"status\":\"failed\",\"error\":\"Failed after 3 attempts. Last error: Too Many Requests\"},{\"name\":\"gemini-flash\",\"status\":\"failed\",\"error\":\"{\\\"error\\\":{\\\"code\\\":429,\\\"message\\\":\\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\\\nPlease retry in 22.100401918s.\\\",\\\"status\\\":\\\"RESOURCE_EXHAUSTED\\\",\\\"details\\\":[{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.Help\\\",\\\"links\\\":[{\\\"description\\\":\\\"Learn more about Gemini API quotas\\\",\\\"url\\\":\\\"https://ai.google.dev/gemini-api/docs/rate-limits\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.QuotaFailure\\\",\\\"violations\\\":[{\\\"quotaMetric\\\":\\\"generativelanguage.googleapis.com/generate_content_free_tier_requests\\\",\\\"quotaId\\\":\\\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\\\",\\\"quotaDimensions\\\":{\\\"model\\\":\\\"gemini-2.5-flash\\\",\\\"location\\\":\\\"global\\\"},\\\"quotaValue\\\":\\\"20\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.RetryInfo\\\",\\\"retryDelay\\\":\\\"22s\\\"}]}}\"}],\"stageTrace\":[{\"stage\":\"risk_gate\",\"status\":\"pass\",\"details\":{\"score\":0.1,\"allowed\":true},\"elapsedMs\":2},{\"stage\":\"retrieve\",\"status\":\"done\",\"details\":{\"chunks\":0,\"groundingRatio\":0},\"elapsedMs\":2},{\"stage\":\"generate\",\"status\":\"error\",\"details\":{\"provider\":\"none\",\"chars\":0,\"attempts\":[{\"name\":\"vercel-gateway\",\"status\":\"failed\",\"error\":\"missing gateway key\"},{\"name\":\"xai-direct\",\"status\":\"failed\",\"error\":\"Failed after 3 attempts. Last error: Too Many Requests\"},{\"name\":\"gemini-flash\",\"status\":\"failed\",\"error\":\"{\\\"error\\\":{\\\"code\\\":429,\\\"message\\\":\\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\\\nPlease retry in 22.100401918s.\\\",\\\"status\\\":\\\"RESOURCE_EXHAUSTED\\\",\\\"details\\\":[{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.Help\\\",\\\"links\\\":[{\\\"description\\\":\\\"Learn more about Gemini API quotas\\\",\\\"url\\\":\\\"https://ai.google.dev/gemini-api/docs/rate-limits\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.QuotaFailure\\\",\\\"violations\\\":[{\\\"quotaMetric\\\":\\\"generativelanguage.googleapis.com/generate_content_free_tier_requests\\\",\\\"quotaId\\\":\\\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\\\",\\\"quotaDimensions\\\":{\\\"model\\\":\\\"gemini-2.5-flash\\\",\\\"location\\\":\\\"global\\\"},\\\"quotaValue\\\":\\\"20\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.RetryInfo\\\",\\\"retryDelay\\\":\\\"22s\\\"}]}}\"}]},\"elapsedMs\":6216}],\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\"]}}",
-      "response_excerpt": "{\"runId\":\"run_mn9b8hyx\",\"answer\":\"[PROVIDER ERROR] No LLM response available.\",\"mode\":\"abstained\",\"confidence\":0,\"citations\":[],\"unresolved\":[\"Reply with exactly one word: OK.\"],\"verified\":false,\"riskScore\":0.1,\"provider\":\"none\",\"providerAt",
+      "response": "{\"runId\":\"run_mn9bkwld\",\"answer\":\"[PROVIDER ERROR] No LLM response available.\",\"mode\":\"abstained\",\"confidence\":0,\"citations\":[],\"unresolved\":[\"Reply with exactly one word: OK.\"],\"verified\":false,\"riskScore\":0.1,\"provider\":\"none\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"failed\",\"error\":\"missing gateway key\"},{\"name\":\"openai-direct\",\"status\":\"failed\",\"error\":\"Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\"},{\"name\":\"xai-direct\",\"status\":\"failed\",\"error\":\"Failed after 3 attempts. Last error: Too Many Requests\"},{\"name\":\"gemini-flash\",\"status\":\"failed\",\"error\":\"{\\\"error\\\":{\\\"code\\\":429,\\\"message\\\":\\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\\\nPlease retry in 17.346507443s.\\\",\\\"status\\\":\\\"RESOURCE_EXHAUSTED\\\",\\\"details\\\":[{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.Help\\\",\\\"links\\\":[{\\\"description\\\":\\\"Learn more about Gemini API quotas\\\",\\\"url\\\":\\\"https://ai.google.dev/gemini-api/docs/rate-limits\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.QuotaFailure\\\",\\\"violations\\\":[{\\\"quotaMetric\\\":\\\"generativelanguage.googleapis.com/generate_content_free_tier_requests\\\",\\\"quotaId\\\":\\\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\\\",\\\"quotaDimensions\\\":{\\\"location\\\":\\\"global\\\",\\\"model\\\":\\\"gemini-2.5-flash\\\"},\\\"quotaValue\\\":\\\"20\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.RetryInfo\\\",\\\"retryDelay\\\":\\\"17s\\\"}]}}\"}],\"stageTrace\":[{\"stage\":\"risk_gate\",\"status\":\"pass\",\"details\":{\"score\":0.1,\"allowed\":true},\"elapsedMs\":1},{\"stage\":\"retrieve\",\"status\":\"done\",\"details\":{\"chunks\":0,\"groundingRatio\":0},\"elapsedMs\":1},{\"stage\":\"generate\",\"status\":\"error\",\"details\":{\"provider\":\"none\",\"chars\":0,\"attempts\":[{\"name\":\"vercel-gateway\",\"status\":\"failed\",\"error\":\"missing gateway key\"},{\"name\":\"openai-direct\",\"status\":\"failed\",\"error\":\"Failed after 3 attempts. Last error: You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\"},{\"name\":\"xai-direct\",\"status\":\"failed\",\"error\":\"Failed after 3 attempts. Last error: Too Many Requests\"},{\"name\":\"gemini-flash\",\"status\":\"failed\",\"error\":\"{\\\"error\\\":{\\\"code\\\":429,\\\"message\\\":\\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\\\\nPlease retry in 17.346507443s.\\\",\\\"status\\\":\\\"RESOURCE_EXHAUSTED\\\",\\\"details\\\":[{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.Help\\\",\\\"links\\\":[{\\\"description\\\":\\\"Learn more about Gemini API quotas\\\",\\\"url\\\":\\\"https://ai.google.dev/gemini-api/docs/rate-limits\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.QuotaFailure\\\",\\\"violations\\\":[{\\\"quotaMetric\\\":\\\"generativelanguage.googleapis.com/generate_content_free_tier_requests\\\",\\\"quotaId\\\":\\\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\\\",\\\"quotaDimensions\\\":{\\\"location\\\":\\\"global\\\",\\\"model\\\":\\\"gemini-2.5-flash\\\"},\\\"quotaValue\\\":\\\"20\\\"}]},{\\\"@type\\\":\\\"type.googleapis.com/google.rpc.RetryInfo\\\",\\\"retryDelay\\\":\\\"17s\\\"}]}}\"}]},\"elapsedMs\":32150}],\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"openai-direct\",\"xai-direct\",\"gemini-flash\"]}}",
+      "response_excerpt": "{\"runId\":\"run_mn9bkwld\",\"answer\":\"[PROVIDER ERROR] No LLM response available.\",\"mode\":\"abstained\",\"confidence\":0,\"citations\":[],\"unresolved\":[\"Reply with exactly one word: OK.\"],\"verified\":false,\"riskScore\":0.1,\"provider\":\"none\",\"providerAt",
       "details": {
         "provider_header": "unknown"
       },
@@ -72,10 +72,10 @@
       "ok": false,
       "usable": false,
       "provider": "unknown",
-      "latency_ms": 6677.1,
+      "latency_ms": 29998.7,
       "status": 500,
-      "response": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\"]}}",
-      "response_excerpt": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"",
+      "response": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"openai-direct\",\"xai-direct\",\"gemini-flash\"]}}",
+      "response_excerpt": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null",
       "details": {
         "provider_header": "unknown"
       },
@@ -87,10 +87,10 @@
       "ok": false,
       "usable": false,
       "provider": "unknown",
-      "latency_ms": 6884.7,
+      "latency_ms": 28770.9,
       "status": 500,
-      "response": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\"]}}",
-      "response_excerpt": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"",
+      "response": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"openai-direct\",\"xai-direct\",\"gemini-flash\"]}}",
+      "response_excerpt": "{\"error\":\"Error: All Gemini keys exhausted\",\"providerHealth\":{\"gateway\":{\"configured\":false,\"available\":false,\"reason\":\"missing gateway key\",\"url\":\"https://ai-gateway.vercel.sh/v1\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null",
       "details": {
         "provider_header": "unknown"
       },
