@@ -47,6 +47,21 @@ async fn main() -> anyhow::Result<()> {
         Some(Command::Providers) => {
             commands::providers::run(&gateway_client, &cfg).await?;
         }
+        Some(Command::History {
+            search,
+            replay,
+            limit,
+        }) => {
+            commands::history::run(
+                &gateway_client,
+                &cfg,
+                search.as_deref(),
+                replay.as_deref(),
+                limit,
+                &cfg.defaults.mode,
+            )
+            .await?;
+        }
         Some(Command::Chat { workspace }) => {
             commands::chat::run(&gateway_client, workspace, &cfg.defaults.mode, &cfg).await?;
         }

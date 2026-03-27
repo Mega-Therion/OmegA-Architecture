@@ -24,7 +24,7 @@ pub async fn run(
 
     println!(
         "{}",
-        "Type a message and press Enter. Use /help, /status, /inspect, /providers, /briefing, /pulse, /gains, or /exit."
+        "Type a message and press Enter. Use /help, /status, /inspect, /providers, /history, /briefing, /pulse, /gains, or /exit."
             .bright_white()
     );
     println!(
@@ -154,6 +154,7 @@ async fn handle_command(
                     "/status - show live gateway status".to_string(),
                     "/inspect - show a full local + live diagnostics panel".to_string(),
                     "/providers - list linked providers".to_string(),
+                    "/history [search <term>|replay <n-or-term>] - browse saved prompts".to_string(),
                     "/doctor - verify the configured gateway link".to_string(),
                     "/briefing - run the briefing summary".to_string(),
                     "/pulse - show the health panel".to_string(),
@@ -175,6 +176,9 @@ async fn handle_command(
         }
         "/providers" => {
             crate::commands::providers::run(client, cfg).await?;
+        }
+        "/history" => {
+            handle_history_command(&parts, client, cfg, session_mode).await?;
         }
         "/doctor" => {
             crate::commands::config::run(ConfigAction::Doctor, cfg, client).await?;
@@ -284,4 +288,67 @@ async fn handle_config_command(
     }
 
     Ok(())
+}
+
+async fn handle_history_command(
+    parts: &[&str],
+    client: &GatewayClient,
+    cfg: &CliConfig,
+    session_mode: &str,
+) -> anyhow::Result<()> {
+    let (search, replay, limit) = parse_history_args(parts)?;
+    crate::commands::history::run(
+        client,
+        cfg,
+        search.as_deref(),
+        replay.as_deref(),
+        limit,
+        session_mode,
+    )
+    .await
+}
+
+fn parse_history_args(parts: &[&str]) -> anyhow::Result<(Option<String>, Option<String>, usize)> {
+    let mut search = None;
+    let mut replay = None;
+    let mut limit = 10usize;
+
+    match parts.get(1).copied() {
+        None => {}
+        Some("search") => {
+            let query = parts.get(2..).unwrap_or(&[]).join(" ").trim().to_string();
+            if query.is_empty() {
+                anyhow::bail!("Usage: /history search <term>");
+            }
+            search = Some(query);
+        }
+        Some("replay") => {
+            let target = parts
+                .get(2)
+                .ok_or_else(|| anyhow::anyhow!("Usage: /history replay <n-or-term>"))?;
+            replay = Some((*target).to_string());
+        }
+        Some("limit") => {
+            let value = parts
+                .get(2)
+                .ok_or_else(|| anyhow::anyhow!("Usage: /history limit <count>"))?;
+            limit = value
+                .parse::<usize>()
+                .map_err(|_| anyhow::anyhow!("history limit must be a positive integer"))?;
+        }
+        Some(other) => {
+            let joined = parts.get(1..).unwrap_or(&[]).join(" ");
+            if joined.trim().is_empty() {
+                println!(
+                    "{}",
+                    format!("Unknown history subcommand `{other}`. Try /history, /history search <term>, or /history replay <n-or-term>.")
+                        .bright_red()
+                );
+            } else {
+                search = Some(joined);
+            }
+        }
+    }
+
+    Ok((search, replay, limit))
 }

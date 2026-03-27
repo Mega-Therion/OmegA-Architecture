@@ -37,6 +37,15 @@ pub enum Command {
     Pulse,
     /// Show linked provider availability
     Providers,
+    /// Browse and replay saved chat history
+    History {
+        #[arg(long)]
+        search: Option<String>,
+        #[arg(long)]
+        replay: Option<String>,
+        #[arg(long, default_value_t = 10)]
+        limit: usize,
+    },
     /// Interactive multi-agent chat
     Chat {
         #[arg(short, long)]
