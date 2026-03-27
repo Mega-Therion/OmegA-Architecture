@@ -1,5 +1,39 @@
 use futures_util::StreamExt;
 use omega_core::provider::ChatResponse;
+use serde::Deserialize;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GatewayStatus {
+    pub model: String,
+    pub base_url: String,
+    pub db: String,
+    pub auth: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct HealthStatus {
+    pub ok: bool,
+    pub service: String,
+    pub version: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DeepHealthStatus {
+    pub ok: bool,
+    pub state: String,
+    pub services: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ProviderEntry {
+    pub name: String,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ProvidersResponse {
+    pub providers: Vec<ProviderEntry>,
+}
 
 pub struct GatewayClient {
     client: reqwest::Client,
@@ -34,6 +68,60 @@ impl GatewayClient {
             .await?;
 
         Ok(resp.reply)
+    }
+
+    /// Check gateway health.
+    pub async fn health(&self) -> anyhow::Result<HealthStatus> {
+        let resp = self
+            .client
+            .get(format!("{}/health", self.base_url))
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<HealthStatus>()
+            .await?;
+        Ok(resp)
+    }
+
+    /// Fetch gateway status/config details.
+    pub async fn status(&self) -> anyhow::Result<GatewayStatus> {
+        let resp = self
+            .client
+            .get(format!("{}/api/v1/status", self.base_url))
+            .bearer_auth(&self.bearer_token)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<GatewayStatus>()
+            .await?;
+        Ok(resp)
+    }
+
+    /// Fetch deep health details.
+    pub async fn deep_health(&self) -> anyhow::Result<DeepHealthStatus> {
+        let resp = self
+            .client
+            .get(format!("{}/health/deep", self.base_url))
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<DeepHealthStatus>()
+            .await?;
+        Ok(resp)
+    }
+
+    /// Fetch provider availability for the linked gateway.
+    pub async fn providers(&self) -> anyhow::Result<ProvidersResponse> {
+        let resp = self
+            .client
+            .get(format!("{}/api/v1/providers", self.base_url))
+            .bearer_auth(&self.bearer_token)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<ProvidersResponse>()
+            .await?;
+        Ok(resp)
     }
 
     /// Send a chat request and return a stream of chunks.
@@ -77,15 +165,5 @@ impl GatewayClient {
         });
 
         Ok(stream)
-    }
-
-    /// Check gateway health.
-    pub async fn health(&self) -> anyhow::Result<()> {
-        self.client
-            .get(format!("{}/health", self.base_url))
-            .send()
-            .await?
-            .error_for_status()?;
-        Ok(())
     }
 }

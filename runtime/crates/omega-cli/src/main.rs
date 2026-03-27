@@ -2,6 +2,7 @@ mod cli;
 mod client;
 mod commands;
 mod config;
+mod ui;
 
 use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -23,9 +24,7 @@ async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         None => {
-            // Default: show status / help.
-            println!("Ω Sovereign CLI — run `omega --help` for commands.");
-            println!("Gateway: {}", cfg.gateway.url);
+            ui::print_banner(&cfg);
         }
         Some(Command::Ask { prompt, mode }) => {
             commands::ask::run(&gateway_client, prompt, &mode).await?;
@@ -37,22 +36,22 @@ async fn main() -> anyhow::Result<()> {
             commands::ask::run(&gateway_client, prompt, "gemini").await?;
         }
         Some(Command::Briefing) => {
-            commands::briefing::run(&gateway_client).await?;
+            commands::briefing::run(&gateway_client, &cfg.defaults.mode, &cfg).await?;
         }
         Some(Command::Pulse) => {
-            commands::pulse::run().await?;
+            commands::pulse::run(&gateway_client, &cfg).await?;
         }
         Some(Command::Chat { workspace }) => {
-            commands::chat::run(&gateway_client, workspace).await?;
+            commands::chat::run(&gateway_client, workspace, &cfg.defaults.mode, &cfg).await?;
         }
         Some(Command::Forward { prompt }) => {
-            commands::forward::run(&gateway_client, prompt).await?;
+            commands::forward::run(&gateway_client, prompt, &cfg.defaults.mode, &cfg).await?;
         }
         Some(Command::Gains) => {
-            commands::gains::run(&gateway_client).await?;
+            commands::gains::run(&gateway_client, &cfg.defaults.mode, &cfg).await?;
         }
         Some(Command::Warp { action }) => {
-            commands::warp::run(action).await?;
+            commands::warp::run(action, &cfg).await?;
         }
         Some(Command::Completions { shell }) => {
             commands::completions::run(shell)?;
