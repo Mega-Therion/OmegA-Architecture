@@ -122,6 +122,17 @@
     "pass_rate": "4/15",
     "result_file": "eval/results/rc1_e12_pressure_eval_2026-03-27.md",
     "notes": "Ran against the latest Vercel production deployment; 13/15 cases still fell back to xai-direct diagnostics, while 2/15 were answered by gemini-flash and 4/15 passed overall"
+  },
+  {
+    "id": "E13",
+    "name": "Provider Isolation Probe",
+    "family": "provider",
+    "description": "Local direct-provider probe to isolate gateway, xAI, and Gemini access from the live route layer",
+    "last_run": "2026-03-27",
+    "last_result": "FAIL",
+    "pass_rate": "0/3",
+    "result_file": "eval/results/rc1_e13_provider_isolation_2026-03-27.md",
+    "notes": "Local env reproduction failed across all three providers: Vercel gateway lacked OIDC, xAI direct was denied, and Gemini keys were invalid in the repo env files"
   }
-  ]
+]
 }

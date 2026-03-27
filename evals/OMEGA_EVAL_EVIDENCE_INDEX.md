@@ -27,6 +27,12 @@ This document provides a categorized index of the evaluation evidence files for 
 | `runtime/eval/results/rc1_e12_pressure_eval_2026-03-27.md` | Live Pressure Report | Harder live production battery against the latest Vercel deployment; 4/15 pass, with provider traces showing 13 xai-direct fallthroughs and 2 gemini-flash successes. |
 | `evals/live_deployment_pressure_report.json` | Structured Summary | Machine-readable result bundle with per-case provider, latency, response, and comparison metadata from the latest rerun. |
 
+### Provider isolation artifacts
+| Path | Type | Importance |
+| :--- | :--- | :--- |
+| `runtime/eval/results/rc1_e13_provider_isolation_2026-03-27.md` | Local Provider Probe | Direct gateway / xAI / Gemini calls from the repo env files; all three failed, which confirms the local shell context is not a valid reproduction of deployed provider access. |
+| `evals/provider_isolation_report.json` | Structured Summary | Machine-readable result bundle for the provider-isolation pass/fail and provider-specific error shapes. |
+
 ## 3. Discourse & Deep Assessment Records
 | Path | Type | Importance |
 | :--- | :--- | :--- |
