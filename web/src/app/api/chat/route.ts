@@ -345,13 +345,17 @@ export async function POST(req: NextRequest) {
     let provider = 'unknown';
     let lastErr: unknown;
     let providerStream: ReadableStream | null = null;
+    const providerAttempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
 
     for (const p of providers) {
       try {
         providerStream = await p.fn();
         provider = p.name;
+        providerAttempts.push({ name: p.name, status: 'selected' });
         break;
       } catch (e) {
+        const error = e instanceof Error ? e.message : String(e);
+        providerAttempts.push({ name: p.name, status: 'failed', error });
         console.warn(`[OmegA] ${p.name} failed:`, e);
         lastErr = e;
       }
@@ -367,14 +371,25 @@ export async function POST(req: NextRequest) {
 
           const reader = providerStream.getReader();
           let fullResponse = '';
+          let chunkCount = 0;
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
             const text = decoder.decode(value, { stream: true });
             if (text) {
+              chunkCount += 1;
               fullResponse += text;
               controller.enqueue(encoder.encode(text));
             }
+          }
+
+          if (!fullResponse.trim()) {
+            const attemptSummary = providerAttempts
+              .map(p => (p.status === 'failed' ? `${p.name}:failed` : `${p.name}:selected`))
+              .join(' -> ');
+            const diagnostic = `[OmegA diagnostic] provider ${provider} returned no text after ${chunkCount} chunks. Attempts: ${attemptSummary || 'unknown'}.`;
+            console.error('[OmegA] Empty provider output', { provider, chunkCount, providerAttempts });
+            controller.enqueue(encoder.encode(`${diagnostic}\n`));
           }
 
           if (dbUrl && finalSessionId && fullResponse) {
