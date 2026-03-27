@@ -4,10 +4,11 @@ use figment::{
 };
 use serde::{Deserialize, Serialize};
 
-/// Gateway configuration. All fields map to `OMEGA_*` environment variables.
+/// Gateway configuration. Most fields map to `OMEGA_*` environment variables.
+/// LiveKit control-plane fields map to `LIVEKIT_*` without an `OMEGA_` prefix.
 /// The Python gateway uses pydantic-settings with env_prefix="OMEGA_", which
-/// strips the prefix. Here we read vars as-is (already OMEGA_-prefixed) via
-/// figment Env::raw() and match field names to the full env var name lowercased.
+/// strips the prefix. Here we read vars as-is via figment Env::raw() and match
+/// field names to the full env var name lowercased.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GatewayConfig {
     /// Runtime profile. Env: OMEGA_RUNTIME_PROFILE
@@ -70,6 +71,48 @@ pub struct GatewayConfig {
     /// Allow federated gAIng memory. Env: OMEGA_ENABLE_FEDERATED_MEMORY
     #[serde(default)]
     pub omega_enable_federated_memory: bool,
+    /// Force headless operation (skip CLI providers). Env: OMEGA_HEADLESS
+    #[serde(default)]
+    pub omega_headless: bool,
+    /// Enable tiered memory routing (s1/s2/s3/n1/n2). Env: OMEGA_ENABLE_TIERED_MEMORY
+    #[serde(default)]
+    pub omega_enable_tiered_memory: bool,
+    /// Tier 1 (short-term) DB URL. Env: OMEGA_MEMORY_S1_URL
+    #[serde(default)]
+    pub omega_memory_s1_url: String,
+    /// Tier 2 (short-term) DB URL. Env: OMEGA_MEMORY_S2_URL
+    #[serde(default)]
+    pub omega_memory_s2_url: String,
+    /// Tier 3 (short-term) DB URL. Env: OMEGA_MEMORY_S3_URL
+    #[serde(default)]
+    pub omega_memory_s3_url: String,
+    /// Tier 1 (long-term) DB URL. Env: OMEGA_MEMORY_N1_URL
+    #[serde(default)]
+    pub omega_memory_n1_url: String,
+    /// Tier 2 (archive) DB URL. Env: OMEGA_MEMORY_N2_URL
+    #[serde(default)]
+    pub omega_memory_n2_url: String,
+    /// Enable reinforcement-based promotion. Env: OMEGA_MEMORY_REINFORCE_ENABLED
+    #[serde(default)]
+    pub omega_memory_reinforce_enabled: bool,
+    /// Importance delta per reinforcement. Env: OMEGA_MEMORY_REINFORCE_DELTA
+    #[serde(default = "default_memory_reinforce_delta")]
+    pub omega_memory_reinforce_delta: f64,
+    /// Max importance cap. Env: OMEGA_MEMORY_REINFORCE_MAX
+    #[serde(default = "default_memory_reinforce_max")]
+    pub omega_memory_reinforce_max: f64,
+    /// Promote to s2 when importance >= threshold. Env: OMEGA_MEMORY_TIER_S2_THRESHOLD
+    #[serde(default = "default_memory_tier_s2_threshold")]
+    pub omega_memory_tier_s2_threshold: f64,
+    /// Promote to s3 when importance >= threshold. Env: OMEGA_MEMORY_TIER_S3_THRESHOLD
+    #[serde(default = "default_memory_tier_s3_threshold")]
+    pub omega_memory_tier_s3_threshold: f64,
+    /// Promote to n1 when importance >= threshold. Env: OMEGA_MEMORY_TIER_N1_THRESHOLD
+    #[serde(default = "default_memory_tier_n1_threshold")]
+    pub omega_memory_tier_n1_threshold: f64,
+    /// Promote to n2 when importance >= threshold. Env: OMEGA_MEMORY_TIER_N2_THRESHOLD
+    #[serde(default = "default_memory_tier_n2_threshold")]
+    pub omega_memory_tier_n2_threshold: f64,
 
     // ---- Anthropic -----------------------------------------------------------
     /// Anthropic API key. Env: OMEGA_ANTHROPIC_API_KEY
@@ -142,6 +185,17 @@ pub struct GatewayConfig {
     /// Internal service token. Env: OMEGA_INTERNAL_TOKEN
     #[serde(default)]
     pub omega_internal_token: String,
+
+    // ---- LiveKit control plane ---------------------------------------------
+    /// LiveKit server URL. Env: LIVEKIT_URL
+    #[serde(default)]
+    pub livekit_url: String,
+    /// LiveKit API key. Env: LIVEKIT_API_KEY
+    #[serde(default)]
+    pub livekit_api_key: String,
+    /// LiveKit API secret. Env: LIVEKIT_API_SECRET
+    #[serde(default)]
+    pub livekit_api_secret: String,
 
     // ---- Server --------------------------------------------------------------
     /// HTTP port to listen on. Env: OMEGA_PORT
@@ -225,6 +279,24 @@ fn default_xai_base_url() -> String {
 fn default_xai_model() -> String {
     "grok-beta".to_string()
 }
+fn default_memory_reinforce_delta() -> f64 {
+    0.05
+}
+fn default_memory_reinforce_max() -> f64 {
+    1.0
+}
+fn default_memory_tier_s2_threshold() -> f64 {
+    0.6
+}
+fn default_memory_tier_s3_threshold() -> f64 {
+    0.75
+}
+fn default_memory_tier_n1_threshold() -> f64 {
+    0.9
+}
+fn default_memory_tier_n2_threshold() -> f64 {
+    0.97
+}
 fn default_brain_base_url() -> String {
     "http://localhost:8080".to_string()
 }
@@ -276,6 +348,20 @@ impl GatewayConfig {
             omega_cli_timeout_secs: default_cli_timeout(),
             omega_enable_background_tasks: false,
             omega_enable_federated_memory: false,
+            omega_headless: false,
+            omega_enable_tiered_memory: false,
+            omega_memory_s1_url: String::new(),
+            omega_memory_s2_url: String::new(),
+            omega_memory_s3_url: String::new(),
+            omega_memory_n1_url: String::new(),
+            omega_memory_n2_url: String::new(),
+            omega_memory_reinforce_enabled: false,
+            omega_memory_reinforce_delta: default_memory_reinforce_delta(),
+            omega_memory_reinforce_max: default_memory_reinforce_max(),
+            omega_memory_tier_s2_threshold: default_memory_tier_s2_threshold(),
+            omega_memory_tier_s3_threshold: default_memory_tier_s3_threshold(),
+            omega_memory_tier_n1_threshold: default_memory_tier_n1_threshold(),
+            omega_memory_tier_n2_threshold: default_memory_tier_n2_threshold(),
             omega_anthropic_api_key: String::new(),
             omega_anthropic_model: default_anthropic_model(),
             omega_anthropic_base_url: default_anthropic_base_url(),
@@ -296,6 +382,9 @@ impl GatewayConfig {
             omega_brain_base_url: default_brain_base_url(),
             omega_bridge_base_url: None,
             omega_internal_token: String::new(),
+            livekit_url: String::new(),
+            livekit_api_key: String::new(),
+            livekit_api_secret: String::new(),
             omega_port: default_port(),
             omega_timeout_secs: default_timeout(),
             omega_system_prompt_path: default_system_prompt_path(),
@@ -316,6 +405,12 @@ impl GatewayConfig {
     /// Returns true when authentication is enabled (token is non-empty).
     pub fn auth_enabled(&self) -> bool {
         !self.omega_api_bearer_token.is_empty()
+    }
+
+    pub fn livekit_configured(&self) -> bool {
+        !self.livekit_url.trim().is_empty()
+            && !self.livekit_api_key.trim().is_empty()
+            && !self.livekit_api_secret.trim().is_empty()
     }
 
     pub fn is_smoke_test_profile(&self) -> bool {
@@ -368,6 +463,43 @@ impl GatewayConfig {
 
     pub fn federated_memory_enabled(&self) -> bool {
         !self.is_smoke_test_profile() && self.omega_enable_federated_memory
+    }
+
+    pub fn headless_enabled(&self) -> bool {
+        self.omega_headless
+    }
+
+    pub fn tiered_memory_enabled(&self) -> bool {
+        !self.is_smoke_test_profile() && self.omega_enable_tiered_memory
+    }
+
+    pub fn memory_reinforce_enabled(&self) -> bool {
+        !self.is_smoke_test_profile() && self.omega_memory_reinforce_enabled
+    }
+
+    pub fn memory_reinforce_delta(&self) -> f64 {
+        if self.omega_memory_reinforce_delta <= 0.0 {
+            default_memory_reinforce_delta()
+        } else {
+            self.omega_memory_reinforce_delta
+        }
+    }
+
+    pub fn memory_reinforce_max(&self) -> f64 {
+        if self.omega_memory_reinforce_max <= 0.0 {
+            default_memory_reinforce_max()
+        } else {
+            self.omega_memory_reinforce_max
+        }
+    }
+
+    pub fn memory_tier_thresholds(&self) -> (f64, f64, f64, f64) {
+        (
+            self.omega_memory_tier_s2_threshold,
+            self.omega_memory_tier_s3_threshold,
+            self.omega_memory_tier_n1_threshold,
+            self.omega_memory_tier_n2_threshold,
+        )
     }
 
     /// Returns the effective SQLite DB URL.

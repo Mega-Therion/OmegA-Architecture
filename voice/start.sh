@@ -3,6 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/.venv"
 
 # Load env (for local gateway fallback if desired)
 if [ -f "$HOME/.omega/one-true.env" ]; then
@@ -22,4 +23,8 @@ else
   export OMEGA_VOICE_URL="https://omega-sovereign.vercel.app"
 fi
 
-python3 "$SCRIPT_DIR/omega_voice.py" "$@"
+if [ -x "$VENV_DIR/bin/python" ]; then
+  "$VENV_DIR/bin/python" "$SCRIPT_DIR/omega_voice.py" "$@"
+else
+  python3 "$SCRIPT_DIR/omega_voice.py" "$@"
+fi

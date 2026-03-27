@@ -20,6 +20,18 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Environment Variables
+
+LiveKit (optional):
+
+- `NEXT_PUBLIC_LIVEKIT_ENABLED` (`true` to enable LiveKitGate)
+- `NEXT_PUBLIC_LIVEKIT_URL` (LiveKit server URL)
+- `NEXT_PUBLIC_LIVEKIT_TOKEN_ENDPOINT` (optional, defaults to `/api/livekit/token`)
+- `NEXT_PUBLIC_LIVEKIT_STATUS_BADGE` (`true` to show the UI status badge)
+- `LIVEKIT_API_KEY` (server-side)
+- `LIVEKIT_API_SECRET` (server-side)
+- `LIVEKIT_ROOM` (optional, default room name for tokens)
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

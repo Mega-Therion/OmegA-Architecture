@@ -6,6 +6,7 @@ use axum::{
     Json,
 };
 use futures::StreamExt;
+use omega_core::memory::{MemoryEntry, MemoryStore};
 use omega_core::provider::ChatRequest;
 use omega_trace::{TraceEvent, TraceOutcome};
 use serde_json::json;
@@ -18,6 +19,72 @@ use omega_core::economy::TransactionType;
 
 fn clamp01(value: f64) -> f64 {
     value.clamp(0.0, 1.0)
+}
+
+fn tier_rank(label: &str) -> u8 {
+    match label.trim().to_ascii_lowercase().as_str() {
+        "s1" | "hot" | "short" | "short-term" | "ram" => 1,
+        "s2" | "warm" | "fresh" => 2,
+        "s3" | "staging" => 3,
+        "n1" | "cold" | "long" | "long-term" => 4,
+        "n2" | "archive" | "immutable" | "vault" => 5,
+        _ => 0,
+    }
+}
+
+fn target_tier_from_importance(importance: f64, thresholds: (f64, f64, f64, f64)) -> &'static str {
+    let (s2, s3, n1, n2) = thresholds;
+    if importance >= n2 {
+        "n2"
+    } else if importance >= n1 {
+        "n1"
+    } else if importance >= s3 {
+        "s3"
+    } else if importance >= s2 {
+        "s2"
+    } else {
+        "s1"
+    }
+}
+
+async fn reinforce_memory_hits(
+    store: Arc<dyn MemoryStore>,
+    cfg: &crate::config::GatewayConfig,
+    entries: Vec<MemoryEntry>,
+) {
+    if entries.is_empty() || !cfg.memory_reinforce_enabled() {
+        return;
+    }
+
+    let delta = cfg.memory_reinforce_delta();
+    let max_importance = cfg.memory_reinforce_max();
+    let thresholds = cfg.memory_tier_thresholds();
+
+    for entry in entries {
+        let Some(id) = entry.id.clone() else { continue };
+        let mut updated = entry.clone();
+        let boosted = (updated.importance + delta).min(max_importance);
+        if boosted <= updated.importance {
+            continue;
+        }
+
+        updated.importance = boosted;
+        let target_tier = target_tier_from_importance(boosted, thresholds);
+        let current_rank = updated
+            .tier
+            .as_deref()
+            .map(tier_rank)
+            .unwrap_or(0);
+        let target_rank = tier_rank(target_tier);
+        if target_rank > current_rank {
+            updated.tier = Some(target_tier.to_string());
+        }
+
+        updated.id = Some(id);
+        if let Err(err) = store.write(updated).await {
+            tracing::warn!(error = %err, "failed to reinforce memory entry");
+        }
+    }
 }
 
 fn retrieval_sources_from_hits(memory_hits: &[serde_json::Value]) -> Option<Vec<String>> {
@@ -356,18 +423,27 @@ pub async fn chat_handler(
     }
 
     // Retrieve memory hits before routing so they can be included in the response.
-    let memory_hits: Vec<serde_json::Value> = if req.use_memory {
+    let memory_entries: Vec<MemoryEntry> = if req.use_memory {
         state
             .memory_store
             .search(&req.user, 3)
             .await
             .unwrap_or_default()
-            .into_iter()
-            .map(|e| serde_json::to_value(e).unwrap_or_default())
-            .collect()
     } else {
         vec![]
     };
+    let memory_hits: Vec<serde_json::Value> = memory_entries
+        .iter()
+        .cloned()
+        .map(|e| serde_json::to_value(e).unwrap_or_default())
+        .collect();
+
+    if req.use_memory && state.config.memory_reinforce_enabled() && !memory_entries.is_empty() {
+        let store = state.memory_store.clone();
+        let cfg = state.config.clone();
+        let entries = memory_entries.clone();
+        tokio::spawn(async move { reinforce_memory_hits(store, &cfg, entries).await });
+    }
 
     // Inject sovereign identity as system prompt prefix.
     // If the caller already provided a system prompt, append it after the identity block.

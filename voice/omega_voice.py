@@ -17,7 +17,7 @@ Architecture:
 ────────────────────────────────────────────────────────────────
 """
 
-import os, sys, io, time, queue, struct, wave, tempfile, threading
+import os, sys, io, time, queue, struct, wave, tempfile, threading, asyncio
 import numpy as np
 import sounddevice as sd
 import requests
@@ -29,6 +29,16 @@ import subprocess
 OMEGA_BASE   = os.getenv("OMEGA_VOICE_URL", "https://omega-sovereign.vercel.app")
 STT_URL      = f"{OMEGA_BASE}/api/stt"
 TTS_URL      = f"{OMEGA_BASE}/api/tts"
+SIMPLE_UI    = os.getenv("OMEGA_VOICE_SIMPLE", "1") == "1"
+ENABLE_GREETING = os.getenv("OMEGA_VOICE_GREETING", "0") == "1"
+
+# LiveKit (optional)
+LIVEKIT_URL   = os.getenv("LIVEKIT_URL", "").strip()
+LIVEKIT_TOKEN = os.getenv("LIVEKIT_TOKEN", "").strip()
+LIVEKIT_TOKEN_URL = os.getenv("LIVEKIT_TOKEN_URL", "").strip()
+LIVEKIT_TOKEN_FIELD = os.getenv("LIVEKIT_TOKEN_FIELD", "token").strip()
+LIVEKIT_TOKEN_BEARER = os.getenv("LIVEKIT_TOKEN_BEARER", "").strip()
+LIVEKIT_DISABLE = os.getenv("LIVEKIT_DISABLE", "0") == "1"
 
 # If local gateway is running, use it for ask (richer memory, streaming capable)
 _local_ask   = os.getenv("OMEGA_LOCAL_ASK")
@@ -63,9 +73,16 @@ class State:
 state      = State.ACTIVE
 state_lock = threading.Lock()
 
+livekit_room = None
+livekit_thread = None
+livekit_stop = threading.Event()
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def print_status(msg, color="\033[96m"):
+    if SIMPLE_UI:
+        print(f"omega-voice: {msg}", flush=True)
+        return
     reset = "\033[0m"
     print(f"{color}[OmegA Voice]{reset} {msg}", flush=True)
 
@@ -130,6 +147,80 @@ def frames_to_wav(frames: list, rate: int = SAMPLE_RATE) -> bytes:
             wf.writeframes(chunk.tobytes())
     return buf.getvalue()
 
+# ── LiveKit (optional) ────────────────────────────────────────────────────────
+
+def resolve_livekit_token() -> str:
+    """Return a LiveKit token from env or fetch it from LIVEKIT_TOKEN_URL."""
+    if LIVEKIT_TOKEN:
+        return LIVEKIT_TOKEN
+    if not LIVEKIT_TOKEN_URL:
+        return ""
+    try:
+        headers = {}
+        if LIVEKIT_TOKEN_BEARER:
+            headers["Authorization"] = f"Bearer {LIVEKIT_TOKEN_BEARER}"
+        r = requests.get(LIVEKIT_TOKEN_URL, headers=headers, timeout=10)
+        r.raise_for_status()
+        content_type = r.headers.get("content-type", "")
+        if "application/json" in content_type:
+            payload = r.json()
+            token = payload.get(LIVEKIT_TOKEN_FIELD, "")
+            return token.strip() if isinstance(token, str) else ""
+        return r.text.strip()
+    except Exception as e:
+        print_status(f"LiveKit token fetch failed: {e}", "\033[93m")
+        return ""
+
+def start_livekit_client():
+    """Optional LiveKit client wiring. Requires LIVEKIT_URL + LIVEKIT_TOKEN (or token URL)."""
+    global livekit_thread
+    if LIVEKIT_DISABLE:
+        return
+    token = resolve_livekit_token()
+    if not LIVEKIT_URL or not token:
+        return
+    if livekit_thread is not None:
+        return
+    try:
+        from livekit.rtc import Room
+    except Exception as e:
+        print_status(f"LiveKit import failed: {e}", "\033[93m")
+        return
+
+    async def _connect():
+        global livekit_room
+        room = Room()
+        livekit_room = room
+
+        @room.on("connection_state_changed")
+        def _on_state(state):
+            print_status(f"livekit state: {state}", "\033[90m")
+
+        try:
+            await room.connect(LIVEKIT_URL, token)
+            print_status("livekit connected", "\033[90m")
+            while not livekit_stop.is_set():
+                await asyncio.sleep(0.5)
+        except Exception as e:
+            print_status(f"LiveKit connect error: {e}", "\033[93m")
+        finally:
+            try:
+                await room.disconnect()
+            except Exception:
+                pass
+            print_status("livekit disconnected", "\033[90m")
+
+    def _runner():
+        asyncio.run(_connect())
+
+    livekit_thread = threading.Thread(target=_runner, name="livekit-client", daemon=True)
+    livekit_thread.start()
+
+def stop_livekit_client():
+    livekit_stop.set()
+    if livekit_thread is not None:
+        livekit_thread.join(timeout=2.0)
+
 # ── VAD ───────────────────────────────────────────────────────────────────────
 
 try:
@@ -177,9 +268,11 @@ def run_voice_loop():
     def audio_callback(indata, frames, time_info, status):
         audio_queue.put(indata.copy())
 
-    print_status("Phylactery Terminal online.", "\033[92m")
-    print_status("Listening... (say anything)", "\033[92m")
-    speak("Phylactery Terminal online. I am OmegA. Speak your mind.")
+    start_livekit_client()
+    print_status("ready", "\033[92m")
+    print_status("listening", "\033[92m")
+    if ENABLE_GREETING:
+        speak("Phylactery Terminal online. I am OmegA. Speak your mind.")
 
     with sd.InputStream(
         samplerate=SAMPLE_RATE,
@@ -202,7 +295,7 @@ def run_voice_loop():
                     if state == State.ACTIVE:
                         if time.time() - last_active_time > SLEEP_TIMEOUT_S:
                             state = State.SLEEP
-                            print_status("Going to sleep. Say 'Mega' to wake me.", "\033[93m")
+                            print_status("sleep", "\033[93m")
                 continue
 
             chunk_int16 = chunk[:, 0] if chunk.ndim > 1 else chunk.flatten()
@@ -225,8 +318,9 @@ def run_voice_loop():
                         with state_lock:
                             state = State.ACTIVE
                         last_active_time = time.time()
-                        print_status("Wake word detected — ACTIVE", "\033[92m")
-                        speak("I'm here. Go ahead.")
+                        print_status("wake", "\033[92m")
+                        if ENABLE_GREETING:
+                            speak("I'm here. Go ahead.")
                 continue
 
             # ── ACTIVE mode: full VAD + record + process ──────────────────
@@ -244,7 +338,7 @@ def run_voice_loop():
 
                     if silent_count >= SILENCE_CHUNKS_THRESHOLD:
                         # End of utterance — process it
-                        print_status("Processing...", "\033[96m")
+                        print_status("processing", "\033[96m")
                         wav = frames_to_wav(speech_buffer)
                         speech_buffer = []
                         recording     = False
@@ -253,13 +347,13 @@ def run_voice_loop():
 
                         text = transcribe(wav)
                         if not text:
-                            print_status("Didn't catch that.", "\033[93m")
+                            print_status("no input", "\033[93m")
                             last_active_time = time.time()
                             continue
 
-                        print_status(f"You: {text}", "\033[97m")
+                        print_status(f"you: {text}", "\033[97m")
                         reply = ask_omega(text)
-                        print_status(f"OmegA: {reply}", "\033[95m")
+                        print_status(f"omega: {reply}", "\033[95m")
                         speak(reply)
                         last_active_time = time.time()
                 else:
@@ -272,3 +366,5 @@ if __name__ == "__main__":
         run_voice_loop()
     except KeyboardInterrupt:
         print_status("Phylactery Terminal closed.", "\033[93m")
+    finally:
+        stop_livekit_client()

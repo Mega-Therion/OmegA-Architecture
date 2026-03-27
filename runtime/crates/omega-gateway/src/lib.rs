@@ -2,6 +2,7 @@ pub mod agency;
 pub mod config;
 pub mod correction;
 pub mod dream;
+pub mod livekit;
 pub mod middleware;
 pub mod routes;
 pub mod state;

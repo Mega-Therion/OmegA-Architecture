@@ -94,15 +94,11 @@ impl PgMemoryStore {
         format!("[{}]", inner.join(","))
     }
 
-    /// Deserialise a pgvector text representation back to `Vec<f32>`.
-    /// Returns `None` on parse failure.
-    fn parse_vec_literal(s: &str) -> Option<Vec<f32>> {
-        // pgvector returns "[x,y,z,...]"
-        let trimmed = s.trim_matches(|c| c == '[' || c == ']');
-        trimmed
-            .split(',')
-            .map(|tok| tok.trim().parse::<f32>().ok())
-            .collect()
+    fn is_undefined_column(err: &sqlx::Error) -> bool {
+        match err {
+            sqlx::Error::Database(db_err) => db_err.code().as_deref() == Some("42703"),
+            _ => false,
+        }
     }
 }
 
@@ -207,6 +203,56 @@ impl MemoryStore for PgMemoryStore {
                 .trim_matches('"')
                 .to_string();
 
+            if let Some(tier) = entry.tier.clone() {
+                let sql_tier = format!(
+                    r#"
+                    INSERT INTO omega_memory_entries
+                        (id, content, source, importance, created_at, namespace, embedding,
+                         domain, confidence, version, superseded_by, key, raw_artifact, tier)
+                    VALUES ($1, $2, $3, $4, $5, $6, '{}'::vector, $7, $8, $9, $10, $11, $12, $13)
+                    ON CONFLICT (id) DO UPDATE SET
+                        content       = EXCLUDED.content,
+                        source        = EXCLUDED.source,
+                        importance    = EXCLUDED.importance,
+                        created_at    = EXCLUDED.created_at,
+                        namespace     = EXCLUDED.namespace,
+                        embedding     = EXCLUDED.embedding,
+                        domain        = EXCLUDED.domain,
+                        confidence    = EXCLUDED.confidence,
+                        version       = EXCLUDED.version,
+                        superseded_by = EXCLUDED.superseded_by,
+                        key           = EXCLUDED.key,
+                        raw_artifact  = EXCLUDED.raw_artifact,
+                        tier          = EXCLUDED.tier
+                    "#,
+                    emb_literal
+                );
+                let res = sqlx::query(&sql_tier)
+                    .bind(&id_str)
+                    .bind(&entry.content)
+                    .bind(&entry.source)
+                    .bind(entry.importance)
+                    .bind(&created_at)
+                    .bind(&entry.namespace)
+                    .bind(&domain_str)
+                    .bind(entry.confidence as f64)
+                    .bind(entry.version as i64)
+                    .bind(&entry.superseded_by)
+                    .bind(&entry.key)
+                    .bind(&entry.raw_artifact)
+                    .bind(tier)
+                    .execute(&self.pool)
+                    .await;
+                match res {
+                    Ok(_) => {}
+                    Err(e) => {
+                        if !Self::is_undefined_column(&e) {
+                            return Err(MemoryStoreError::Sqlx(e).into());
+                        }
+                    }
+                }
+            }
+
             sqlx::query(&sql)
                 .bind(&id_str)
                 .bind(&entry.content)
@@ -225,6 +271,57 @@ impl MemoryStore for PgMemoryStore {
                 .map_err(MemoryStoreError::Sqlx)?;
         } else {
             // Write without embedding
+            if let Some(tier) = entry.tier.clone() {
+                let res = sqlx::query(
+                    r#"
+                    INSERT INTO omega_memory_entries
+                        (id, content, source, importance, created_at, namespace,
+                         domain, confidence, version, superseded_by, key, raw_artifact, tier)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                    ON CONFLICT (id) DO UPDATE SET
+                        content       = EXCLUDED.content,
+                        source        = EXCLUDED.source,
+                        importance    = EXCLUDED.importance,
+                        created_at    = EXCLUDED.created_at,
+                        namespace     = EXCLUDED.namespace,
+                        domain        = EXCLUDED.domain,
+                        confidence    = EXCLUDED.confidence,
+                        version       = EXCLUDED.version,
+                        superseded_by = EXCLUDED.superseded_by,
+                        key           = EXCLUDED.key,
+                        raw_artifact  = EXCLUDED.raw_artifact,
+                        tier          = EXCLUDED.tier
+                    "#,
+                )
+                .bind(&id_str)
+                .bind(&entry.content)
+                .bind(&entry.source)
+                .bind(entry.importance)
+                .bind(&created_at)
+                .bind(&entry.namespace)
+                .bind(
+                    serde_json::to_string(&entry.domain)
+                        .unwrap_or_default()
+                        .trim_matches('"'),
+                )
+                .bind(entry.confidence as f64)
+                .bind(entry.version as i64)
+                .bind(&entry.superseded_by)
+                .bind(&entry.key)
+                .bind(&entry.raw_artifact)
+                .bind(tier)
+                .execute(&self.pool)
+                .await;
+                match res {
+                    Ok(_) => {}
+                    Err(e) => {
+                        if !Self::is_undefined_column(&e) {
+                            return Err(MemoryStoreError::Sqlx(e).into());
+                        }
+                    }
+                }
+            }
+
             sqlx::query(
                 r#"
                 INSERT INTO omega_memory_entries

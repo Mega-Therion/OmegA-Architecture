@@ -3,7 +3,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use omega_core::{economy::NeuroCreditStore, memory::MemoryStore};
-use omega_memory::{FederatedMemoryStore, GaingRestMemoryStore, PgMemoryStore, SqliteMemoryStore};
+use omega_memory::{
+    FederatedMemoryStore, GaingRestMemoryStore, PgMemoryStore, SqliteMemoryStore,
+    TieredMemoryConfig, TieredMemoryStore,
+};
 use omega_provider::{
     anthropic::AnthropicProvider,
     cli::{CliKind, CliProvider},
@@ -38,6 +41,7 @@ async fn main() -> anyhow::Result<()> {
         runtime_profile = %cfg.omega_runtime_profile,
         "omega-gateway starting"
     );
+    omega_gateway::livekit::log_livekit_status(&cfg);
     if !cfg.omega_anthropic_api_key.is_empty() {
         tracing::info!(
             model = %cfg.omega_anthropic_model,
@@ -70,11 +74,37 @@ async fn main() -> anyhow::Result<()> {
         "CLI-backed providers configured"
     );
 
+    async fn build_memory_store(db_url: &str) -> anyhow::Result<Arc<dyn MemoryStore>> {
+        if db_url.starts_with("postgres://") || db_url.starts_with("postgresql://") {
+            let store = Arc::new(
+                PgMemoryStore::new(db_url)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("pg memory store init failed: {e}"))?,
+            );
+            Ok(store)
+        } else {
+            let store = Arc::new(
+                SqliteMemoryStore::new(db_url)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("sqlite memory store init failed: {e}"))?,
+            );
+            store
+                .migrate()
+                .await
+                .map_err(|e| anyhow::anyhow!("memory migration failed: {e}"))?;
+
+            // Spawn importance decay — 0.995 decay per hour, prune below 0.01.
+            let _decay_handle = store.spawn_decay_task(Duration::from_secs(3600), 0.995, 0.01);
+
+            Ok(store)
+        }
+    }
+
     // Initialise the memory and economy stores.
     let db_url = cfg.omega_db_url_or_default();
     tracing::info!(db_url = %db_url, "initialising memory and economy stores");
 
-    let (memory_store, economy_store): (Arc<dyn MemoryStore>, Arc<dyn NeuroCreditStore>) =
+    let (base_memory_store, economy_store): (Arc<dyn MemoryStore>, Arc<dyn NeuroCreditStore>) =
         if db_url.starts_with("postgres://") || db_url.starts_with("postgresql://") {
             let store = Arc::new(
                 PgMemoryStore::new(&db_url)
@@ -100,6 +130,51 @@ async fn main() -> anyhow::Result<()> {
             tracing::info!("sqlite memory store ready");
             (store.clone(), store)
         };
+
+    let mut memory_store: Arc<dyn MemoryStore> = base_memory_store.clone();
+    if cfg.tiered_memory_enabled() {
+        let s1_url = if cfg.omega_memory_s1_url.trim().is_empty() {
+            db_url.clone()
+        } else {
+            cfg.omega_memory_s1_url.clone()
+        };
+        let s1_store = if s1_url == db_url {
+            base_memory_store.clone()
+        } else {
+            build_memory_store(&s1_url).await?
+        };
+        let s2_store = if cfg.omega_memory_s2_url.trim().is_empty() {
+            None
+        } else {
+            Some(build_memory_store(&cfg.omega_memory_s2_url).await?)
+        };
+        let s3_store = if cfg.omega_memory_s3_url.trim().is_empty() {
+            None
+        } else {
+            Some(build_memory_store(&cfg.omega_memory_s3_url).await?)
+        };
+        let n1_store = if cfg.omega_memory_n1_url.trim().is_empty() {
+            None
+        } else {
+            Some(build_memory_store(&cfg.omega_memory_n1_url).await?)
+        };
+        let n2_store = if cfg.omega_memory_n2_url.trim().is_empty() {
+            None
+        } else {
+            Some(build_memory_store(&cfg.omega_memory_n2_url).await?)
+        };
+
+        let tiered = TieredMemoryStore::new(TieredMemoryConfig {
+            s1: Some(s1_store),
+            s2: s2_store,
+            s3: s3_store,
+            n1: n1_store,
+            n2: n2_store,
+            promote_threshold: cfg.omega_memory_tier_n1_threshold,
+        });
+        memory_store = Arc::new(tiered);
+        tracing::info!("tiered memory routing enabled");
+    }
 
     // Optionally wrap the memory store in a FederatedMemoryStore that also
     // searches the gAIng Supabase project (secondary, read-only).
@@ -162,10 +237,60 @@ async fn main() -> anyhow::Result<()> {
     ];
 
     // Provider chain:
+    //   headless           → API providers only (OpenAI/Gemini/Anthropic/etc) → Local
     //   smoke-test profile → Codex CLI → Gemini CLI flash-lite → Claude CLI → Local
     //   full profile       → Codex CLI → Gemini CLI fallthrough → OpenAI → Local →
     //                        Gemini API → Claude CLI → Anthropic → Perplexity → DeepSeek → xAI
-    let chain: Vec<Arc<dyn omega_core::provider::LlmProvider>> = if cfg.is_smoke_test_profile() {
+    let chain: Vec<Arc<dyn omega_core::provider::LlmProvider>> = if cfg.headless_enabled() {
+        let mut providers: Vec<Arc<dyn omega_core::provider::LlmProvider>> = Vec::new();
+        if !cfg.omega_openai_api_key.trim().is_empty() {
+            providers.push(Arc::new(OpenAiProvider::new(
+                cfg.omega_openai_api_key.clone(),
+                cfg.omega_openai_base_url.clone(),
+                cfg.omega_model.clone(),
+            )));
+        }
+        if !cfg.omega_gemini_api_key.trim().is_empty() {
+            providers.push(Arc::new(GeminiProvider::new(
+                cfg.omega_gemini_api_key.clone(),
+                cfg.omega_gemini_base_url.clone(),
+                cfg.omega_gemini_model.clone(),
+            )));
+        }
+        if !cfg.omega_anthropic_api_key.trim().is_empty() {
+            providers.push(Arc::new(AnthropicProvider::new(
+                cfg.omega_anthropic_api_key.clone(),
+                cfg.omega_anthropic_base_url.clone(),
+                cfg.omega_anthropic_model.clone(),
+            )));
+        }
+        if !cfg.omega_perplexity_api_key.trim().is_empty() {
+            providers.push(Arc::new(PerplexityProvider::new(
+                cfg.omega_perplexity_api_key.clone(),
+                cfg.omega_perplexity_base_url.clone(),
+                cfg.omega_perplexity_model.clone(),
+            )));
+        }
+        if !cfg.omega_deepseek_api_key.trim().is_empty() {
+            providers.push(Arc::new(DeepSeekProvider::new(
+                cfg.omega_deepseek_api_key.clone(),
+                cfg.omega_deepseek_base_url.clone(),
+                cfg.omega_deepseek_model.clone(),
+            )));
+        }
+        if !cfg.omega_xai_api_key.trim().is_empty() {
+            providers.push(Arc::new(XaiProvider::new(
+                cfg.omega_xai_api_key.clone(),
+                cfg.omega_xai_base_url.clone(),
+                cfg.omega_xai_model.clone(),
+            )));
+        }
+        providers.push(Arc::new(LocalProvider::new(
+            Some(cfg.omega_local_base_url.clone()),
+            Some(cfg.omega_local_model.clone()),
+        )));
+        providers
+    } else if cfg.is_smoke_test_profile() {
         vec![
             Arc::new(CliProvider::new(
                 CliKind::Codex,

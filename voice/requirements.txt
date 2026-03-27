@@ -5,3 +5,4 @@ webrtcvad
 openwakeword
 requests
 pyaudio
+livekit

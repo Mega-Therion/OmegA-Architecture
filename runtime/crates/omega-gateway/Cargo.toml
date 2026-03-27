@@ -18,6 +18,8 @@ omega-memory = { path = "../omega-memory", features = ["semantic-search"] }
 omega-consensus = { path = "../omega-consensus" }
 omega-identity = { path = "../omega-identity" }
 omega-trace = { path = "../omega-trace" }
+livekit = { workspace = true, optional = true }
+livekit-api = { workspace = true, optional = true }
 tokio = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }
@@ -34,6 +36,10 @@ futures = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 regex = "1.12.3"
+
+[features]
+default = []
+livekit = ["dep:livekit", "dep:livekit-api"]
 
 [dev-dependencies]
 wiremock = { workspace = true }

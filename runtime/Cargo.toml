@@ -34,6 +34,8 @@ chrono = { version = "0.4", features = ["serde"] }
 sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite", "postgres", "macros"] }
 wiremock = "0.6"
 tokio-test = "0.4"
+livekit = "0.7.34"
+livekit-api = "0.4.16"
 
 [profile.dev]
 opt-level = 0

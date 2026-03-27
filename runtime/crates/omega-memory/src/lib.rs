@@ -12,9 +12,11 @@ pub mod gaing;
 pub mod pg;
 pub mod schema;
 pub mod sqlite;
+pub mod tiered;
 
 pub use error::MemoryStoreError;
 pub use federated::FederatedMemoryStore;
 pub use gaing::GaingRestMemoryStore;
 pub use pg::{EmbedText, PgMemoryStore};
 pub use sqlite::SqliteMemoryStore;
+pub use tiered::{TieredMemoryConfig, TieredMemoryStore};
