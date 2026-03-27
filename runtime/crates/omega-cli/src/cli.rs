@@ -31,8 +31,12 @@ pub enum Command {
     },
     /// Activity summary
     Briefing,
+    /// Full local + live diagnostics panel
+    Inspect,
     /// CPU/RAM vitals
     Pulse,
+    /// Show linked provider availability
+    Providers,
     /// Interactive multi-agent chat
     Chat {
         #[arg(short, long)]

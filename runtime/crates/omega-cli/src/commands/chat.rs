@@ -24,7 +24,7 @@ pub async fn run(
 
     println!(
         "{}",
-        "Type a message and press Enter. Use /help, /status, /briefing, /pulse, /gains, or /exit."
+        "Type a message and press Enter. Use /help, /status, /inspect, /providers, /briefing, /pulse, /gains, or /exit."
             .bright_white()
     );
     println!(
@@ -152,6 +152,8 @@ async fn handle_command(
                 &[
                     "/help - show shortcuts".to_string(),
                     "/status - show live gateway status".to_string(),
+                    "/inspect - show a full local + live diagnostics panel".to_string(),
+                    "/providers - list linked providers".to_string(),
                     "/doctor - verify the configured gateway link".to_string(),
                     "/briefing - run the briefing summary".to_string(),
                     "/pulse - show the health panel".to_string(),
@@ -167,6 +169,12 @@ async fn handle_command(
         }
         "/status" | "/pulse" => {
             crate::commands::pulse::run(client, cfg).await?;
+        }
+        "/inspect" => {
+            crate::commands::inspect::run(client, cfg).await?;
+        }
+        "/providers" => {
+            crate::commands::providers::run(client, cfg).await?;
         }
         "/doctor" => {
             crate::commands::config::run(ConfigAction::Doctor, cfg, client).await?;

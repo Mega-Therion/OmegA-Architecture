@@ -5,5 +5,7 @@ pub mod completions;
 pub mod config;
 pub mod forward;
 pub mod gains;
+pub mod inspect;
+pub mod providers;
 pub mod pulse;
 pub mod warp;

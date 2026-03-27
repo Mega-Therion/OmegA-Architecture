@@ -38,8 +38,14 @@ async fn main() -> anyhow::Result<()> {
         Some(Command::Briefing) => {
             commands::briefing::run(&gateway_client, &cfg.defaults.mode, &cfg).await?;
         }
+        Some(Command::Inspect) => {
+            commands::inspect::run(&gateway_client, &cfg).await?;
+        }
         Some(Command::Pulse) => {
             commands::pulse::run(&gateway_client, &cfg).await?;
+        }
+        Some(Command::Providers) => {
+            commands::providers::run(&gateway_client, &cfg).await?;
         }
         Some(Command::Chat { workspace }) => {
             commands::chat::run(&gateway_client, workspace, &cfg.defaults.mode, &cfg).await?;

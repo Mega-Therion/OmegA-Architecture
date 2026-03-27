@@ -30,8 +30,10 @@ pub fn print_banner(cfg: &CliConfig) {
     ]));
     table.add_row(Row::from(vec![
         Cell::new("Surface").fg(Color::Cyan),
-        Cell::new("ask · briefing · pulse · chat · forward · gains · warp · config")
-            .fg(Color::White),
+        Cell::new(
+            "ask · briefing · inspect · pulse · providers · chat · forward · gains · warp · config",
+        )
+        .fg(Color::White),
     ]));
     println!("{}", "Ω OmegA".bright_magenta().bold());
     println!("{}", "Sovereign. Persistent. Self-Knowing.".bright_yellow());
