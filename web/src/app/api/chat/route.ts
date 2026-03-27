@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import {
+  getProviderHealthSnapshot,
+  getProviderOrder,
+  selectStreamingProvider,
+  type ProviderName,
+} from '@/lib/provider-routing';
 
 // ── Provider config ───────────────────────────────────────────────────────────
 
@@ -335,33 +341,16 @@ export async function POST(req: NextRequest) {
     const voiceDirective = voiceMode ? `\n\n━━━ VOICE MODE ━━━\nYou are speaking aloud. The user will hear your response via text-to-speech.\nRules:\n- Keep responses under 3 sentences unless a longer answer is truly necessary.\n- No markdown formatting, no bullet points, no headers — plain spoken sentences only.\n- No "certainly", "of course", "absolutely". Just answer directly.\n- If you need to think through something complex, say one sentence summary then offer to go deeper.\n━━━ END VOICE MODE ━━━` : '';
     const system = `${SYNTHESIS_DIRECTIVE}\n\n${ANTI_ECHO_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}${voiceDirective}`;
 
-    // Resolve the provider before sending headers so X-Provider reflects reality.
-    const providers: Array<{ name: string; fn: () => Promise<ReadableStream> }> = [
-      { name: 'gemini-flash', fn: () => tryGemini(encoder, system, user, history) },
-      { name: 'vercel-gateway', fn: () => tryVercelGateway(encoder, system, user, history) },
-      { name: 'xai-direct', fn: () => tryXaiDirect(encoder, system, user, history) },
-    ];
+    const providerHealth = getProviderHealthSnapshot();
+    const providerFns: Record<ProviderName, () => Promise<ReadableStream>> = {
+      'vercel-gateway': () => tryVercelGateway(encoder, system, user, history),
+      'xai-direct': () => tryXaiDirect(encoder, system, user, history),
+      'gemini-flash': () => tryGemini(encoder, system, user, history),
+    };
 
-    let provider = 'unknown';
-    let lastErr: unknown;
-    let providerStream: ReadableStream | null = null;
-    const providerAttempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
-
-    for (const p of providers) {
-      try {
-        providerStream = await p.fn();
-        provider = p.name;
-        providerAttempts.push({ name: p.name, status: 'selected' });
-        break;
-      } catch (e) {
-        const error = e instanceof Error ? e.message : String(e);
-        providerAttempts.push({ name: p.name, status: 'failed', error });
-        console.warn(`[OmegA] ${p.name} failed:`, e);
-        lastErr = e;
-      }
-    }
-
-    if (!providerStream) throw lastErr ?? new Error('All providers failed');
+    const providers = getProviderOrder().map(name => ({ name, fn: providerFns[name] }));
+    const selection = await selectStreamingProvider(providers, encoder, decoder);
+    const { provider, stream: providerStream, attempts: providerAttempts } = selection;
 
     const customStream = new ReadableStream({
       async start(controller) {
@@ -371,25 +360,14 @@ export async function POST(req: NextRequest) {
 
           const reader = providerStream.getReader();
           let fullResponse = '';
-          let chunkCount = 0;
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
             const text = decoder.decode(value, { stream: true });
             if (text) {
-              chunkCount += 1;
               fullResponse += text;
               controller.enqueue(encoder.encode(text));
             }
-          }
-
-          if (!fullResponse.trim()) {
-            const attemptSummary = providerAttempts
-              .map(p => (p.status === 'failed' ? `${p.name}:failed` : `${p.name}:selected`))
-              .join(' -> ');
-            const diagnostic = `[OmegA diagnostic] provider ${provider} returned no text after ${chunkCount} chunks. Attempts: ${attemptSummary || 'unknown'}.`;
-            console.error('[OmegA] Empty provider output', { provider, chunkCount, providerAttempts });
-            controller.enqueue(encoder.encode(`${diagnostic}\n`));
           }
 
           if (dbUrl && finalSessionId && fullResponse) {
@@ -415,6 +393,10 @@ export async function POST(req: NextRequest) {
         'X-Session-Id': finalSessionId || '',
         'X-Provider': provider,
         'X-Memory-Backend': dbUrl ? 'neon-live' : 'none',
+        'X-Provider-Health': JSON.stringify(providerHealth),
+        'X-Provider-Attempts': providerAttempts
+          .map(p => (p.status === 'failed' ? `${p.name}:failed` : `${p.name}:selected`))
+          .join(' -> '),
       }
     });
 

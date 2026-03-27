@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAI } from '@ai-sdk/openai';
 import { GoogleGenAI } from '@google/genai';
 import { generateText } from 'ai';
+import { getProviderHealthSnapshot } from '@/lib/provider-routing';
 
 // ── Provider config (mirrors chat route) ──────────────────────────────────────
 
@@ -23,6 +24,20 @@ async function tryVercelGateway(text: string): Promise<string> {
   const provider = createOpenAI({ baseURL: VERCEL_GATEWAY_URL, apiKey: key });
   const result = await generateText({
     model: provider('xai/grok-3-fast'),
+    system: SYSTEM,
+    prompt: text,
+    maxOutputTokens: 512,
+    temperature: 0.6,
+  });
+  return result.text;
+}
+
+async function tryXaiDirect(text: string): Promise<string> {
+  const key = process.env.XAI_API_KEY;
+  if (!key) throw new Error('No xAI key');
+  const xai = createOpenAI({ baseURL: 'https://api.x.ai/v1', apiKey: key });
+  const result = await generateText({
+    model: xai('grok-3-fast'),
     system: SYSTEM,
     prompt: text,
     maxOutputTokens: 512,
@@ -54,10 +69,12 @@ export async function POST(req: NextRequest) {
     if (!text?.trim()) {
       return NextResponse.json({ error: 'No text' }, { status: 400 });
     }
+    const providerHealth = getProviderHealthSnapshot();
 
     const providerAttempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
     const providers = [
       { name: 'vercel-gateway', fn: () => tryVercelGateway(text) },
+      { name: 'xai-direct', fn: () => tryXaiDirect(text) },
       { name: 'gemini-flash', fn: () => tryGemini(text) },
     ];
 
@@ -67,7 +84,7 @@ export async function POST(req: NextRequest) {
         const refined = await p.fn();
         if (refined?.trim()) {
           providerAttempts.push({ name: p.name, status: 'selected' });
-          return NextResponse.json({ refined: refined.trim(), provider: p.name, providerAttempts });
+          return NextResponse.json({ refined: refined.trim(), provider: p.name, providerAttempts, providerHealth });
         }
       } catch (e) {
         providerAttempts.push({ name: p.name, status: 'failed', error: e instanceof Error ? e.message : String(e) });
@@ -78,6 +95,6 @@ export async function POST(req: NextRequest) {
     throw lastErr ?? new Error(`All providers failed (${providerAttempts.map(p => p.name).join(' -> ')})`);
   } catch (err) {
     console.error('[OmegA Refine]', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({ error: String(err), providerHealth: getProviderHealthSnapshot() }, { status: 500 });
   }
 }

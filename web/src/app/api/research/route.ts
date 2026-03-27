@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
+import { getProviderHealthSnapshot } from '@/lib/provider-routing';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ interface ResearchResponse {
   answer: string;
   mode: 'grounded' | 'inferred' | 'abstained' | 'blocked';
   confidence: number;
+  providerHealth?: ReturnType<typeof getProviderHealthSnapshot>;
   provider?: string;
   providerAttempts?: Array<{ name: string; status: 'failed' | 'selected'; error?: string }>;
   citations: Citation[];
@@ -241,6 +243,7 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const runId = `run_${Date.now().toString(36)}`;
   const stages: StageTrace[] = [];
+  const providerHealth = getProviderHealthSnapshot();
 
   function recordStage(stage: string, status: string, details: Record<string, unknown>) {
     stages.push({ stage, status, details, elapsedMs: Date.now() - startTime });
@@ -263,7 +266,7 @@ export async function POST(req: NextRequest) {
         runId, blocked: true, blockedReason: risk.reason ?? 'Risk gate blocked',
         answer: '[BLOCKED] This request was rejected by the AEGIS risk gate.',
         mode: 'blocked', confidence: 0, citations: [], unresolved: [], verified: false,
-        riskScore: risk.score, stageTrace: stages,
+        riskScore: risk.score, stageTrace: stages, providerHealth,
       } satisfies ResearchResponse);
     }
 
@@ -295,6 +298,7 @@ export async function POST(req: NextRequest) {
         runId, answer: '[PROVIDER ERROR] No LLM response available.',
         mode: 'abstained', confidence: 0, citations, unresolved: [query],
         verified: false, riskScore: risk.score, provider: llmProvider, providerAttempts: attempts, stageTrace: stages,
+        providerHealth,
       } satisfies ResearchResponse, { status: 500 });
     }
 
@@ -334,6 +338,7 @@ export async function POST(req: NextRequest) {
       verified: verif.passed,
       riskScore: Math.round(risk.score * 1000) / 1000,
       stageTrace: stages,
+      providerHealth,
     };
 
     if (gate.pending) {
@@ -345,6 +350,6 @@ export async function POST(req: NextRequest) {
 
   } catch (err) {
     console.error('[OmegA Research]', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({ error: String(err), providerHealth: getProviderHealthSnapshot() }, { status: 500 });
   }
 }

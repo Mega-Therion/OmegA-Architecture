@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { getProviderHealthSnapshot } from '@/lib/provider-routing';
 
 // ── Shared config (mirrors chat route) ────────────────────────────────────────
 
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
 
     const memory = await pullBriefContext();
     const system = SYNTHESIS_DIRECTIVE + memory;
+    const providerHealth = getProviderHealthSnapshot();
 
     const providers: Array<{ name: string; fn: () => Promise<string> }> = [
       { name: 'vercel-gateway', fn: () => tryVercelGateway(system, text) },
@@ -109,7 +111,7 @@ export async function POST(req: NextRequest) {
       try {
         const reply = await p.fn();
         if (reply?.trim()) {
-          return NextResponse.json({ reply: reply.trim(), provider: p.name });
+          return NextResponse.json({ reply: reply.trim(), provider: p.name, providerHealth });
         }
       } catch (e) {
         console.warn(`[OmegA Ask] ${p.name} failed:`, e);
@@ -120,6 +122,6 @@ export async function POST(req: NextRequest) {
     throw lastErr ?? new Error('All providers failed');
   } catch (err) {
     console.error('[OmegA Ask]', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({ error: String(err), providerHealth: getProviderHealthSnapshot() }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAI } from '@ai-sdk/openai';
 import { GoogleGenAI } from '@google/genai';
 import { generateText } from 'ai';
+import { getProviderHealthSnapshot } from '@/lib/provider-routing';
 
 // ── Provider config (mirrors chat route) ──────────────────────────────────────
 
@@ -41,6 +42,20 @@ async function tryVercelGateway(prompt: string): Promise<string> {
   return result.text;
 }
 
+async function tryXaiDirect(prompt: string): Promise<string> {
+  const key = process.env.XAI_API_KEY;
+  if (!key) throw new Error('No xAI key');
+  const xai = createOpenAI({ baseURL: 'https://api.x.ai/v1', apiKey: key });
+  const result = await generateText({
+    model: xai('grok-3-fast'),
+    system: SYSTEM,
+    prompt,
+    maxOutputTokens: 1024,
+    temperature: 0.8,
+  });
+  return result.text;
+}
+
 async function tryGemini(prompt: string): Promise<string> {
   for (const key of GEMINI_KEYS) {
     try {
@@ -72,6 +87,7 @@ export async function POST(req: NextRequest) {
     if (!history || history.length < 2) {
       return NextResponse.json({ error: 'Need at least 2 messages' }, { status: 400 });
     }
+    const providerHealth = getProviderHealthSnapshot();
 
     const historyStr = history
       .slice(-30)
@@ -83,6 +99,7 @@ export async function POST(req: NextRequest) {
     const providerAttempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
     const providers = [
       { name: 'vercel-gateway', fn: () => tryVercelGateway(prompt) },
+      { name: 'xai-direct', fn: () => tryXaiDirect(prompt) },
       { name: 'gemini-flash', fn: () => tryGemini(prompt) },
     ];
 
@@ -93,7 +110,7 @@ export async function POST(req: NextRequest) {
         // Validate it's parseable JSON
         const parsed = JSON.parse(raw);
         providerAttempts.push({ name: p.name, status: 'selected' });
-        return NextResponse.json({ ...parsed, provider: p.name, providerAttempts });
+        return NextResponse.json({ ...parsed, provider: p.name, providerAttempts, providerHealth });
       } catch (e) {
         providerAttempts.push({ name: p.name, status: 'failed', error: e instanceof Error ? e.message : String(e) });
         lastErr = e;
@@ -103,6 +120,6 @@ export async function POST(req: NextRequest) {
     throw lastErr ?? new Error(`All providers failed (${providerAttempts.map(p => p.name).join(' -> ')})`);
   } catch (err) {
     console.error('[OmegA Synthesize]', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({ error: String(err), providerHealth: getProviderHealthSnapshot() }, { status: 500 });
   }
 }
