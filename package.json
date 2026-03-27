@@ -2,6 +2,7 @@
   "name": "omega-architecture",
   "private": true,
   "dependencies": {
+    "@supabase/ssr": "^0.9.0",
     "next": "16.2.1"
   }
 }
