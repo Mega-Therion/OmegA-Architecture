@@ -133,6 +133,17 @@
     "pass_rate": "0/3",
     "result_file": "eval/results/rc1_e13_provider_isolation_2026-03-27.md",
     "notes": "Local env reproduction failed across all three providers: Vercel gateway lacked OIDC, xAI direct was denied, and Gemini keys were invalid in the repo env files"
+  },
+  {
+    "id": "E14",
+    "name": "Deployed Route Isolation",
+    "family": "routes",
+    "description": "Live route-level isolation probe across chat, research, synthesize, and refine to identify the first collapsing deployed endpoint",
+    "last_run": "2026-03-27",
+    "last_result": "FAIL",
+    "pass_rate": "0/4",
+    "result_file": "eval/results/rc1_e14_route_isolation_2026-03-27.md",
+    "notes": "Against the latest production deployment, chat collapsed first with xai-direct diagnostics, research returned a providerless 500 after mixed upstream failures, and synthesize/refine both returned gateway-missing 500s"
   }
 ]
 }
