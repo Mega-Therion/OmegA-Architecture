@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { getProviderHealthSnapshot } from '@/lib/provider-routing';
+import { getProviderHealthSnapshot, resolveGatewayAuth } from '@/lib/provider-routing';
 
 // ── Shared config (mirrors chat route) ────────────────────────────────────────
 
@@ -24,8 +24,9 @@ You have access to your memory systems. Reason over the data. Be direct, be hone
 // ── Provider waterfall (non-streaming) ────────────────────────────────────────
 
 async function tryVercelGateway(system: string, prompt: string): Promise<string> {
-  const key = process.env.VERCEL_AI_GATEWAY_KEY;
-  if (!key) throw new Error('No gateway key');
+  const gatewayAuth = resolveGatewayAuth();
+  const key = gatewayAuth.key;
+  if (!key) throw new Error(gatewayAuth.source ? `No gateway auth from ${gatewayAuth.source}` : 'No gateway auth');
   const provider = createOpenAI({ baseURL: VERCEL_GATEWAY_URL, apiKey: key });
   const result = await generateText({
     model: provider('xai/grok-3-fast'),

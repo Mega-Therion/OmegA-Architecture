@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
-import { getProviderHealthSnapshot } from '@/lib/provider-routing';
+import { getProviderHealthSnapshot, resolveGatewayAuth } from '@/lib/provider-routing';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -166,7 +166,8 @@ async function callLLM(system: string, prompt: string): Promise<{ text: string; 
   const attempts: Array<{ name: string; status: 'failed' | 'selected'; error?: string }> = [];
 
   // Try Vercel Gateway
-  const gatewayKey = process.env.VERCEL_AI_GATEWAY_KEY;
+  const gatewayAuth = resolveGatewayAuth();
+  const gatewayKey = gatewayAuth.key;
   if (gatewayKey) {
     try {
       const provider = createOpenAI({ baseURL: 'https://ai-gateway.vercel.sh/v1', apiKey: gatewayKey });
@@ -177,7 +178,7 @@ async function callLLM(system: string, prompt: string): Promise<{ text: string; 
       attempts.push({ name: 'vercel-gateway', status: 'failed', error: e instanceof Error ? e.message : String(e) });
     }
   } else {
-    attempts.push({ name: 'vercel-gateway', status: 'failed', error: 'missing gateway key' });
+    attempts.push({ name: 'vercel-gateway', status: 'failed', error: gatewayAuth.source ? `missing gateway auth from ${gatewayAuth.source}` : 'missing gateway auth' });
   }
 
   // Try xAI direct

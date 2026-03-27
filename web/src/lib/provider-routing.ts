@@ -12,6 +12,7 @@ export type ProviderHealthSnapshot = {
     available: boolean;
     reason: string | null;
     url: string;
+    authSource: string | null;
   };
   openai: {
     configured: boolean;
@@ -45,8 +46,25 @@ const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY,
 ].filter(Boolean) as string[];
 
+export function resolveGatewayAuth(): { key: string | null; source: string | null } {
+  if (process.env.AI_GATEWAY_API_KEY) {
+    return { key: process.env.AI_GATEWAY_API_KEY, source: 'AI_GATEWAY_API_KEY' };
+  }
+
+  if (process.env.VERCEL_AI_GATEWAY_KEY) {
+    return { key: process.env.VERCEL_AI_GATEWAY_KEY, source: 'VERCEL_AI_GATEWAY_KEY' };
+  }
+
+  if (process.env.VERCEL_OIDC_TOKEN) {
+    return { key: process.env.VERCEL_OIDC_TOKEN, source: 'VERCEL_OIDC_TOKEN' };
+  }
+
+  return { key: null, source: null };
+}
+
 export function getProviderHealthSnapshot(): ProviderHealthSnapshot {
-  const gatewayConfigured = Boolean(process.env.VERCEL_AI_GATEWAY_KEY);
+  const gatewayAuth = resolveGatewayAuth();
+  const gatewayConfigured = Boolean(gatewayAuth.key);
   const openaiConfigured = Boolean(process.env.OPENAI_API_KEY);
   const xaiConfigured = Boolean(process.env.XAI_API_KEY);
   const geminiConfigured = GEMINI_KEYS.length > 0;
@@ -55,8 +73,9 @@ export function getProviderHealthSnapshot(): ProviderHealthSnapshot {
     gateway: {
       configured: gatewayConfigured,
       available: gatewayConfigured,
-      reason: gatewayConfigured ? null : 'missing gateway key',
+      reason: gatewayConfigured ? null : 'missing gateway auth',
       url: 'https://ai-gateway.vercel.sh/v1',
+      authSource: gatewayAuth.source,
     },
     openai: {
       configured: openaiConfigured,

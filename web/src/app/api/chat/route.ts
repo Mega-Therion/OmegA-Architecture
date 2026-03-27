@@ -6,6 +6,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import {
   getProviderHealthSnapshot,
   getProviderOrder,
+  resolveGatewayAuth,
   selectStreamingProvider,
   type ProviderName,
 } from '@/lib/provider-routing';
@@ -203,8 +204,9 @@ async function tryVercelGateway(
   user: string,
   history: Msg[] | undefined
 ): Promise<ReadableStream> {
-  const key = process.env.VERCEL_AI_GATEWAY_KEY;
-  if (!key) throw new Error('No Vercel AI Gateway key');
+  const gatewayAuth = resolveGatewayAuth();
+  const key = gatewayAuth.key;
+  if (!key) throw new Error(gatewayAuth.source ? `No gateway auth from ${gatewayAuth.source}` : 'No gateway auth');
 
   const vercelAI = createOpenAI({ baseURL: VERCEL_GATEWAY_URL, apiKey: key });
   const result = await streamText({
