@@ -100,6 +100,30 @@ impl PgMemoryStore {
             _ => false,
         }
     }
+
+    fn search_terms(query: &str) -> Vec<String> {
+        const STOP_WORDS: &[&str] = &[
+            "the", "and", "for", "that", "with", "from", "this", "what", "when", "where",
+            "have", "does", "know", "about", "your", "you", "into", "then", "them", "they",
+            "was", "were", "are", "is", "who", "why", "how", "can", "any", "relating",
+            "please", "summarize", "memory",
+        ];
+
+        let mut terms = Vec::new();
+        for token in query
+            .split(|c: char| !c.is_alphanumeric())
+            .map(|t| t.trim().to_ascii_lowercase())
+        {
+            if token.len() < 3 || STOP_WORDS.contains(&token.as_str()) || terms.contains(&token) {
+                continue;
+            }
+            terms.push(token);
+            if terms.len() >= 8 {
+                break;
+            }
+        }
+        terms
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -450,6 +474,7 @@ impl MemoryStore for PgMemoryStore {
     ///   `importance DESC` (same semantics as `SqliteMemoryStore`).
     async fn search(&self, query: &str, limit: usize) -> Result<Vec<MemoryEntry>, MemoryError> {
         let limit_i64 = limit as i64;
+        let trimmed = query.trim();
 
         let rows = if let Some(emb) = self.embedder.as_ref().and_then(|e| e.embed(query)) {
             // Vector similarity search.
@@ -469,20 +494,59 @@ impl MemoryStore for PgMemoryStore {
                 .fetch_all(&self.pool)
                 .await
                 .map_err(MemoryStoreError::Sqlx)?
-        } else {
-            // Keyword fallback.
-            let pattern = format!("%{}%", query);
+        } else if trimmed.is_empty() {
             sqlx::query(
                 r#"
                 SELECT id, content, source, importance, created_at, namespace,
                        domain, confidence, version, superseded_by, key, raw_artifact
                 FROM omega_memory_entries
-                WHERE content ILIKE $1
-                ORDER BY importance DESC
-                LIMIT $2
+                ORDER BY importance DESC, created_at DESC NULLS LAST
+                LIMIT $1
+                "#,
+            )
+            .bind(limit_i64)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(MemoryStoreError::Sqlx)?
+        } else {
+            // Keyword fallback.
+            let pattern = format!("%{}%", trimmed);
+            let term_patterns: Vec<String> = Self::search_terms(trimmed)
+                .into_iter()
+                .map(|term| format!("%{}%", term))
+                .collect();
+            sqlx::query(
+                r#"
+                SELECT id, content, source, importance, created_at, namespace,
+                       domain, confidence, version, superseded_by, key, raw_artifact
+                FROM omega_memory_entries
+                WHERE
+                    content ILIKE $1
+                    OR source ILIKE $1
+                    OR namespace ILIKE $1
+                    OR (
+                        cardinality($2::text[]) > 0
+                        AND (
+                            content ILIKE ANY($2::text[])
+                            OR source ILIKE ANY($2::text[])
+                            OR namespace ILIKE ANY($2::text[])
+                        )
+                    )
+                ORDER BY
+                    CASE
+                        WHEN source ILIKE $1 OR namespace ILIKE $1 THEN 0
+                        WHEN cardinality($2::text[]) > 0
+                             AND (source ILIKE ANY($2::text[]) OR namespace ILIKE ANY($2::text[])) THEN 1
+                        WHEN content ILIKE $1 THEN 2
+                        ELSE 3
+                    END,
+                    importance DESC,
+                    created_at DESC NULLS LAST
+                LIMIT $3
                 "#,
             )
             .bind(&pattern)
+            .bind(&term_patterns)
             .bind(limit_i64)
             .fetch_all(&self.pool)
             .await

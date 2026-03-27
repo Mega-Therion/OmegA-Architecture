@@ -162,20 +162,37 @@ impl MemoryStore for TieredMemoryStore {
 
         let mut seen: HashSet<String> = HashSet::new();
         let mut merged: Vec<MemoryEntry> = Vec::with_capacity(limit);
-        for bucket in [r1, r2, r3, r4, r5] {
-            if merged.len() >= limit {
-                break;
-            }
-            let entries = bucket.unwrap_or_default();
-            for entry in entries {
-                if merged.len() >= limit {
-                    break;
+        let mut buckets = [
+            r1.unwrap_or_default(),
+            r2.unwrap_or_default(),
+            r3.unwrap_or_default(),
+            r4.unwrap_or_default(),
+            r5.unwrap_or_default(),
+        ];
+        let mut cursor = 0usize;
+
+        while merged.len() < limit {
+            let mut made_progress = false;
+            for bucket in &mut buckets {
+                if cursor >= bucket.len() {
+                    continue;
                 }
+                let entry = bucket[cursor].clone();
                 let key = entry.content.chars().take(64).collect::<String>();
                 if seen.insert(key) {
                     merged.push(entry);
+                    made_progress = true;
+                    if merged.len() >= limit {
+                        break;
+                    }
+                } else {
+                    made_progress = true;
                 }
             }
+            if !made_progress {
+                break;
+            }
+            cursor += 1;
         }
         Ok(merged)
     }
@@ -202,4 +219,3 @@ impl MemoryStore for TieredMemoryStore {
         Ok(vec![])
     }
 }
-

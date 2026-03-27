@@ -10,6 +10,7 @@ use omega_core::memory::{MemoryEntry, MemoryStore};
 use omega_core::provider::ChatRequest;
 use omega_trace::{TraceEvent, TraceOutcome};
 use serde_json::json;
+use std::collections::HashSet;
 use std::sync::{Arc, OnceLock};
 use std::time::Instant;
 use uuid::Uuid;
@@ -325,6 +326,79 @@ fn detect_injection(prompt: &str) -> bool {
     injection_regexes().iter().any(|re| re.is_match(prompt))
 }
 
+fn retrieval_queries(user: &str, state: &AppState) -> Vec<String> {
+    const STOP_WORDS: &[&str] = &[
+        "the", "and", "for", "that", "with", "from", "this", "what", "when", "where", "does",
+        "know", "about", "your", "have", "please", "summarize", "memory",
+    ];
+
+    let trimmed = user.trim();
+    if trimmed.is_empty() {
+        return vec![];
+    }
+
+    let lower = trimmed.to_ascii_lowercase();
+    let self_referential = [" me ", " my ", " myself ", " who am i", " know about me"]
+        .iter()
+        .any(|needle| format!(" {lower} ").contains(needle));
+
+    let mut queries = vec![trimmed.to_string()];
+    let keywords: Vec<String> = trimmed
+        .split(|c: char| !c.is_alphanumeric())
+        .map(|t| t.trim().to_ascii_lowercase())
+        .filter(|t| t.len() >= 3 && !STOP_WORDS.contains(&t.as_str()))
+        .take(6)
+        .collect();
+
+    if !keywords.is_empty() {
+        queries.push(keywords.join(" "));
+    }
+
+    if self_referential {
+        queries.push(state.identity.operator.clone());
+        queries.push("personal biography".to_string());
+        queries.push("personal".to_string());
+        for anchor in state.identity.identity_anchors.iter().take(2) {
+            queries.push(anchor.clone());
+        }
+    }
+
+    let mut seen = HashSet::new();
+    queries
+        .into_iter()
+        .filter(|q| !q.trim().is_empty())
+        .filter(|q| seen.insert(q.to_ascii_lowercase()))
+        .collect()
+}
+
+fn render_memory_context(memory_entries: &[MemoryEntry]) -> Option<String> {
+    if memory_entries.is_empty() {
+        return None;
+    }
+
+    let lines: Vec<String> = memory_entries
+        .iter()
+        .take(6)
+        .map(|entry| {
+            let snippet = entry
+                .content
+                .split_whitespace()
+                .take(48)
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!(
+                "- source: {}\n  namespace: {}\n  excerpt: {}",
+                entry.source, entry.namespace, snippet
+            )
+        })
+        .collect();
+
+    Some(format!(
+        "Recovered memory context:\n{}\nThese retrieved entries are valid memory evidence for this request. If they are relevant, answer from them and do not say you lack memory evidence.",
+        lines.join("\n")
+    ))
+}
+
 /// Valid mode names accepted by the router.  Must stay in sync with
 /// `resolve_mode()` in `omega-provider/src/failover.rs`.
 const VALID_MODES: &[&str] = &[
@@ -424,11 +498,32 @@ pub async fn chat_handler(
 
     // Retrieve memory hits before routing so they can be included in the response.
     let memory_entries: Vec<MemoryEntry> = if req.use_memory {
-        state
-            .memory_store
-            .search(&req.user, 3)
-            .await
-            .unwrap_or_default()
+        let mut merged = Vec::new();
+        let mut seen = HashSet::new();
+        for query in retrieval_queries(&req.user, &state) {
+            let hits = state
+                .memory_store
+                .search(&query, 6)
+                .await
+                .unwrap_or_default();
+            for entry in hits {
+                let dedupe_key = entry
+                    .id
+                    .as_ref()
+                    .map(|id| id.0.clone())
+                    .unwrap_or_else(|| entry.content.chars().take(80).collect::<String>());
+                if seen.insert(dedupe_key) {
+                    merged.push(entry);
+                }
+                if merged.len() >= 6 {
+                    break;
+                }
+            }
+            if merged.len() >= 6 {
+                break;
+            }
+        }
+        merged
     } else {
         vec![]
     };
@@ -453,9 +548,26 @@ pub async fn chat_handler(
         .format("Current date: %Y-%m-%d (UTC).")
         .to_string();
     let mut req = req;
+    let memory_context = render_memory_context(&memory_entries);
     req.system = Some(match req.system.take() {
-        Some(existing) => format!("{}\n{}\n\n{}", identity_text, current_date, existing),
-        None => format!("{}\n{}", identity_text, current_date),
+        Some(existing) => {
+            let mut system = format!("{}\n{}", identity_text, current_date);
+            if let Some(memory_context) = memory_context.as_ref() {
+                system.push_str("\n\n");
+                system.push_str(memory_context);
+            }
+            system.push_str("\n\n");
+            system.push_str(&existing);
+            system
+        }
+        None => {
+            let mut system = format!("{}\n{}", identity_text, current_date);
+            if let Some(memory_context) = memory_context.as_ref() {
+                system.push_str("\n\n");
+                system.push_str(memory_context);
+            }
+            system
+        }
     });
 
     let started = Instant::now();
