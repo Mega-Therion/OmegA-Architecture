@@ -59,7 +59,6 @@ export default function LiveKitGate() {
     room.on(RoomEvent.Connected, handleConnected);
     room.on(RoomEvent.Disconnected, handleDisconnected);
     room.on(RoomEvent.ConnectionStateChanged, handleStateChange);
-    room.on(RoomEvent.ConnectionError, handleError);
 
     (async () => {
       try {
@@ -78,7 +77,6 @@ export default function LiveKitGate() {
       room.off(RoomEvent.Connected, handleConnected);
       room.off(RoomEvent.Disconnected, handleDisconnected);
       room.off(RoomEvent.ConnectionStateChanged, handleStateChange);
-      room.off(RoomEvent.ConnectionError, handleError);
       room.disconnect();
       roomRef.current = null;
     };

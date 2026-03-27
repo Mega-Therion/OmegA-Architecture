@@ -308,66 +308,63 @@ export async function POST(req: NextRequest) {
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
+
+    if (dbUrl && finalSessionId) {
+      const db = neon(dbUrl);
+      try {
+        await db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'user', ${user})`;
+      } catch (e) {
+        console.error('[OmegA] DB write error', e);
+      }
+    }
+
+    let rawContext: string;
+    try {
+      rawContext = await pullRawContext(user);
+    } catch (e) {
+      console.warn('[OmegA] DB pull failed:', e);
+      rawContext = '(Memory bank unreachable — reasoning independently)';
+    }
+
+    const conversationContext = history?.length
+      ? `\n━━━ SESSION CONVERSATION HISTORY ━━━\n\n` +
+        history.map(m => `[${m.role === 'omega' ? 'OmegA' : 'User'}]: ${m.text}`).join('\n\n') +
+        `\n\n━━━ END HISTORY ━━━\n`
+      : '';
+
+    const voiceDirective = voiceMode ? `\n\n━━━ VOICE MODE ━━━\nYou are speaking aloud. The user will hear your response via text-to-speech.\nRules:\n- Keep responses under 3 sentences unless a longer answer is truly necessary.\n- No markdown formatting, no bullet points, no headers — plain spoken sentences only.\n- No "certainly", "of course", "absolutely". Just answer directly.\n- If you need to think through something complex, say one sentence summary then offer to go deeper.\n━━━ END VOICE MODE ━━━` : '';
+    const system = `${SYNTHESIS_DIRECTIVE}\n\n${ANTI_ECHO_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}${voiceDirective}`;
+
+    // Resolve the provider before sending headers so X-Provider reflects reality.
+    const providers: Array<{ name: string; fn: () => Promise<ReadableStream> }> = [
+      { name: 'gemini-flash', fn: () => tryGemini(encoder, system, user, history) },
+      { name: 'vercel-gateway', fn: () => tryVercelGateway(encoder, system, user, history) },
+      { name: 'xai-direct', fn: () => tryXaiDirect(encoder, system, user, history) },
+    ];
+
     let provider = 'unknown';
+    let lastErr: unknown;
+    let providerStream: ReadableStream | null = null;
+
+    for (const p of providers) {
+      try {
+        providerStream = await p.fn();
+        provider = p.name;
+        break;
+      } catch (e) {
+        console.warn(`[OmegA] ${p.name} failed:`, e);
+        lastErr = e;
+      }
+    }
+
+    if (!providerStream) throw lastErr ?? new Error('All providers failed');
 
     const customStream = new ReadableStream({
       async start(controller) {
         try {
           controller.enqueue(encoder.encode('data: {"type":"status","text":"reading memory..."}\n\n'));
-
-          if (dbUrl && finalSessionId) {
-            const db = neon(dbUrl);
-            db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'user', ${user})`
-              .catch(e => console.error('[OmegA] DB write error', e));
-          }
-
-          let rawContext: string;
-          try {
-            rawContext = await pullRawContext(user);
-          } catch (e) {
-            console.warn('[OmegA] DB pull failed:', e);
-            rawContext = '(Memory bank unreachable — reasoning independently)';
-          }
-
           controller.enqueue(encoder.encode('data: {"type":"status","text":"synthesizing..."}\n\n'));
 
-          const conversationContext = history?.length
-            ? `\n━━━ SESSION CONVERSATION HISTORY ━━━\n\n` +
-              history.map(m => `[${m.role === 'omega' ? 'OmegA' : 'User'}]: ${m.text}`).join('\n\n') +
-              `\n\n━━━ END HISTORY ━━━\n`
-            : '';
-
-          const voiceDirective = voiceMode ? `\n\n━━━ VOICE MODE ━━━\nYou are speaking aloud. The user will hear your response via text-to-speech.\nRules:\n- Keep responses under 3 sentences unless a longer answer is truly necessary.\n- No markdown formatting, no bullet points, no headers — plain spoken sentences only.\n- No "certainly", "of course", "absolutely". Just answer directly.\n- If you need to think through something complex, say one sentence summary then offer to go deeper.\n━━━ END VOICE MODE ━━━` : '';
-          const system = `${SYNTHESIS_DIRECTIVE}\n\n${ANTI_ECHO_DIRECTIVE}\n\n━━━ RAW DATA FROM MEMORY SYSTEMS ━━━\n\n${rawContext}\n\n━━━ END RAW DATA ━━━\n${conversationContext}${voiceDirective}`;
-
-          // ── Provider waterfall (true streaming) ─────────────────────────
-          // 1. Gemini Flash     (key rotation across 3 keys, free tier)
-          // 2. Vercel AI Gateway (grok-3-fast, $5 free credits)
-          // 3. xAI direct       (grok-3-fast, pure credit, no daily cap)
-
-          const providers: Array<{ name: string; fn: () => Promise<ReadableStream> }> = [
-            { name: 'gemini-flash',   fn: () => tryGemini(encoder, system, user, history) },
-            { name: 'vercel-gateway', fn: () => tryVercelGateway(encoder, system, user, history) },
-            { name: 'xai-direct',     fn: () => tryXaiDirect(encoder, system, user, history) },
-          ];
-
-          let lastErr: unknown;
-          let providerStream: ReadableStream | null = null;
-
-          for (const p of providers) {
-            try {
-              providerStream = await p.fn();
-              provider = p.name;
-              break;
-            } catch (e) {
-              console.warn(`[OmegA] ${p.name} failed:`, e);
-              lastErr = e;
-            }
-          }
-
-          if (!providerStream) throw lastErr ?? new Error('All providers failed');
-
-          // Pipe chunks directly to client as they arrive
           const reader = providerStream.getReader();
           let fullResponse = '';
           while (true) {
@@ -382,8 +379,11 @@ export async function POST(req: NextRequest) {
 
           if (dbUrl && finalSessionId && fullResponse) {
             const db = neon(dbUrl);
-            db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'omega', ${fullResponse})`
-              .catch(e => console.error('[OmegA] DB save error', e));
+            try {
+              await db`INSERT INTO omega_chat_messages (session_id, role, content) VALUES (${finalSessionId}, 'omega', ${fullResponse})`;
+            } catch (e) {
+              console.error('[OmegA] DB save error', e);
+            }
           }
 
           controller.close();
