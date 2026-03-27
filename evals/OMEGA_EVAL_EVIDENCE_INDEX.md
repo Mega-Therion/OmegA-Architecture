@@ -21,6 +21,12 @@ This document provides a categorized index of the evaluation evidence files for 
 | `services/gateway/eval/results/e10_identity_scope.jsonl` | Identity Scope | Limits and boundaries of self-identity claims. |
 | `services/gateway/eval/results/e11_creator_profile_boundary.jsonl` | Creator Boundary | Adversarial results for creator-related probes. |
 
+### New live-deployment pressure artifacts
+| Path | Type | Importance |
+| :--- | :--- | :--- |
+| `runtime/eval/results/rc1_e12_pressure_eval_2026-03-27.md` | Live Pressure Report | Harder live production battery against the latest Vercel deployment; 0/15 pass, with xai-direct fallback returning empty responses under pressure. |
+| `evals/live_deployment_pressure_report.json` | Structured Summary | Machine-readable result bundle with per-case provider, latency, response, and comparison metadata. |
+
 ## 3. Discourse & Deep Assessment Records
 | Path | Type | Importance |
 | :--- | :--- | :--- |

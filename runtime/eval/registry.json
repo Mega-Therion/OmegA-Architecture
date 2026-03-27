@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-03-14",
+  "last_updated": "2026-03-27",
   "evals": [
     {
       "id": "E1",
@@ -111,6 +111,17 @@
       "pass_rate": "pass",
       "result_file": null,
       "notes": "Live eval via Python gateway eval harness"
+    },
+    {
+      "id": "E12",
+      "name": "Live Deployment Pressure Battery",
+      "family": "pressure",
+      "description": "Harder live deployment battery across identity, creator, temporal, continuity, and governance pressure tests",
+      "last_run": "2026-03-27",
+      "last_result": "PARTIAL",
+      "pass_rate": "0/15",
+      "result_file": "eval/results/rc1_e12_pressure_eval_2026-03-27.md",
+      "notes": "Ran against the latest Vercel production deployment; all 15 requests fell back to xai-direct and returned empty responses under pressure"
     }
   ]
 }
