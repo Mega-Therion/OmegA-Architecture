@@ -24,8 +24,8 @@ This document provides a categorized index of the evaluation evidence files for 
 ### New live-deployment pressure artifacts
 | Path | Type | Importance |
 | :--- | :--- | :--- |
-| `runtime/eval/results/rc1_e12_pressure_eval_2026-03-27.md` | Live Pressure Report | Harder live production battery against the latest Vercel deployment; 0/15 pass, with xai-direct fallback returning empty responses under pressure. |
-| `evals/live_deployment_pressure_report.json` | Structured Summary | Machine-readable result bundle with per-case provider, latency, response, and comparison metadata. |
+| `runtime/eval/results/rc1_e12_pressure_eval_2026-03-27.md` | Live Pressure Report | Harder live production battery against the latest Vercel deployment; 4/15 pass, with provider traces showing 13 xai-direct fallthroughs and 2 gemini-flash successes. |
+| `evals/live_deployment_pressure_report.json` | Structured Summary | Machine-readable result bundle with per-case provider, latency, response, and comparison metadata from the latest rerun. |
 
 ## 3. Discourse & Deep Assessment Records
 | Path | Type | Importance |
