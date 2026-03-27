@@ -55,6 +55,11 @@ pub enum Command {
         #[arg(value_enum)]
         shell: Shell,
     },
+    /// Show or link local CLI configuration
+    Config {
+        #[command(subcommand)]
+        action: ConfigAction,
+    },
 }
 
 #[derive(Subcommand)]
@@ -63,4 +68,25 @@ pub enum WarpAction {
     Engage,
     /// Restore services
     Disengage,
+}
+
+#[derive(Subcommand)]
+pub enum ConfigAction {
+    /// Show the resolved CLI configuration
+    Show,
+    /// Save the gateway link locally and verify connectivity
+    Link {
+        #[arg(long)]
+        gateway_url: String,
+        #[arg(long)]
+        token: Option<String>,
+        #[arg(long)]
+        mode: Option<String>,
+        #[arg(long)]
+        temperature: Option<f32>,
+        #[arg(long)]
+        timeout_secs: Option<u64>,
+    },
+    /// Verify the current link and gateway health
+    Doctor,
 }

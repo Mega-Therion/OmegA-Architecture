@@ -56,6 +56,9 @@ async fn main() -> anyhow::Result<()> {
         Some(Command::Completions { shell }) => {
             commands::completions::run(shell)?;
         }
+        Some(Command::Config { action }) => {
+            commands::config::run(action, &cfg, &gateway_client).await?;
+        }
     }
 
     Ok(())

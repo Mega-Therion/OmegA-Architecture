@@ -3,6 +3,7 @@ use figment::{
     Figment,
 };
 use serde::{Deserialize, Serialize};
+use std::{fs, path::PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GatewaySection {
@@ -74,7 +75,7 @@ impl Default for CliConfig {
 
 impl CliConfig {
     pub fn load() -> anyhow::Result<Self> {
-        let config_path = dirs_config_path();
+        let config_path = config_path();
 
         let mut fig = Figment::new().merge(Serialized::defaults(CliConfig::default()));
 
@@ -92,16 +93,28 @@ impl CliConfig {
         let config: CliConfig = fig.extract()?;
         Ok(config)
     }
+
+    pub fn save(&self) -> anyhow::Result<PathBuf> {
+        let path = config_file_path().ok_or_else(|| anyhow::anyhow!("HOME is not set"))?;
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let serialized = toml::to_string_pretty(self)?;
+        fs::write(&path, serialized)?;
+        Ok(path)
+    }
 }
 
-fn dirs_config_path() -> Option<std::path::PathBuf> {
-    let home = std::env::var("HOME").ok()?;
-    let path = std::path::PathBuf::from(home)
-        .join(".omega")
-        .join("config.toml");
+pub fn config_path() -> Option<PathBuf> {
+    let path = config_file_path()?;
     if path.exists() {
         Some(path)
     } else {
         None
     }
+}
+
+fn config_file_path() -> Option<PathBuf> {
+    let home = std::env::var("HOME").ok()?;
+    Some(PathBuf::from(home).join(".omega").join("config.toml"))
 }
