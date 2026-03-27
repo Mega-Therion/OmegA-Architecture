@@ -114,6 +114,11 @@ pub fn config_path() -> Option<PathBuf> {
     }
 }
 
+pub fn history_path() -> Option<PathBuf> {
+    let home = std::env::var("HOME").ok()?;
+    Some(PathBuf::from(home).join(".omega").join("chat.history"))
+}
+
 fn config_file_path() -> Option<PathBuf> {
     let home = std::env::var("HOME").ok()?;
     Some(PathBuf::from(home).join(".omega").join("config.toml"))

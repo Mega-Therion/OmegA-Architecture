@@ -1,7 +1,7 @@
 use crate::{
     cli::ConfigAction,
     client::GatewayClient,
-    config::{config_path, CliConfig},
+    config::{config_path, history_path, CliConfig},
     ui,
 };
 
@@ -35,6 +35,12 @@ fn show(cfg: &CliConfig) -> anyhow::Result<()> {
         "Resolved configuration",
         &[
             ("config_path", path),
+            (
+                "history_path",
+                history_path()
+                    .map(|p| p.display().to_string())
+                    .unwrap_or_else(|| "~/.omega/chat.history".to_string()),
+            ),
             ("gateway_url", cfg.gateway.url.clone()),
             (
                 "gateway_token",
