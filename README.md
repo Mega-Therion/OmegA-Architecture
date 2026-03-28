@@ -190,6 +190,20 @@ The Rust gateway (RC1.3) has been evaluated against the architecture's own forma
 
 > These are spec-level conformance tests — they verify that the implementation matches the formal architecture definitions, not independent external benchmarks. External benchmark evaluation is the next phase of the research program.
 
+## Proof Status
+
+The architecture maintains a formal proof surface of **10 theorems** (T-1 through T-10) backed by **36 property-based tests** using the Hypothesis framework. The release gate (`verify.sh`) runs the full invariant suite on every commit.
+
+- **Theorem Ledger:** [`specs/THEOREM_LEDGER.md`](specs/THEOREM_LEDGER.md) — formal statement, classification, and evidence status for each claim
+- **Proof Map:** [`proofs/PROOF_MAP.md`](proofs/PROOF_MAP.md) — claim-to-evidence traceability (code path, test, runtime artifact, log)
+- **Property Tests:** [`proofs/invariants.py`](proofs/invariants.py) — executable invariants for T-1 through T-7, T-9, T-10
+
+**Conditional claims:**
+- T-8 (Provider Non-Collapse) is conditional on live multi-provider access. Automated single-provider test exists.
+- T-10 includes a structural gap: monotonic envelope versioning is specified but not yet enforced in code.
+
+> If a claim is not proven, it is marked conditional or not claimed. See [`publication/CLAIM_LEDGER.md`](publication/CLAIM_LEDGER.md) for the full four-column classification.
+
 ---
 
 ## Papers in This Series
