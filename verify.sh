@@ -96,6 +96,10 @@ else
     echo "!! Warning: Knowledge Graph not found."
 fi
 
+# 2b. Master eval + spec audit + identity/memory regressions
+echo ">> Running OmegA master evaluation..."
+python3 "$ROOT_DIR/omegactl.py" eval
+
 # 3. Polyglot runtime validation
 echo ">> Running polyglot runtime validation..."
 if is_memory_only_change_set; then

@@ -50,11 +50,14 @@ The build sequence:
 | Formal specification of all four layers | `papers/OmegA_Unified_Architecture_Paper.md`, per-layer papers | Published, DOI-archived |
 | 59-assertion conformance suite | `evals/test_conformance.py`, `evals/conformance_report.json` | 59/59 PASS |
 | Spec annotation cross-validation | `tools/spec_auditor.py` | 20 specs, no broken references |
+| Master evaluation suite | `python3 omegactl.py eval` | PASS |
 | Phylactery: SHA-256 chained identity log | `omega/phylactery.py` | Implemented, tested |
+| Cross-session identity persistence | `evals/test_cross_session_identity.py` | PASS |
 | Run Envelope compilation | `omega/envelope.py` | Implemented |
 | Risk gate with 3-gate composition | `omega/risk_gate.py` | Implemented |
 | Drift penalty J and verifier score V | `omega/drift.py` | Implemented |
 | Sparse graph memory with edge hardening | `omega/memory.py` | Implemented |
+| Memory utility growth under repeated retrieval | `evals/test_memory_utility_growth.py` | PASS |
 | Full agent wiring through Ollama | `omega/agent.py` | Implemented |
 | AEGIS identity enforcement | `evals/test_aegis_identity.py` | 1/1 PASS |
 | Live Ollama integration | `evals/test_live_ollama.py` | 14/15 PASS |

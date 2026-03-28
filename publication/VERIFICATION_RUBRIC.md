@@ -24,7 +24,7 @@ Run `publication/ALYE_ONBOARDING.md` first to set up your environment.
 | Does the Python reference implementation exist? | `omega/` directory | `agent.py`, `phylactery.py`, `drift.py`, `memory.py`, `risk_gate.py`, `envelope.py` all present | Any core module missing |
 | Does the Phylactery chain SHA-256 correctly? | `omega/phylactery.py` | `Φ_{t+1} = H(Φ_t ∥ δ ∥ R)` implemented; hash is deterministic and tamper-detectable | No hash chaining in implementation |
 | Does the risk gate compose three gates sequentially? | `omega/risk_gate.py` | All three gates (V, ρ, R) evaluated in order; any gate failure short-circuits | Gates not chained or any gate missing |
-| Does the conformance suite pass? | `python3 omegactl.py eval` | `59/59 PASS`, exit 0 | Any assertion fails or count is wrong |
+| Does the master evaluation suite pass? | `python3 omegactl.py eval` | `OMEGA_SPEC_AUDITOR: PASS`, `AEGIS_IDENTITY_ENFORCEMENT: PASS`, `OMEGA_CONFORMANCE_SUITE: PASS`, `OMEGA_CROSS_SESSION_IDENTITY: PASS`, `OMEGA_MEMORY_UTILITY_GROWTH: PASS` | Any listed harness fails or is missing |
 
 ---
 
@@ -34,6 +34,8 @@ Run `publication/ALYE_ONBOARDING.md` first to set up your environment.
 |---|---|---|---|
 | Do the spec annotations cross-validate? | `python3 tools/spec_auditor.py` | 20 `@OMEGA_SPEC` annotations found, no broken references | Fewer than 20 found, or broken references reported |
 | Does AEGIS enforce identity without a kernel? | `python3 evals/test_aegis_identity.py` | `1/1 PASS` | `0/1` or error |
+| Does identity survive context flush across agent instances? | `python3 evals/test_cross_session_identity.py` | `PASS` | Any assertion fails |
+| Does memory utility increase on successful retrieval paths? | `python3 evals/test_memory_utility_growth.py` | `PASS` | Any assertion fails |
 | Does the live Ollama integration produce 14/15? | `python3 evals/test_live_ollama.py --model llama3.2:3b` | `14/15 PASS`; the one failure is the small-model doctrine reversion | More than 1 failure, or any failure other than the doctrine reversion |
 | Does the full release gate pass? | `bash verify.sh` | `Verification Complete: PASS`, exit 0 | Any step fails before the final line |
 
@@ -62,7 +64,7 @@ Run `publication/ALYE_ONBOARDING.md` first to set up your environment.
 
 ## Scoring Guidance for Alye
 
-- **Full pass:** All rubric rows in "Core Architecture" and "Implementation Claims" pass, plus conformance 59/59 and AEGIS 1/1.
+- **Full pass:** All rubric rows in "Core Architecture" and "Implementation Claims" pass, plus the master evaluation suite, AEGIS 1/1, cross-session identity, and memory utility growth.
 - **Partial pass:** Known failures in "Live Deployment" rows are acceptable if they match the documented failure modes (E12 4/15, E13 all-fail from local, E14 route instability).
 - **Regression:** Any failure in "Core Architecture", "Implementation Claims", or "Test Coverage" rows that is not already documented in the eval index is a regression.
 - **Misreading:** Judging OmegA against "Behavioral / Identity Claims" columns that are explicitly in the "Not Claimed" category of `CLAIM_LEDGER.md` is a misreading of the system's scope.

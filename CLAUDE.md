@@ -74,6 +74,7 @@ All normal work starts in this repo. Priority tasks:
 - Use `scripts/catalog_sync.py --write` to regenerate `catalog/registry.json` from the repo tree before creating a new top-level folder.
 - Update the catalog and `scripts/catalog_guard.py` whenever a new structural folder is added.
 - Use `python3 scripts/memory_gate.py` when you only need the memory-store regression gate.
+- Use `python3 omegactl.py eval` as the canonical blind verification master eval.
 - Editing and improving papers (publication quality: precise, formal, cross-referenced)
 - Maintaining cross-references between papers and the knowledge graph
 - Updating `CITATION.cff` and `README.md` for accuracy

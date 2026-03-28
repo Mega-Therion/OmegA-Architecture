@@ -279,7 +279,7 @@ Each paper defines a rigorous evaluation protocol and ablation suite. The evalua
 ### Running the Eval Suite
 
 ```bash
-# Full conformance suite (59 assertions, no external dependencies)
+# Master blind verification suite
 python3 omegactl.py eval
 
 # Live integration tests (requires Ollama running locally)
@@ -291,8 +291,11 @@ python3 tools/spec_auditor.py
 
 | Suite | Assertions | What It Tests |
 |-------|-----------|---------------|
+| Master Eval | PASS | Spec auditor, AEGIS identity, conformance, cross-session identity, memory utility growth |
 | Conformance | 59/59 pass | Formal properties from all 5 papers as executable assertions |
 | AEGIS Identity | 1/1 pass | Identity enforcement without identity kernel |
+| Cross-session Identity | PASS | Phylactery persistence across agent instances |
+| Memory Utility Growth | PASS | Retrieval hardening across repeated successful paths |
 | Live Ollama | 14/15 pass | Real LLM through simulated AEGIS → AEON → ADCCL stack |
 | Spec Auditor | 20 specs | Cross-paper `@OMEGA_SPEC` annotation coverage |
 
@@ -327,7 +330,7 @@ OmegA is designed to **fail closed**, never silently:
 
 ## Claim Scope
 
-This series presents OmegA as a **conceptual architecture and research program**. A 60-assertion conformance suite validates the formal mathematical properties, and a live integration test against local Ollama models demonstrates the architecture's constraints under real LLM output. The architecture should be described as **formally specified, internally consistent, and empirically testable** — with initial conformance and integration results reported, but full independent benchmark evaluation remaining as future work.
+This series presents OmegA as a **conceptual architecture and research program**. The master evaluation suite now covers spec auditing, conformance, identity persistence, and memory growth, while live integration tests demonstrate the architecture's constraints under real LLM output. The architecture should be described as **formally specified, internally consistent, and empirically testable** — with blind external verification now available via the Alye protocol, while full independent benchmark evaluation remains future work.
 
 ---
 

@@ -36,23 +36,20 @@ git clone https://github.com/Mega-Therion/OmegA-Architecture.git
 cd OmegA-Architecture
 ```
 
-### Step 1 — Run the conformance suite (no external dependencies)
+### Step 1 — Run the master evaluation suite (no external dependencies)
 
 ```bash
 python3 omegactl.py eval
 ```
 
-Expected: 59/59 assertions PASS. No network required.
+Expected:
+- `OMEGA_SPEC_AUDITOR: PASS`
+- `AEGIS_IDENTITY_ENFORCEMENT: PASS`
+- `OMEGA_CONFORMANCE_SUITE: PASS`
+- `OMEGA_CROSS_SESSION_IDENTITY: PASS`
+- `OMEGA_MEMORY_UTILITY_GROWTH: PASS`
 
-### Step 2 — Run the spec auditor
-
-```bash
-python3 tools/spec_auditor.py
-```
-
-Expected: 20 `@OMEGA_SPEC` annotations found and cross-validated across all papers.
-
-### Step 3 — Run the knowledge graph integrity check
+### Step 2 — Run the knowledge graph integrity check
 
 ```bash
 python3 omega_kg_explorer.py --list-nodes > /dev/null && echo "KG OK"
@@ -60,7 +57,7 @@ python3 omega_kg_explorer.py --list-nodes > /dev/null && echo "KG OK"
 
 Expected: exits 0, no errors.
 
-### Step 4 — AEGIS identity invariant test
+### Step 3 — AEGIS identity invariant test
 
 ```bash
 python3 evals/test_aegis_identity.py
@@ -68,7 +65,7 @@ python3 evals/test_aegis_identity.py
 
 Expected: 1/1 PASS — AEGIS enforces identity without an identity kernel loaded.
 
-### Step 5 — Live integration tests (requires Ollama)
+### Step 4 — Live integration tests (requires Ollama)
 
 ```bash
 python3 evals/test_live_ollama.py --model llama3.2:3b
@@ -76,7 +73,7 @@ python3 evals/test_live_ollama.py --model llama3.2:3b
 
 Expected: 14/15 pass. The one known failure (small model reverts to generic self-description under doctrine query) is documented as a validated empirical finding, not a regression.
 
-### Step 6 — Run the full release gate
+### Step 5 — Run the full release gate
 
 ```bash
 bash verify.sh
@@ -90,10 +87,12 @@ Expected: "Verification Complete: PASS". Requires `rg` (ripgrep) and Python 3.12
 
 | Test | Pass condition |
 |---|---|
-| Conformance suite | `59/59 PASS` printed, exit 0 |
+| Master evaluation suite | Five PASS lines printed, exit 0 |
 | Spec auditor | 20 specs found, no broken cross-references |
 | Knowledge graph | No JSON parse errors, all nodes listed |
 | AEGIS identity | `1/1 PASS` |
+| Cross-session identity | `PASS` |
+| Memory utility growth | `PASS` |
 | Live Ollama | `14/15 PASS` (the 15th failure is a documented finding) |
 | verify.sh | `Verification Complete: PASS` |
 
@@ -120,6 +119,9 @@ Any deviation from these counts should be treated as a regression and reported.
 | Per-layer formal papers | `papers/AEGIS_Final_Paper.md`, `AEON_Final_Paper.md`, `ADCCL_Final_Paper.md`, `MYELIN_Final_Paper.md` |
 | Conformance test source | `evals/test_conformance.py` |
 | Conformance report (JSON) | `evals/conformance_report.json` |
+| Master evaluation report (JSON) | `evals/final_evaluation_report.json` |
+| Cross-session identity regression | `evals/test_cross_session_identity.py` |
+| Memory utility growth regression | `evals/test_memory_utility_growth.py` |
 | Live integration report | `evals/live_integration_report.json` |
 | Live pressure eval (E12) | `evals/live_deployment_pressure_report.json` |
 | Provider isolation eval (E13) | `evals/provider_isolation_report.json` |

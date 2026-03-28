@@ -39,6 +39,14 @@ This document provides a categorized index of the evaluation evidence files for 
 | `runtime/eval/results/rc1_e14_route_isolation_2026-03-27.md` | Live Route Probe | Deployed route-level isolation pass across chat, research, synthesize, and refine; chat collapsed first, research failed with mixed upstream provider/auth issues, and synthesize/refine failed with gateway-missing or Gemini exhaustion responses. |
 | `evals/live_route_isolation_report.json` | Structured Summary | Machine-readable result bundle for the deployed route isolation run, including per-route HTTP status, provider traces, and the first collapsing route. |
 
+### Blind verification artifacts
+| Path | Type | Importance |
+| :--- | :--- | :--- |
+| `tools/master_eval.py` | Master Eval Harness | Canonical blind verification harness that runs the scoped spec auditor, conformance, AEGIS identity, cross-session identity, and memory utility growth tests. |
+| `evals/final_evaluation_report.json` | Structured Summary | Machine-readable master eval result bundle showing spec auditor, AEGIS identity, conformance, cross-session identity, and memory utility growth all passing. |
+| `evals/test_cross_session_identity.py` | Regression Test | Verifies Phylactery persistence across agent instances and confirms HEAD continuity. |
+| `evals/test_memory_utility_growth.py` | Regression Test | Verifies repeated successful retrievals harden hot memory paths and decay cold ones. |
+
 ## 3. Discourse & Deep Assessment Records
 | Path | Type | Importance |
 | :--- | :--- | :--- |

@@ -42,6 +42,9 @@ Evidence paths are relative to the repo root.
 | AEGIS enforces identity even without identity kernel | Proven | `evals/test_aegis_identity.py` — 1/1 PASS |
 | 59/59 conformance assertions pass | Proven | `evals/conformance_report.json`; `evals/test_conformance.py` |
 | Spec auditor validates 20 @OMEGA_SPEC annotations | Proven | `tools/spec_auditor.py` |
+| Master evaluation suite passes with spec, identity, conformance, cross-session, and memory growth coverage | Proven | `tools/master_eval.py`; `evals/final_evaluation_report.json` |
+| Identity survives context flush when Phylactery is loaded | Proven | `evals/test_cross_session_identity.py`; `omega/phylactery.py`; `omega/agent.py` |
+| Memory retrieval improves with use (hardening) | Proven | `evals/test_memory_utility_growth.py`; `omega/memory.py` |
 | 14/15 live Ollama integration tests pass | Proven | `evals/test_live_ollama.py`; `evals/live_integration_report.json` |
 | Spec-level evals E3, E4, E9, E10, E11 pass (15/15) | Proven | `evals/OMEGA_EVAL_EVIDENCE_INDEX.md` — specific JSONL files listed |
 
@@ -52,8 +55,6 @@ Evidence paths are relative to the repo root.
 | Claim | Status | Evidence / Condition |
 |---|---|---|
 | OmegA corrects "Mega" nickname gracefully without identity collapse | Demonstrable | `publication/ALYE_EXPLAINER_SUMMARY_2026-03-12.md` §What did OmegA do when called Mega |
-| Identity survives context flush when Phylactery is loaded | Demonstrable | Architecture spec; conformance assertions cover Phylactery chaining, but no automated cross-session test exists |
-| Memory retrieval improves with use (hardening) | Demonstrable | `omega/memory.py` edge hardening equations; no longitudinal automated test yet |
 | Governance is model-agnostic (runs on any Ollama model) | Conditional | Conditional on Ollama running locally with a compatible model |
 | 4-layer stack degrades gracefully (fail-closed) | Demonstrable | Failure mode table in README; `evals/failure_injection.py` exists but results not summarized in a structured report |
 

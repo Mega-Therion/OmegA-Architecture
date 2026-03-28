@@ -17,6 +17,7 @@ import time
 import hashlib
 import urllib.request
 import urllib.error
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -55,8 +56,17 @@ class OmegaAgent:
     DEFAULT_DOCTRINE = "I am what I am, and I will be what I will be."
     OLLAMA_URL = "http://localhost:11434"
 
-    def __init__(self, name: str = "OmegA", doctrine: str | None = None):
-        self.phylactery = Phylactery(doctrine or self.DEFAULT_DOCTRINE)
+    def __init__(
+        self,
+        name: str = "OmegA",
+        doctrine: str | None = None,
+        phylactery_path: str | None = None,
+    ):
+        self.phylactery_path = Path(phylactery_path) if phylactery_path else None
+        if self.phylactery_path and self.phylactery_path.exists():
+            self.phylactery = Phylactery.load(self.phylactery_path)
+        else:
+            self.phylactery = Phylactery(doctrine or self.DEFAULT_DOCTRINE)
         self.risk_gate = RiskGate()
         self.memory = MemoryGraph()
         self.self_tags: list[SelfTag] = []
@@ -126,6 +136,7 @@ class OmegaAgent:
         # 6. MYELIN: Store interaction in memory
         node_id = tso_hash[:12]
         self.memory.add_node(node_id, task, stratum=Stratum.EPISODIC)
+        self.persist_identity()
 
         elapsed = (time.time() - start) * 1000
 
@@ -158,9 +169,14 @@ class OmegaAgent:
         try:
             with urllib.request.urlopen(req, timeout=120) as resp:
                 data = json.loads(resp.read().decode())
-                return data.get("response", "[No response from model]")
+            return data.get("response", "[No response from model]")
         except (urllib.error.URLError, TimeoutError, OSError) as e:
             return f"[MODEL ERROR] {e}"
+
+    def persist_identity(self) -> None:
+        """Persist the phylactery chain when a storage path is configured."""
+        if self.phylactery_path:
+            self.phylactery.save(self.phylactery_path)
 
     @property
     def state_vector(self) -> dict:
