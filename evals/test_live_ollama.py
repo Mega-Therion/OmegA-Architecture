@@ -90,6 +90,7 @@ class RunEnvelope:
     def __init__(self, identity: IdentityKernel, goal: str):
         self.identity_kernel = identity
         self.goal_contract = goal
+        self.version = 1
         self.governance_policy = "STANDARD"
         self.tool_manifest = []
         self.audit_log = []
@@ -98,6 +99,7 @@ class RunEnvelope:
         return all([
             self.identity_kernel,
             self.goal_contract,
+            self.version is not None and self.version > 0,
             self.governance_policy is not None,
         ])
 

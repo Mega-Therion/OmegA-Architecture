@@ -50,6 +50,7 @@ For blind testers and outside reviewers:
 - `publication/PRIVATE_REVIEW_BUNDLE.md` — broader reviewer-gated bundle
 - `scripts/catalog_sync.py` — regenerate or validate the registry from the repo tree
 - `scripts/memory_gate.py` — fast memory-only gate for retrieval and store regressions
+- `tools/proof_auditor.py` — executable drift check for theorem / claim / proof correspondence
 - `verify.sh` — canonical release gate; auto-switches to `scripts/memory_gate.py` for memory-only diffs
 - `papers/OmegA_Unified_Architecture_Paper.md` — the master unified paper
 - `papers/MYELIN_Final_Paper.md`, `ADCCL_Final_Paper.md`, `AEON_Final_Paper.md`, `AEGIS_Final_Paper.md` — per-layer papers

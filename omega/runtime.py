@@ -17,7 +17,7 @@ from enum import Enum
 from typing import Any
 
 from omega.phylactery import Phylactery
-from omega.envelope import RunEnvelope, ActionGate, ActionClass
+from omega.envelope import RunEnvelope, ActionGate, ActionClass, EnvelopeClock
 from omega.risk_gate import RiskGate
 from omega.drift import DriftController, GoalContract, VerifierMiddleware
 from omega.memory import MemoryGraph, Stratum, WritePolicy
@@ -84,6 +84,7 @@ class RunTrace:
     answer_mode: str = ""
     gate_allowed: bool = True
     error: str = ""
+    envelope_version: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -101,6 +102,7 @@ class RunTrace:
             "answer_mode": self.answer_mode,
             "gate_allowed": self.gate_allowed,
             "error": self.error,
+            "envelope_version": self.envelope_version,
         }
 
 
@@ -155,6 +157,7 @@ class RuntimeOrchestrator:
         self.answer_builder = AnswerBuilder()
         self.capabilities = CapabilityRegistry()
         self.router = ProviderRouter()
+        self.envelope_clock = EnvelopeClock()
 
         # Register default capabilities
         for cap in default_capabilities():
@@ -232,7 +235,12 @@ class RuntimeOrchestrator:
         # ── Stage 3: Plan ─────────────────────────────────────────────
         stage = self._begin_stage(RuntimeStage.PLAN)
         goal = GoalContract(task=task)
-        envelope = RunEnvelope(identity_kernel=self.identity_kernel, goal_contract=task)
+        envelope = RunEnvelope(
+            identity_kernel=self.identity_kernel,
+            goal_contract=task,
+            version=self.envelope_clock.next(),
+        )
+        trace.envelope_version = envelope.version
         system_prompt = envelope.to_system_prompt()
         if chunks:
             context_text = "\n\n".join(c.context for c in chunks[:3])

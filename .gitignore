@@ -6,3 +6,4 @@ mcp/node_modules/
 mcp/dist/
 .vercel
 runtime/crates/omega-memory/.fastembed_cache/
+.hypothesis/

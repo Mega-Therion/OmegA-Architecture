@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from omega.phylactery import Phylactery
-from omega.envelope import RunEnvelope
+from omega.envelope import RunEnvelope, EnvelopeClock
 from omega.risk_gate import RiskGate
 from omega.drift import DriftController, GoalContract, ClaimBudget, SupportStatus
 from omega.memory import MemoryGraph, Stratum
@@ -48,6 +48,7 @@ class RunResult:
     risk_allowed: bool
     model: str
     elapsed_ms: float
+    envelope_version: int = 0
 
 
 class OmegaAgent:
@@ -70,6 +71,7 @@ class OmegaAgent:
         self.risk_gate = RiskGate()
         self.memory = MemoryGraph()
         self.self_tags: list[SelfTag] = []
+        self.envelope_clock = EnvelopeClock()
         self.name = name
 
         self.identity_kernel = {
@@ -96,6 +98,7 @@ class OmegaAgent:
         envelope = RunEnvelope(
             identity_kernel=self.identity_kernel,
             goal_contract=task,
+            version=self.envelope_clock.next(),
         )
 
         # 2. AEGIS: Risk Gate
@@ -111,6 +114,7 @@ class OmegaAgent:
                 verification={"V": 0.0, "passed": False, "outcome": "rejected"},
                 self_tag=tag,
                 envelope_complete=envelope.is_complete(),
+                envelope_version=envelope.version,
                 risk_score=R,
                 risk_allowed=False,
                 model=model,
@@ -145,6 +149,7 @@ class OmegaAgent:
             verification=verification,
             self_tag=tag,
             envelope_complete=envelope.is_complete(),
+            envelope_version=envelope.version,
             risk_score=R,
             risk_allowed=True,
             model=model,

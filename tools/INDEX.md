@@ -19,4 +19,4 @@ Reusable internal utilities for cartography, evals, repair, and orchestration.
 - `catalog/INDEX.md`
 - `tools/repo_cartographer.py`
 - `tools/master_eval.py`
-
+- `tools/proof_auditor.py`

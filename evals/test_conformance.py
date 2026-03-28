@@ -70,15 +70,19 @@ for case in test_cases_risk:
 
 # --- 1.2 Run Envelope completeness ---
 REQUIRED_ENVELOPE_FIELDS = [
-    "identity_kernel", "goal_contract", "governance_policy",
+    "identity_kernel", "goal_contract", "version", "governance_policy",
     "memory_snapshot", "tool_manifest", "audit_config"
 ]
 
 valid_envelope = {f: "present" for f in REQUIRED_ENVELOPE_FIELDS}
+valid_envelope["version"] = 1
 check("AEGIS_ENVELOPE_COMPLETE",
-      all(f in valid_envelope and valid_envelope[f] for f in REQUIRED_ENVELOPE_FIELDS))
+      all(f in valid_envelope and valid_envelope[f] for f in REQUIRED_ENVELOPE_FIELDS)
+      and isinstance(valid_envelope["version"], int)
+      and valid_envelope["version"] > 0)
 
 missing_envelope = {f: "present" for f in REQUIRED_ENVELOPE_FIELDS if f != "identity_kernel"}
+missing_envelope["version"] = 1
 check("AEGIS_ENVELOPE_REJECT_MISSING_IDENTITY",
       "identity_kernel" not in missing_envelope or not missing_envelope.get("identity_kernel"))
 
