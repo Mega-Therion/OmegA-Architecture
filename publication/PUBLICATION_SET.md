@@ -13,7 +13,14 @@ It separates the release-ready set, supporting technical papers, private addenda
 - `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
 - `publication/REDACTION_REPORT_2026-03-12.md`
 
-## 1. Canonical Release Set
+## 1. Publication Tracks
+
+- `publication/PUBLIC_RELEASE_BUNDLE.md`
+  - Public-facing bundle for release-safe material.
+- `publication/PRIVATE_REVIEW_BUNDLE.md`
+  - Reviewer-gated bundle for the broader corpus.
+
+## 2. Canonical Release Set
 
 These are the primary artifacts that define the public or near-public publication package.
 
@@ -34,7 +41,7 @@ These are the primary artifacts that define the public or near-public publicatio
 - `papers/Sovereignty_Score.md`
   - Scoring and framing document for sovereign-system evaluation.
 
-## 2. Supporting Technical Papers
+## 3. Supporting Technical Papers
 
 These are important for reviewers, but they are best read as supporting material around the canonical release set rather than as the main release package.
 
@@ -45,13 +52,13 @@ These are important for reviewers, but they are best read as supporting material
 - `papers/hsca_paper_draft.md`
 - `papers/The_Yettragrammaton.md`
 
-## 3. Private Addenda
+## 4. Private Addenda
 
 These files should remain private or reviewer-gated unless the release policy explicitly changes.
 
 - `papers/Yettragrammaton_Private_Addendum.md`
 
-## 4. Publication Support and Appendix Material
+## 5. Publication Support and Appendix Material
 
 These artifacts support reproducibility, review, and redaction.
 
@@ -62,7 +69,7 @@ These artifacts support reproducibility, review, and redaction.
 - `publication/ALYE_EXPLAINER_SUMMARY_2026-03-12.md`
   - Plain-English explainer for non-specialist review.
 
-## 5. Recommended Release Order
+## 6. Recommended Release Order
 
 Use this order when preparing a publication packet or reviewer bundle.
 
@@ -78,11 +85,10 @@ Use this order when preparing a publication packet or reviewer bundle.
 10. `papers/MYELIN_Final_Paper.md`
 11. Supporting technical papers and private addenda as required by the audience
 
-## 6. Release Rules
+## 7. Release Rules
 
 - Keep the canonical release set in `publication/` and the technical paper corpus in `papers/`.
 - Do not duplicate the same artifact into multiple publication homes.
 - Keep private addenda out of public bundles unless explicitly approved.
 - Redact secrets, credentials, and unnecessary local paths before export.
 - Treat the publication set as a living index: update this file when a paper graduates into or out of the canonical release set.
-
