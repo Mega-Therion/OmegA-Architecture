@@ -1,36 +1,36 @@
 {
   "suite": "OmegA Deployed Route Isolation",
-  "base_url": "https://omega-sovereign-fmrdsyutd-megas-projects-1fcf4ba6.vercel.app",
-  "timestamp_utc": "2026-03-28T00:10:38+00:00",
+  "base_url": "https://omega-sovereign-ndhovymj9-megas-projects-1fcf4ba6.vercel.app",
+  "timestamp_utc": "2026-03-28T00:17:10+00:00",
   "total": 4,
   "usable": 4,
   "collapsed": 0,
-  "mean_latency_ms": 13652.0,
+  "mean_latency_ms": 3950.5,
   "first_collapse_route": null,
   "routes": {
     "chat": {
       "usable": true,
       "provider": "vercel-gateway",
       "status": 200,
-      "latency_ms": 43537.7
+      "latency_ms": 10168.8
     },
     "research": {
       "usable": true,
       "provider": "vercel-gateway",
       "status": 200,
-      "latency_ms": 2988.2
+      "latency_ms": 1123.6
     },
     "synthesize": {
       "usable": true,
       "provider": "vercel-gateway",
       "status": 200,
-      "latency_ms": 3884.9
+      "latency_ms": 3381.2
     },
     "refine": {
       "usable": true,
       "provider": "vercel-gateway",
       "status": 200,
-      "latency_ms": 4197.4
+      "latency_ms": 1128.4
     }
   },
   "results": [
@@ -40,7 +40,7 @@
       "ok": true,
       "usable": true,
       "provider": "vercel-gateway",
-      "latency_ms": 43537.7,
+      "latency_ms": 10168.8,
       "status": 200,
       "response": "OK",
       "response_excerpt": "OK",
@@ -57,9 +57,9 @@
       "ok": true,
       "usable": true,
       "provider": "vercel-gateway",
-      "latency_ms": 2988.2,
+      "latency_ms": 1123.6,
       "status": 200,
-      "response": "{\"runId\":\"run_mn9kqigh\",\"answer\":\"Insufficient source evidence to answer confidently. Please provide relevant documents.\",\"mode\":\"abstained\",\"confidence\":0,\"provider\":\"vercel-gateway\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}],\"citations\":[],\"unresolved\":[\"Additional source documents may be needed for higher confidence.\"],\"verified\":true,\"riskScore\":0.1,\"stageTrace\":[{\"stage\":\"risk_gate\",\"status\":\"pass\",\"details\":{\"score\":0.1,\"allowed\":true},\"elapsedMs\":1},{\"stage\":\"retrieve\",\"status\":\"done\",\"details\":{\"chunks\":0,\"groundingRatio\":0},\"elapsedMs\":1},{\"stage\":\"generate\",\"status\":\"done\",\"details\":{\"provider\":\"vercel-gateway\",\"chars\":2,\"attempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}]},\"elapsedMs\":2324},{\"stage\":\"verify\",\"status\":\"pass\",\"details\":{\"V\":0.75,\"outcome\":\"verified\"},\"elapsedMs\":2324},{\"stage\":\"answer_build\",\"status\":\"done\",\"details\":{\"mode\":\"abstained\",\"confidence\":0,\"citationCount\":0},\"elapsedMs\":2324},{\"stage\":\"action_gate\",\"status\":\"approved\",\"details\":{\"approved\":true,\"pending\":false},\"elapsedMs\":2324}],\"providerHealth\":{\"gateway\":{\"configured\":true,\"available\":true,\"reason\":null,\"url\":\"https://ai-gateway.vercel.sh/v1\",\"authSource\":\"VERCEL_AI_GATEWAY_KEY\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\",\"openai-direct\"]}}",
+      "response": "{\"runId\":\"run_mn9kz1aj\",\"answer\":\"Insufficient source evidence to answer confidently. Please provide relevant documents.\",\"mode\":\"abstained\",\"confidence\":0,\"provider\":\"vercel-gateway\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}],\"citations\":[],\"unresolved\":[\"Additional source documents may be needed for higher confidence.\"],\"verified\":true,\"riskScore\":0.1,\"stageTrace\":[{\"stage\":\"risk_gate\",\"status\":\"pass\",\"details\":{\"score\":0.1,\"allowed\":true},\"elapsedMs\":1},{\"stage\":\"retrieve\",\"status\":\"done\",\"details\":{\"chunks\":0,\"groundingRatio\":0},\"elapsedMs\":1},{\"stage\":\"generate\",\"status\":\"done\",\"details\":{\"provider\":\"vercel-gateway\",\"chars\":2,\"attempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}]},\"elapsedMs\":439},{\"stage\":\"verify\",\"status\":\"pass\",\"details\":{\"V\":0.75,\"outcome\":\"verified\"},\"elapsedMs\":439},{\"stage\":\"answer_build\",\"status\":\"done\",\"details\":{\"mode\":\"abstained\",\"confidence\":0,\"citationCount\":0},\"elapsedMs\":439},{\"stage\":\"action_gate\",\"status\":\"approved\",\"details\":{\"approved\":true,\"pending\":false},\"elapsedMs\":440}],\"providerHealth\":{\"gateway\":{\"configured\":true,\"available\":true,\"reason\":null,\"url\":\"https://ai-gateway.vercel.sh/v1\",\"authSource\":\"VERCEL_AI_GATEWAY_KEY\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\",\"openai-direct\"]}}",
       "response_excerpt": "Insufficient source evidence to answer confidently. Please provide relevant documents.",
       "details": {
         "provider_header": "unknown",
@@ -82,10 +82,10 @@
       "ok": true,
       "usable": true,
       "provider": "vercel-gateway",
-      "latency_ms": 3884.9,
+      "latency_ms": 3381.2,
       "status": 200,
-      "response": "{\"directive\":\"The conversation subtly pivots toward troubleshooting underlying systems rather than summarizing surface-level content.\",\"intensity\":65,\"focus\":\"Problem-solving\",\"expansion\":\"There’s an implicit shift from mere summarization to dissecting operational mechanics, hinting at a deeper curiosity or concern about functionality. This suggests the user may be probing for flaws or seeking control over outcomes. Expect follow-up questions to drill into technical specifics.\",\"provider\":\"vercel-gateway\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}],\"providerHealth\":{\"gateway\":{\"configured\":true,\"available\":true,\"reason\":null,\"url\":\"https://ai-gateway.vercel.sh/v1\",\"authSource\":\"VERCEL_AI_GATEWAY_KEY\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\",\"openai-direct\"]}}",
-      "response_excerpt": "The conversation subtly pivots toward troubleshooting underlying systems rather than summarizing surface-level content.",
+      "response": "{\"directive\":\"The conversation reveals a shared intent to distill complexity into actionable clarity.\",\"intensity\":70,\"focus\":\"Simplification\",\"expansion\":\"Beneath the surface, there’s a mutual drive to cut through noise and pinpoint core mechanics like routing and fallback. This suggests a trajectory toward problem-solving over abstraction. Expect future exchanges to prioritize precision and implementation details.\",\"provider\":\"vercel-gateway\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}],\"providerHealth\":{\"gateway\":{\"configured\":true,\"available\":true,\"reason\":null,\"url\":\"https://ai-gateway.vercel.sh/v1\",\"authSource\":\"VERCEL_AI_GATEWAY_KEY\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\",\"openai-direct\"]}}",
+      "response_excerpt": "The conversation reveals a shared intent to distill complexity into actionable clarity.",
       "details": {
         "provider_header": "unknown",
         "provider": "vercel-gateway",
@@ -104,10 +104,10 @@
       "ok": true,
       "usable": true,
       "provider": "vercel-gateway",
-      "latency_ms": 4197.4,
+      "latency_ms": 1128.4,
       "status": 200,
-      "response": "{\"refined\":\"Refine this to be more specific and clear.\",\"provider\":\"vercel-gateway\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}],\"providerHealth\":{\"gateway\":{\"configured\":true,\"available\":true,\"reason\":null,\"url\":\"https://ai-gateway.vercel.sh/v1\",\"authSource\":\"VERCEL_AI_GATEWAY_KEY\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\",\"openai-direct\"]}}",
-      "response_excerpt": "Refine this to be more specific and clear.",
+      "response": "{\"refined\":\"Refine this text to be more specific and clear.\",\"provider\":\"vercel-gateway\",\"providerAttempts\":[{\"name\":\"vercel-gateway\",\"status\":\"selected\"}],\"providerHealth\":{\"gateway\":{\"configured\":true,\"available\":true,\"reason\":null,\"url\":\"https://ai-gateway.vercel.sh/v1\",\"authSource\":\"VERCEL_AI_GATEWAY_KEY\"},\"openai\":{\"configured\":true,\"available\":true,\"reason\":null},\"xai\":{\"configured\":true,\"available\":true,\"reason\":null},\"gemini\":{\"configured\":true,\"available\":true,\"reason\":null,\"keysConfigured\":1},\"preferredOrder\":[\"vercel-gateway\",\"xai-direct\",\"gemini-flash\",\"openai-direct\"]}}",
+      "response_excerpt": "Refine this text to be more specific and clear.",
       "details": {
         "provider_header": "unknown",
         "provider": "vercel-gateway",
