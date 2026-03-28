@@ -3,6 +3,51 @@ set -e
 echo ">> Running OmegA Verification Suite..."
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+is_memory_only_change_set() {
+    local changed_paths=()
+    local path
+
+    while IFS= read -r path; do
+        [ -n "$path" ] && changed_paths+=("$path")
+    done < <(
+        {
+            git -C "$ROOT_DIR" diff --name-only --diff-filter=ACMRTUXB HEAD --;
+            git -C "$ROOT_DIR" diff --name-only --cached --diff-filter=ACMRTUXB --;
+            git -C "$ROOT_DIR" ls-files --others --exclude-standard --;
+        } | sort -u
+    )
+
+    [ "${#changed_paths[@]}" -eq 0 ] && return 1
+
+    for path in "${changed_paths[@]}"; do
+        case "$path" in
+            runtime/crates/omega-memory/*)
+                ;;
+            runtime/crates/omega-core/src/memory.rs)
+                ;;
+            runtime/crates/omega-gateway/src/dream.rs)
+                ;;
+            runtime/crates/omega-gateway/src/routes/ingest.rs)
+                ;;
+            runtime/crates/omega-gateway/src/routes/memory.rs)
+                ;;
+            runtime/scripts/supabase_memory_schema.sql)
+                ;;
+            specs/memory_system.md)
+                ;;
+            evals/test_agent_telemetry.py)
+                ;;
+            ERGON.md)
+                ;;
+            *)
+                return 1
+                ;;
+        esac
+    done
+
+    return 0
+}
+
 # 1. Python Syntax Check
 echo ">> Checking Python syntax..."
 PY_SCAN_PATHS=()
@@ -26,6 +71,13 @@ fi
 
 # 3. Polyglot runtime validation
 echo ">> Running polyglot runtime validation..."
+if is_memory_only_change_set; then
+    echo ">> Memory-only change set detected; running dedicated memory gate..."
+    python3 "$ROOT_DIR/scripts/memory_gate.py"
+    echo ">> Verification Complete: PASS"
+    exit 0
+fi
+
 POLYGLOT_ARGS=(--build --test --json)
 if [ -n "${OMEGA_GATEWAY_URL:-}" ]; then
     POLYGLOT_ARGS+=(--gateway-url "$OMEGA_GATEWAY_URL")

@@ -33,6 +33,7 @@ Each layer has a corresponding final paper in `papers/`.
 - `catalog/registry.json` — machine-readable directory registry
 - `scripts/catalog_sync.py` — regenerate or validate the registry from the repo tree
 - `scripts/memory_gate.py` — fast memory-only gate for retrieval and store regressions
+- `verify.sh` — canonical release gate; auto-switches to `scripts/memory_gate.py` for memory-only diffs
 - `papers/OmegA_Unified_Architecture_Paper.md` — the master unified paper
 - `papers/MYELIN_Final_Paper.md`, `ADCCL_Final_Paper.md`, `AEON_Final_Paper.md`, `AEGIS_Final_Paper.md` — per-layer papers
 - `papers/Canonical_Symbolic_Addendum.md` — canonical symbol table and equation reference
