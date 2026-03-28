@@ -99,24 +99,31 @@ $$L = \alpha\, J_{\text{drift}} + \beta\, L_{\text{memory}} - \gamma\, \kappa_{\
 
 This is not four separate optimization targets bolted together. It is one formal engineering target whose components are optimized by different update schedules within the architecture.
 
+The diagram should visually represent the AEGIS, AEON, ADCCL, and MYELIN layers with their respective roles.
+
+```mermaid
+graph TD
+    A[AEGIS: Model-Agnostic Governance Shell] --> B(AEON: Cognitive Operating System);
+    B --> C(ADCCL: Anti-Drift Cognitive Control Loop);
+    C --> D(MYELIN: Graph Memory);
+
+    subgraph Layer 1
+        A
+    end
+    subgraph Layer 2
+        B
+    end
+    subgraph Layer 3
+        C
+    end
+    subgraph Layer 4
+        D
+    end
+```
+
 ---
 
-## The Four Layers
-
-### 🧠 MYELIN — Path-Dependent Graph Memory
-*"What has the agent reliably experienced, and how does that experience shape what it retrieves?"*
-
-MYELIN replaces flat vector stores with a **sparse graph** whose edges carry four bundled signals: semantic similarity, co-activation count, rewarded retrieval contribution, and staleness pressure. Successful retrieval **hardens** the paths that made it possible. Memory improves with use rather than drifting or going stale.
-
-- Geometry-biased graph attention for fast System 1 retrieval
-- PUCT-guided deliberative traversal for System 2 reasoning
-- Four plasticity strata protecting identity-critical memories from episodic noise
-- Fully specified edge weight and hardening equations
-
-**Key equation (edge hardening):**
-$$q_{ij}(t+1) = (1-\lambda)\,q_{ij}(t) + \lambda\,r_t$$
-
----
+## The Core Equation
 
 ### 🔄 ADCCL — Anti-Drift Cognitive Control Loop
 *"Is what the agent is about to say true, supported, and consistent with its declared constraints?"*
