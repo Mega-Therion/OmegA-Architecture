@@ -109,3 +109,70 @@ async fn pg_search_finds_written_entry() {
 
     let _ = store.delete(&id).await;
 }
+
+#[tokio::test]
+async fn pg_search_returns_incremented_retrieval_telemetry() {
+    let Some(store) = make_store().await else {
+        return;
+    };
+
+    let namespace = format!("pg-test-{}", Uuid::new_v4());
+    let marker = format!("marker-{}", Uuid::new_v4());
+    let content = format!("pg telemetry search {marker} works");
+
+    let id = match store
+        .write(entry(&namespace, &content, 0.6))
+        .await
+        .expect("write failed")
+    {
+        MemoryWriteResult::Written(id) => id,
+        MemoryWriteResult::Contradiction { new_id, .. } => new_id,
+    };
+
+    let hits = store.search(&marker, 20).await.expect("search failed");
+    let hit = hits
+        .iter()
+        .find(|e| e.id == Some(id.clone()))
+        .expect("expected search to return inserted entry");
+
+    assert_eq!(hit.retrieval_count, 1, "search should return incremented count");
+    assert!(
+        hit.last_retrieved_at.is_some(),
+        "search should return retrieval timestamp"
+    );
+
+    let _ = store.delete(&id).await;
+}
+
+#[tokio::test]
+async fn pg_get_random_returns_incremented_retrieval_telemetry() {
+    let Some(store) = make_store().await else {
+        return;
+    };
+
+    let namespace = format!("pg-test-{}", Uuid::new_v4());
+    let content = format!("pg telemetry random {}", Uuid::new_v4());
+
+    let id = match store
+        .write(entry(&namespace, &content, 0.6))
+        .await
+        .expect("write failed")
+    {
+        MemoryWriteResult::Written(id) => id,
+        MemoryWriteResult::Contradiction { new_id, .. } => new_id,
+    };
+
+    let hits = store.get_random(1).await.expect("get_random failed");
+    let hit = hits
+        .iter()
+        .find(|e| e.id == Some(id.clone()))
+        .expect("expected get_random to return inserted entry");
+
+    assert_eq!(hit.retrieval_count, 1, "get_random should return incremented count");
+    assert!(
+        hit.last_retrieved_at.is_some(),
+        "get_random should return retrieval timestamp"
+    );
+
+    let _ = store.delete(&id).await;
+}

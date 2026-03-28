@@ -255,6 +255,58 @@ async fn search_respects_limit() {
 }
 
 // ---------------------------------------------------------------------------
+// Test 6b — search returns incremented retrieval telemetry
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn search_returns_incremented_retrieval_telemetry() {
+    let store = make_store().await;
+
+    let id = store
+        .write(entry("telemetry search marker", "agent", 0.7))
+        .await
+        .unwrap()
+        .into_id();
+
+    let hits = store.search("telemetry search marker", 1).await.unwrap();
+    assert_eq!(hits.len(), 1, "expected a single search hit");
+
+    let hit = &hits[0];
+    assert_eq!(hit.id, Some(id));
+    assert_eq!(hit.retrieval_count, 1, "search should return incremented count");
+    assert!(
+        hit.last_retrieved_at.is_some(),
+        "search should return retrieval timestamp"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Test 6c — get_random returns incremented retrieval telemetry
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn get_random_returns_incremented_retrieval_telemetry() {
+    let store = make_store().await;
+
+    let id = store
+        .write(entry("telemetry random marker", "agent", 0.7))
+        .await
+        .unwrap()
+        .into_id();
+
+    let hits = store.get_random(1).await.unwrap();
+    assert_eq!(hits.len(), 1, "expected a single random hit");
+
+    let hit = &hits[0];
+    assert_eq!(hit.id, Some(id));
+    assert_eq!(hit.retrieval_count, 1, "get_random should return incremented count");
+    assert!(
+        hit.last_retrieved_at.is_some(),
+        "get_random should return retrieval timestamp"
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Test 7 — decay task prunes low-importance entries
 // ---------------------------------------------------------------------------
 
