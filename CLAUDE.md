@@ -35,6 +35,7 @@ Each layer has a corresponding final paper in `papers/`.
 - `publication/PUBLICATION_SET.md` — canonical publication map across the corpus
 - `publication/exports/INDEX.md` — export-ready handoff artifacts
 - `scripts/render_publication_exports.py` — render the publication export tracks to PDF
+- `scripts/publication_release.sh` — one-command publication export wrapper
 - `publication/PUBLIC_RELEASE_BUNDLE.md` — redaction-safe bundle for public release
 - `publication/PRIVATE_REVIEW_BUNDLE.md` — broader reviewer-gated bundle
 - `scripts/catalog_sync.py` — regenerate or validate the registry from the repo tree

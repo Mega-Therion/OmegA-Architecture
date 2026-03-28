@@ -22,3 +22,4 @@ One-off operational and migration scripts.
 - `scripts/migrate_exports_to_neon.py`
 - `scripts/catalog_guard.py`
 - `scripts/render_publication_exports.py`
+- `scripts/publication_release.sh`
