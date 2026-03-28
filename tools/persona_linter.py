@@ -30,6 +30,7 @@ except ImportError:
 
 # ─── AEGIS Policy Gate ────────────────────────────────────────────────────────
 ALLOWED_CAPABILITIES = {'cap.audit.scan', 'cap.fs.read'}
+INVARIANTS = ["I-1", "I-2", "I-3", "E-1", "E-2", "E-4", "O-2", "O-3", "C-1"]
 
 def aegis_check(required_cap: str) -> bool:
     """Enforce AEGIS capability gate before any privileged operation."""
@@ -42,6 +43,7 @@ def aegis_check(required_cap: str) -> bool:
 TASK_STATE = {
     "task_id": f"skill.persona_linter.{int(time.time())}",
     "objective": "Checks prompts, configs, docs, and outputs against OmegA canonical identity rules — flags provider collapse, identity drift, and invariant violations",
+    "invariant_refs": INVARIANTS,
     "phase_state": "OBSERVE",
     "predicted_failure_modes": ['missing_dependency', 'permission_denied', 'output_empty'],
     "authority_shrink_level": 0.1,

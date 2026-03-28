@@ -8,7 +8,13 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tools.persona_linter import main_logic, aegis_check, emit_trace
+from tools.persona_linter import main_logic, aegis_check, emit_trace, INVARIANTS
+
+class TestInvariants:
+    def test_invariants_declared(self):
+        assert isinstance(INVARIANTS, list)
+        assert len(INVARIANTS) > 0
+        assert all(isinstance(item, str) and item.strip() for item in INVARIANTS)
 
 class TestAEGIS:
     def test_capability_gate_blocks_unknown(self):
