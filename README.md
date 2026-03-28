@@ -27,6 +27,7 @@ Use the catalog before creating or moving anything.
 - `CLAUDE.md` — agent-facing repo guidance and default work mode
 - `publication/RELEASE.md` — publication front door for choosing public vs reviewer-gated bundles
 - `publication/PUBLICATION_SET.md` — master index for the publication corpus
+- `publication/exports/INDEX.md` — export-ready handoff artifacts
 - `publication/PUBLIC_RELEASE_BUNDLE.md` — redaction-safe public release bundle
 - `publication/PRIVATE_REVIEW_BUNDLE.md` — reviewer-gated bundle with supporting material
 
@@ -194,6 +195,7 @@ Use these documents to choose the right publication track:
 
 - `publication/RELEASE.md` — start here if you need to decide which bundle to use
 - `publication/PUBLICATION_SET.md` — master map of the corpus
+- `publication/exports/INDEX.md` — export-ready handoff artifacts
 - `publication/PUBLIC_RELEASE_BUNDLE.md` — public / redaction-safe track
 - `publication/PRIVATE_REVIEW_BUNDLE.md` — trusted review / internal track
 

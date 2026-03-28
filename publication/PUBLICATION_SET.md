@@ -9,6 +9,7 @@ It separates the release-ready set, supporting technical papers, private addenda
 
 - `catalog/INDEX.md`
 - `publication/RELEASE.md`
+- `publication/exports/INDEX.md`
 - `publication/OMEGA_MASTER_SYNTHESIS.md`
 - `publication/INDEX.md`
 - `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
@@ -76,7 +77,18 @@ These artifacts support reproducibility, review, and redaction.
 - `publication/ALYE_EXPLAINER_SUMMARY_2026-03-12.md`
   - Plain-English explainer for non-specialist review.
 
-## 7. Recommended Release Order
+## 7. Export-Ready Artifacts
+
+These are the handoff-ready publication front pages. They are compact, stable, and conversion-friendly.
+
+- `publication/exports/PUBLIC_RELEASE_EXPORT.md`
+  - Public-facing export front page for the redaction-safe bundle.
+- `publication/exports/PRIVATE_REVIEW_EXPORT.md`
+  - Reviewer-facing export front page for the broader corpus.
+- `publication/exports/OMEGA_MASTER_ONE_PAGER.md`
+  - Condensed one-page synthesis of the core thesis and control loop.
+
+## 8. Recommended Release Order
 
 Use this order when preparing a publication packet or reviewer bundle.
 
@@ -93,7 +105,7 @@ Use this order when preparing a publication packet or reviewer bundle.
 11. `papers/MYELIN_Final_Paper.md`
 12. Supporting technical papers and private addenda as required by the audience
 
-## 8. Release Rules
+## 9. Release Rules
 
 - Keep the canonical release set in `publication/` and the technical paper corpus in `papers/`.
 - Do not duplicate the same artifact into multiple publication homes.

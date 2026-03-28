@@ -29,6 +29,7 @@ This is the broader reviewer-gated bundle. It is the default choice when:
 Start with:
 - `publication/PUBLICATION_SET.md`
 - `publication/OMEGA_MASTER_SYNTHESIS.md`
+- `publication/exports/INDEX.md`
 
 That file is the master map of the corpus and will point you to the right track.
 
@@ -38,3 +39,4 @@ That file is the master map of the corpus and will point you to the right track.
 - reviewer or internal audience -> `PRIVATE_REVIEW_BUNDLE.md`
 - uncertain -> `PUBLICATION_SET.md`
 - single-paper summary -> `OMEGA_MASTER_SYNTHESIS.md`
+- export-ready handoff -> `publication/exports/INDEX.md`
