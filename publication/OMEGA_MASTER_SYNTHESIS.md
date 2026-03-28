@@ -9,6 +9,10 @@ It is not a replacement for the layer papers. It is the umbrella that shows how 
 
 OmegA is a governed, persistent, identity-bearing AI runtime built from four mutually reinforcing layers: AEGIS for governance, AEON for identity and task state, ADCCL for drift control, and MYELIN for memory hardening. The system is designed so memory, cognition, verification, and governance act as one control surface rather than as disconnected features. This paper states the canonical system equation, the governing objective, and the master control loop that unifies the architecture. It is intentionally narrower than the full series: it summarizes the architecture without claiming proof of consciousness, unrestricted autonomy, or final scientific closure.
 
+## Lay Abstract
+
+OmegA is best understood as a carefully governed AI system with memory, identity, verification, and safety built into the structure itself. Instead of letting the model answer first and explain later, OmegA forces the system to assemble context, check claims, and log decisions before anything important is released. That makes the whole stack more stable, more reviewable, and easier to trust than a loose collection of prompts and tools. This paper gives the short version of that system so a reader can understand what OmegA is, how it is controlled, and what it is not claiming to be.
+
 ## Canonical Claim
 
 If OmegA is implemented as specified in the layer papers, then a single governed runtime state can be maintained across memory, task state, verification, and governance, and every side-effectful action must pass the same ordered control loop before release.
@@ -18,6 +22,32 @@ This is the core claim the rest of the series elaborates.
 ## One-Sentence Thesis
 
 OmegA is a governed, persistent, identity-bearing AI runtime whose memory, cognition, verification, and governance layers are designed to work as one system rather than as disconnected features.
+
+## Architecture Summary
+
+```text
+User / Operator
+      |
+      v
+Publication Front Door
+      |
+      v
+AEGIS  -> governance, policy, release gating
+  |
+  v
+AEON   -> identity, task state, continuity
+  |
+  v
+ADCCL  -> claim budgeting, drift control, verification
+  |
+  v
+MYELIN -> memory graph, retrieval hardening, utility
+      |
+      v
+Release / Log / Memory Update
+```
+
+The architecture is intentionally layered so each control surface can fail or recover without erasing the others.
 
 ## The Core State Equation
 
@@ -96,6 +126,17 @@ Taken together, the layers make OmegA a system with one state model, one control
 - It is not a mathematical proof of every behavioral property.
 - It is not a substitute for the layer papers.
 - It is not a benchmark report.
+
+## Claims and Non-Claims
+
+| Claim | Status |
+|---|---|
+| OmegA is a governed AI runtime with persistent identity, task state, verification, and memory layers. | Claimed and documented across the series |
+| The four layers compose into one controlled release loop. | Claimed and encoded in the architecture papers |
+| The system can be reviewed through a public release bundle and a reviewer-gated bundle. | Implemented in the publication corpus |
+| The current papers prove consciousness. | Not claimed |
+| The current papers prove final scientific closure. | Not claimed |
+| The current papers replace the layer papers. | Not claimed |
 
 ## Conclusion
 
