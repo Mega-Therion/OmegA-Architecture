@@ -11,6 +11,7 @@ const baseUrl = (args.get('base') || process.env.OMEGA_BASE_URL || 'http://local
 const prompt = args.get('prompt') || 'Explain your operating style in fresh wording. Do not repeat the wording of this prompt.';
 const authUser = args.get('auth-user') || process.env.OMEGA_UI_USER || 'omega';
 const authPass = args.get('auth-pass') || process.env.OMEGA_UI_PASSWORD || '';
+const skipRoutes = args.has('skip-routes');
 
 function normalize(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean);
@@ -66,9 +67,110 @@ const report = {
   replyPreview: reply.slice(0, 240),
 };
 
+async function readJsonOrText(res) {
+  const text = await res.text();
+  try {
+    return { json: JSON.parse(text), text };
+  } catch {
+    return { json: null, text };
+  }
+}
+
+async function checkProviders() {
+  const res = await fetch(`${baseUrl}/api/providers`, { headers });
+  const { json, text } = await readJsonOrText(res);
+  const ok = res.ok && json && Array.isArray(json.providerOrder) && json.providerOrder.length > 0;
+  return {
+    ok,
+    status: res.status,
+    providerOrder: json?.providerOrder ?? null,
+    raw: ok ? undefined : text.slice(0, 240),
+  };
+}
+
+async function checkRefine() {
+  const res = await fetch(`${baseUrl}/api/refine`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ text: 'Summarize the last input into one precise sentence.' }),
+  });
+  const { json, text } = await readJsonOrText(res);
+  const refined = json?.refined ?? '';
+  return {
+    ok: res.ok && typeof refined === 'string' && refined.trim().length > 0,
+    status: res.status,
+    refinedPreview: typeof refined === 'string' ? refined.slice(0, 120) : null,
+    raw: res.ok ? undefined : text.slice(0, 240),
+  };
+}
+
+async function checkSynthesize() {
+  const res = await fetch(`${baseUrl}/api/synthesize`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      history: [
+        { role: 'user', text: 'I feel stuck and want a clear next step.' },
+        { role: 'omega', text: 'You want a single actionable step, not a long plan.' },
+      ],
+    }),
+  });
+  const { json, text } = await readJsonOrText(res);
+  const directive = json?.directive ?? '';
+  const focus = json?.focus ?? '';
+  return {
+    ok: res.ok && typeof directive === 'string' && directive.trim().length > 0 && typeof focus === 'string' && focus.trim().length > 0,
+    status: res.status,
+    directivePreview: typeof directive === 'string' ? directive.slice(0, 120) : null,
+    raw: res.ok ? undefined : text.slice(0, 240),
+  };
+}
+
+async function checkResearch() {
+  const res = await fetch(`${baseUrl}/api/research`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      query: 'Summarize the key idea in the provided document.',
+      documents: [
+        { id: 'doc-1', source: 'smoke', title: 'Smoke Doc', content: 'OmegA must preserve identity across provider swaps and avoid provider collapse.' },
+      ],
+    }),
+  });
+  const { json, text } = await readJsonOrText(res);
+  const answer = json?.answer ?? '';
+  return {
+    ok: res.ok && typeof answer === 'string' && answer.trim().length > 0,
+    status: res.status,
+    mode: json?.mode ?? null,
+    answerPreview: typeof answer === 'string' ? answer.slice(0, 120) : null,
+    raw: res.ok ? undefined : text.slice(0, 240),
+  };
+}
+
+if (!skipRoutes) {
+  const [providersCheck, refineCheck, synthCheck, researchCheck] = await Promise.all([
+    checkProviders(),
+    checkRefine(),
+    checkSynthesize(),
+    checkResearch(),
+  ]);
+  report.routeHealth = {
+    providers: providersCheck,
+    refine: refineCheck,
+    synthesize: synthCheck,
+    research: researchCheck,
+  };
+}
+
 console.log(JSON.stringify(report, null, 2));
 
 if (!sessionId) process.exitCode = 1;
 if (!memoryBackend || memoryBackend === 'none') process.exitCode = 1;
 if (!report.dbRoundTrip) process.exitCode = 1;
 if (report.promptOverlap > 0.85) process.exitCode = 1;
+if (report.replyLength === 0) process.exitCode = 1;
+if (!skipRoutes && report.routeHealth) {
+  const { providers, refine, synthesize, research } = report.routeHealth;
+  if (!providers?.ok || !refine?.ok || !synthesize?.ok || !research?.ok) process.exitCode = 1;
+}

@@ -63,6 +63,20 @@ Retrieval timeout: if semantic search exceeds 2s, fall back to keyword search an
 
 ---
 
+## Retrieval Telemetry
+
+Every retrieval should emit evidence that can drive memory utility decisions, not proxy scores.
+
+### Required Fields (in-memory and persistent layers)
+- `retrieval_count`: incremented on every successful retrieval of a node.
+- `last_retrieved_at`: Unix timestamp of the most recent retrieval.
+
+### Usage
+- Memory pruning uses retrieval evidence before importance scores.
+- Entries with no retrieval activity over a defined window are eligible for decay or demotion.
+
+---
+
 ## Write Path
 
 ```

@@ -105,6 +105,8 @@ pub fn spawn_dream_task(state: Arc<AppState>, interval: Duration) -> tokio::task
                         key: None,
                         raw_artifact: None,
                         tier: None,
+                        retrieval_count: 0,
+                        last_retrieved_at: None,
                     };
 
                     if let Err(e) = state.memory_store.write(epiphany).await {

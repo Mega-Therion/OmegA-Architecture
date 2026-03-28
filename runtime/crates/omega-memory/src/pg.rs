@@ -261,8 +261,9 @@ impl MemoryStore for PgMemoryStore {
                     r#"
                     INSERT INTO omega_memory_entries
                         (id, content, source, importance, created_at, namespace, embedding,
-                         domain, confidence, version, superseded_by, key, raw_artifact, tier)
-                    VALUES ($1, $2, $3, $4, $5, $6, '{}'::vector, $7, $8, $9, $10, $11, $12, $13)
+                         domain, confidence, version, superseded_by, key, raw_artifact,
+                         retrieval_count, last_retrieved_at, tier)
+                    VALUES ($1, $2, $3, $4, $5, $6, '{}'::vector, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                     ON CONFLICT (id) DO UPDATE SET
                         content       = EXCLUDED.content,
                         source        = EXCLUDED.source,
@@ -293,6 +294,8 @@ impl MemoryStore for PgMemoryStore {
                     .bind(&entry.superseded_by)
                     .bind(&entry.key)
                     .bind(&entry.raw_artifact)
+                    .bind(entry.retrieval_count as i64)
+                    .bind(entry.last_retrieved_at)
                     .bind(tier)
                     .execute(&self.pool)
                     .await;
@@ -319,6 +322,8 @@ impl MemoryStore for PgMemoryStore {
                 .bind(&entry.superseded_by)
                 .bind(&entry.key)
                 .bind(&entry.raw_artifact)
+                .bind(entry.retrieval_count as i64)
+                .bind(entry.last_retrieved_at)
                 .execute(&self.pool)
                 .await
                 .map_err(MemoryStoreError::Sqlx)?;
@@ -329,8 +334,9 @@ impl MemoryStore for PgMemoryStore {
                     r#"
                     INSERT INTO omega_memory_entries
                         (id, content, source, importance, created_at, namespace,
-                         domain, confidence, version, superseded_by, key, raw_artifact, tier)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                         domain, confidence, version, superseded_by, key, raw_artifact,
+                         retrieval_count, last_retrieved_at, tier)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                     ON CONFLICT (id) DO UPDATE SET
                         content       = EXCLUDED.content,
                         source        = EXCLUDED.source,
@@ -362,6 +368,8 @@ impl MemoryStore for PgMemoryStore {
                 .bind(&entry.superseded_by)
                 .bind(&entry.key)
                 .bind(&entry.raw_artifact)
+                .bind(entry.retrieval_count as i64)
+                .bind(entry.last_retrieved_at)
                 .bind(tier)
                 .execute(&self.pool)
                 .await;
@@ -379,8 +387,9 @@ impl MemoryStore for PgMemoryStore {
                 r#"
                 INSERT INTO omega_memory_entries
                     (id, content, source, importance, created_at, namespace,
-                     domain, confidence, version, superseded_by, key, raw_artifact)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                     domain, confidence, version, superseded_by, key, raw_artifact,
+                     retrieval_count, last_retrieved_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 ON CONFLICT (id) DO UPDATE SET
                     content       = EXCLUDED.content,
                     source        = EXCLUDED.source,
@@ -411,6 +420,8 @@ impl MemoryStore for PgMemoryStore {
             .bind(&entry.superseded_by)
             .bind(&entry.key)
             .bind(&entry.raw_artifact)
+            .bind(entry.retrieval_count as i64)
+            .bind(entry.last_retrieved_at)
             .execute(&self.pool)
             .await
             .map_err(MemoryStoreError::Sqlx)?;
@@ -433,8 +444,25 @@ impl MemoryStore for PgMemoryStore {
     /// Retrieve a single entry by its [`MemoryId`].
     /// Returns `None` if the entry does not exist.
     async fn read(&self, id: &MemoryId) -> Result<Option<MemoryEntry>, MemoryError> {
+        let now_ts = Utc::now().timestamp();
+        let update_result = sqlx::query(
+            "UPDATE omega_memory_entries SET retrieval_count = retrieval_count + 1, last_retrieved_at = $1 WHERE id = $2",
+        )
+        .bind(now_ts)
+        .bind(&id.0)
+        .execute(&self.pool)
+        .await;
+
+        if let Err(e) = update_result {
+            if !Self::is_undefined_column(&e) {
+                return Err(MemoryStoreError::Sqlx(e).into());
+            }
+        }
+
         let row = sqlx::query(
-            "SELECT id, content, source, importance, created_at, namespace \
+            "SELECT id, content, source, importance, created_at, namespace, \
+             domain, confidence, version, superseded_by, key, raw_artifact, tier, \
+             retrieval_count, last_retrieved_at \
              FROM omega_memory_entries WHERE id = $1",
         )
         .bind(&id.0)
@@ -474,6 +502,8 @@ impl MemoryStore for PgMemoryStore {
                     .try_get::<Option<String>, _>("raw_artifact")
                     .unwrap_or(None),
                 tier: r.try_get::<Option<String>, _>("tier").unwrap_or(None),
+                retrieval_count: r.try_get::<i64, _>("retrieval_count").unwrap_or(0) as u64,
+                last_retrieved_at: r.try_get::<Option<i64>, _>("last_retrieved_at").unwrap_or(None),
             })),
         }
     }
@@ -504,6 +534,7 @@ impl MemoryStore for PgMemoryStore {
     async fn search(&self, query: &str, limit: usize) -> Result<Vec<MemoryEntry>, MemoryError> {
         let limit_i64 = limit as i64;
         let trimmed = query.trim();
+        let now_ts = Utc::now().timestamp();
 
         let rows = if let Some(emb) = self.embedder.as_ref().and_then(|e| e.embed(query)) {
             // Vector similarity search.
@@ -511,7 +542,8 @@ impl MemoryStore for PgMemoryStore {
             let sql = format!(
                 r#"
                 SELECT id, content, source, importance, created_at, namespace,
-                       domain, confidence, version, superseded_by, key, raw_artifact
+                       domain, confidence, version, superseded_by, key, raw_artifact,
+                       retrieval_count, last_retrieved_at, tier
                 FROM omega_memory_entries
                 ORDER BY embedding <=> '{}'::vector
                 LIMIT $1
@@ -527,7 +559,8 @@ impl MemoryStore for PgMemoryStore {
             sqlx::query(
                 r#"
                 SELECT id, content, source, importance, created_at, namespace,
-                       domain, confidence, version, superseded_by, key, raw_artifact
+                       domain, confidence, version, superseded_by, key, raw_artifact,
+                       retrieval_count, last_retrieved_at, tier
                 FROM omega_memory_entries
                 ORDER BY importance DESC, created_at DESC NULLS LAST
                 LIMIT $1
@@ -547,7 +580,8 @@ impl MemoryStore for PgMemoryStore {
             sqlx::query(
                 r#"
                 SELECT id, content, source, importance, created_at, namespace,
-                       domain, confidence, version, superseded_by, key, raw_artifact
+                       domain, confidence, version, superseded_by, key, raw_artifact,
+                       retrieval_count, last_retrieved_at, tier
                 FROM omega_memory_entries
                 WHERE
                     content ILIKE $1
@@ -582,7 +616,7 @@ impl MemoryStore for PgMemoryStore {
             .map_err(MemoryStoreError::Sqlx)?
         };
 
-        let entries = rows
+        let mut entries: Vec<MemoryEntry> = rows
             .into_iter()
             .map(|r| MemoryEntry {
                 id: Some(MemoryId::new(
@@ -614,17 +648,28 @@ impl MemoryStore for PgMemoryStore {
                     .try_get::<Option<String>, _>("raw_artifact")
                     .unwrap_or(None),
                 tier: r.try_get::<Option<String>, _>("tier").unwrap_or(None),
+                retrieval_count: r.try_get::<i64, _>("retrieval_count").unwrap_or(0) as u64,
+                last_retrieved_at: r.try_get::<Option<i64>, _>("last_retrieved_at").unwrap_or(None),
             })
             .collect();
+
+        let ids: Vec<String> = entries
+            .iter()
+            .filter_map(|e| e.id.as_ref().map(|i| i.0.clone()))
+            .collect();
+        bump_retrievals(&self.pool, &ids, now_ts).await?;
+        apply_retrieval_telemetry(&mut entries, now_ts);
 
         Ok(entries)
     }
 
     async fn get_random(&self, limit: usize) -> Result<Vec<MemoryEntry>, MemoryError> {
         let limit_i64 = limit as i64;
+        let now_ts = Utc::now().timestamp();
         let rows = sqlx::query(
             "SELECT id, content, source, importance, created_at, namespace, \
-             domain, confidence, version, superseded_by, key, raw_artifact \
+             domain, confidence, version, superseded_by, key, raw_artifact, \
+             retrieval_count, last_retrieved_at, tier \
              FROM omega_memory_entries ORDER BY RANDOM() LIMIT $1",
         )
         .bind(limit_i64)
@@ -632,7 +677,7 @@ impl MemoryStore for PgMemoryStore {
         .await
         .map_err(MemoryStoreError::Sqlx)?;
 
-        let entries = rows
+        let mut entries: Vec<MemoryEntry> = rows
             .into_iter()
             .map(|r| MemoryEntry {
                 id: Some(MemoryId::new(
@@ -664,10 +709,44 @@ impl MemoryStore for PgMemoryStore {
                     .try_get::<Option<String>, _>("raw_artifact")
                     .unwrap_or(None),
                 tier: r.try_get::<Option<String>, _>("tier").unwrap_or(None),
+                retrieval_count: r.try_get::<i64, _>("retrieval_count").unwrap_or(0) as u64,
+                last_retrieved_at: r.try_get::<Option<i64>, _>("last_retrieved_at").unwrap_or(None),
             })
             .collect();
 
+        let ids: Vec<String> = entries
+            .iter()
+            .filter_map(|e| e.id.as_ref().map(|i| i.0.clone()))
+            .collect();
+        bump_retrievals(&self.pool, &ids, now_ts).await?;
+        apply_retrieval_telemetry(&mut entries, now_ts);
+
         Ok(entries)
+    }
+}
+
+async fn bump_retrievals(
+    pool: &PgPool,
+    ids: &[String],
+    now_ts: i64,
+) -> Result<(), MemoryStoreError> {
+    for id in ids {
+        sqlx::query(
+            "UPDATE omega_memory_entries SET retrieval_count = retrieval_count + 1, last_retrieved_at = $1 WHERE id = $2",
+        )
+        .bind(now_ts)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(MemoryStoreError::Sqlx)?;
+    }
+    Ok(())
+}
+
+fn apply_retrieval_telemetry(entries: &mut [MemoryEntry], now_ts: i64) {
+    for entry in entries {
+        entry.retrieval_count = entry.retrieval_count.saturating_add(1);
+        entry.last_retrieved_at = Some(now_ts);
     }
 }
 

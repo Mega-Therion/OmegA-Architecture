@@ -138,6 +138,8 @@ pub async fn ingest_handler(
             key: None,
             raw_artifact: req.path.clone(),
             tier: None,
+            retrieval_count: 0,
+            last_retrieved_at: None,
         };
 
         match state.memory_store.write(entry).await {

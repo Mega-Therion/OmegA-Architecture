@@ -19,6 +19,7 @@ from typing import Any
 class TelemetryEventType(str, Enum):
     STAGE_LATENCY = "stage_latency"
     RETRIEVAL_SCORE = "retrieval_score"
+    RETRIEVAL_HIT = "retrieval_hit"
     VERIFIER_REJECT = "verifier_reject"
     GATE_DENY = "gate_deny"
     APPROVAL_WAIT = "approval_wait"

@@ -1,4 +1,5 @@
 """Tests for Ticket 4: Ingestion Plane."""
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -23,6 +24,8 @@ def test_ingest_text():
     assert result.content_hash != ""
     assert result.version == 1
     assert result.provenance.get("doc_id") == result.doc_id
+    assert result.provenance.get("source_type") == IngestSource.TEXT.value
+    assert result.provenance.get("source_uri") == "test://omega"
     print("[PASS] test_ingest_text")
 
 
@@ -75,6 +78,8 @@ def test_ingest_failed_tracking():
     failed = plane.failed_jobs()
     assert len(failed) == 1
     assert failed[0].job_id == result.job_id
+    assert result.provenance.get("source_type") == IngestSource.FILE.value
+    assert result.provenance.get("source_uri") == "/nonexistent/path.txt"
     print("[PASS] test_ingest_failed_tracking")
 
 
@@ -110,6 +115,8 @@ def test_ingest_journaling():
         assert journal_file.exists()
         lines = journal_file.read_text().strip().split("\n")
         assert len(lines) == 1
+        entry = json.loads(lines[0])
+        assert entry.get("version") == 1
     print("[PASS] test_ingest_journaling")
 
 

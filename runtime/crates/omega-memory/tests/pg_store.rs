@@ -23,6 +23,8 @@ fn entry(namespace: &str, content: &str, importance: f64) -> MemoryEntry {
         key: None,
         raw_artifact: None,
         tier: None,
+        retrieval_count: 0,
+        last_retrieved_at: None,
     }
 }
 

@@ -51,16 +51,18 @@ DOMAIN_CAPS = {
 }
 
 # ─── TSO Template ─────────────────────────────────────────────────────────────
-def build_tso(name: str, objective: str, domain: str, priority: str) -> dict:
+def build_tso(name: str, objective: str, domain: str, priority: str, invariants: list[str]) -> dict:
     urgency_map = {"critical": 1.0, "high": 0.8, "medium": 0.6, "low": 0.4}
     return {
         "task_id": f"skill.{name}.{int(time.time())}",
         "objective": objective,
+        "invariant_refs": invariants,
         "constraints": [
             "No secrets in logs or output",
             "All file paths must be absolute",
             "Emit TELEODYNAMICS_TRACE on completion",
             "Log to ~/NEXUS/ERGON.md on success",
+            "Respect declared invariants",
         ],
         "success_criteria": [
             f"{name} executes without error",
@@ -89,6 +91,8 @@ version: "1.0.0"
 layer: {layer}
 domain: {domain}
 priority: {priority}
+invariants:
+{invariants_yaml}
 aegis_policy: strict
 generated_by: meta_generator.py
 generated_at: {timestamp}
@@ -120,6 +124,9 @@ generated_at: {timestamp}
 
 ### Output Artifacts
 {outputs}
+
+### Invariants Enforced
+{invariants_md}
 
 ### Rollback Behavior
 - On failure: emit `TELEODYNAMICS_TRACE` with `actual_failure_mode` set
@@ -207,6 +214,14 @@ except ImportError:
 
 # ─── AEGIS Policy Gate ────────────────────────────────────────────────────────
 ALLOWED_CAPABILITIES = {permissions_list}
+INVARIANTS = {invariants_list}
+
+def get_env(name: str, default: Optional[str] = None, required: bool = False) -> Optional[str]:
+    """Environment-only credential resolution (no hardcoded secrets)."""
+    value = os.getenv(name, default)
+    if required and not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
 
 def aegis_check(required_cap: str) -> bool:
     """Enforce AEGIS capability gate before any privileged operation."""
@@ -219,6 +234,7 @@ def aegis_check(required_cap: str) -> bool:
 TASK_STATE = {{
     "task_id": f"skill.{name}.{{int(time.time())}}",
     "objective": "{description}",
+    "invariant_refs": INVARIANTS,
     "phase_state": "OBSERVE",
     "predicted_failure_modes": {predicted_failures},
     "authority_shrink_level": 0.1,
@@ -284,6 +300,7 @@ def main_logic(args: argparse.Namespace) -> dict:
     Contract:
     - Inputs: {inputs_inline}
     - Outputs: {outputs_inline}
+    - Invariants: {invariants_inline}
     - Must call aegis_check() before any write or network operation
     - Must return dict with 'success', 'artifacts', and 'message' keys
     """
@@ -344,7 +361,16 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tools.{name} import main_logic, aegis_check, emit_trace
+from tools.{name} import main_logic, aegis_check, emit_trace, INVARIANTS, get_env
+
+class TestInvariants:
+    def test_invariants_declared(self):
+        assert isinstance(INVARIANTS, list)
+        assert len(INVARIANTS) > 0
+        assert all(isinstance(item, str) and item.strip() for item in INVARIANTS)
+
+    def test_env_helper_default(self):
+        assert get_env("OMEGA_TEST_ENV", default="ok") == "ok"
 
 class TestAEGIS:
     def test_capability_gate_blocks_unknown(self):
@@ -401,12 +427,19 @@ def generate_skill(args):
     priority_score_map = {"critical": 1.0, "high": 0.8, "medium": 0.6, "low": 0.4}
     priority_score = priority_score_map.get(priority, 0.7)
 
-    tso = build_tso(name, args.description or f"OmegA {title}", domain, priority)
+    invariants = [item.strip() for item in args.invariants.split(",") if item.strip()]
+    if not invariants:
+        raise ValueError("At least one invariant reference is required (e.g. I-1,E-2).")
+
+    tso = build_tso(name, args.description or f"OmegA {title}", domain, priority, invariants)
     tso_json = json.dumps(tso, indent=2)
 
     predicted_failures = str(tso["predicted_failure_modes"])
     inputs_inline = args.inputs or "TBD"
     outputs_inline = args.outputs or "TBD"
+    invariants_inline = ", ".join(invariants)
+    invariants_yaml = "\n".join(f"  - {inv}" for inv in invariants)
+    invariants_md = "\n".join(f"- `{inv}`" for inv in invariants)
 
     # Format SKILL.md
     skill_md = SKILL_MD_TEMPLATE.format(
@@ -416,6 +449,8 @@ def generate_skill(args):
         inputs=f"- `{inputs_inline}`" if inputs_inline else "- TBD",
         permissions="\n".join(f"- `{p}`" for p in permissions),
         outputs=f"- `{outputs_inline}`" if outputs_inline else "- TBD",
+        invariants_yaml=invariants_yaml,
+        invariants_md=invariants_md,
         priority_score=priority_score, predicted_failures=predicted_failures,
         tso_json=tso_json, usage_args=f"--{name.replace('_','-')} <arg>",
     )
@@ -432,9 +467,11 @@ def generate_skill(args):
         name=name, title=title, description=args.description or f"OmegA {title}",
         layer=layer, domain=domain,
         permissions_list=permissions_list,
+        invariants_list=repr(invariants),
         predicted_failures=predicted_failures,
         priority_score=priority_score,
         inputs_inline=inputs_inline, outputs_inline=outputs_inline,
+        invariants_inline=invariants_inline,
         argparse_args=argparse_args,
     )
 
@@ -486,6 +523,8 @@ def main():
                         help="Skill priority")
     parser.add_argument("--inputs", help="Comma-separated input parameters")
     parser.add_argument("--outputs", help="Comma-separated output artifacts")
+    parser.add_argument("--invariants", required=True,
+                        help="Comma-separated invariant IDs (e.g. I-1,E-2)")
     parser.add_argument("--root", default=".", help="OmegA-Architecture root path")
     parser.add_argument("--dry-run", action="store_true",
                         help="Preview files without writing")

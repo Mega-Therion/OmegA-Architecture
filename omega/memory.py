@@ -35,6 +35,8 @@ class MemoryNode:
     embedding: list[float] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
     access_count: int = 0
+    retrieval_count: int = 0
+    last_retrieved_at: float | None = None
 
 
 @dataclass
@@ -83,6 +85,8 @@ class MemoryGraph:
         node = self.nodes.get(node_id)
         if node:
             node.access_count += 1
+            node.retrieval_count += 1
+            node.last_retrieved_at = time.time()
         return node
 
     def harden_path(self, path: list[str], reward: float = 1.0):

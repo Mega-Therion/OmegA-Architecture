@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS memory_entries (
     version       INTEGER NOT NULL DEFAULT 1,
     superseded_by TEXT,
     key           TEXT,
-    raw_artifact  TEXT
+    raw_artifact  TEXT,
+    retrieval_count INTEGER NOT NULL DEFAULT 0,
+    last_retrieved_at INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_memory_namespace  ON memory_entries(namespace);
 CREATE INDEX IF NOT EXISTS idx_memory_importance ON memory_entries(importance DESC);

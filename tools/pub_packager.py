@@ -34,6 +34,14 @@ except ImportError:
 
 # ─── AEGIS Policy Gate ────────────────────────────────────────────────────────
 ALLOWED_CAPABILITIES = {'cap.network.github', 'cap.fs.read', 'cap.fs.write'}
+INVARIANTS = ["E-2", "O-1", "O-2"]
+
+def get_env(name: str, default: Optional[str] = None, required: bool = False) -> Optional[str]:
+    """Environment-only credential resolution (no hardcoded secrets)."""
+    value = os.getenv(name, default)
+    if required and not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
 
 def aegis_check(required_cap: str) -> bool:
     """Enforce AEGIS capability gate before any privileged operation."""
@@ -46,6 +54,7 @@ def aegis_check(required_cap: str) -> bool:
 TASK_STATE = {
     "task_id": f"skill.pub_packager.{int(time.time())}",
     "objective": "Automates GitHub releases, Zenodo uploads, citation updates, changelogs, and documentation bundles for OmegA papers",
+    "invariant_refs": INVARIANTS,
     "phase_state": "OBSERVE",
     "predicted_failure_modes": ['missing_dependency', 'permission_denied', 'output_empty'],
     "authority_shrink_level": 0.1,
@@ -286,6 +295,9 @@ def main_logic(args: argparse.Namespace) -> dict:
 
     dry_run = getattr(args, "dry_run", False)
     artifacts = []
+    zenodo_token = getattr(args, "zenodo_token", None) or get_env("OMEGA_ZENODO_TOKEN")
+    if zenodo_token:
+        print("[pub_packager] Zenodo token detected (env/arg).")
 
     # ── 3. Spec compliance gate ──────────────────────────────────────────────
     print("[pub_packager] Running omegactl audit...")

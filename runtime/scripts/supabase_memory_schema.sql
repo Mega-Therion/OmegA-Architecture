@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS omega_memory_entries (
     importance  DOUBLE PRECISION NOT NULL DEFAULT 0.5,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     namespace   TEXT NOT NULL DEFAULT 'default',
-    embedding   vector(384)
+    embedding   vector(384),
+    retrieval_count BIGINT NOT NULL DEFAULT 0,
+    last_retrieved_at BIGINT
 );
 
 CREATE INDEX IF NOT EXISTS idx_omega_memory_embedding
@@ -21,4 +23,3 @@ CREATE INDEX IF NOT EXISTS idx_omega_memory_embedding
 
 CREATE INDEX IF NOT EXISTS idx_omega_memory_namespace
     ON omega_memory_entries (namespace);
-

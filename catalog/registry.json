@@ -1,0 +1,509 @@
+{
+  "version": 1,
+  "root": "/home/mega/OMEGA_WORKSPACE/CANON/OmegA-Architecture",
+  "policy": {
+    "oneCanonicalHomePerArtifact": true,
+    "registerBeforeCreate": true,
+    "scratchBelongsInInbox": true,
+    "generatedOutputsStayIsolated": true
+  },
+  "ignoreTopLevelDirectories": [
+    ".git",
+    ".pytest_cache",
+    "__pycache__",
+    "node_modules",
+    ".next",
+    "dist"
+  ],
+  "directories": [
+    {
+      "name": "catalog",
+      "path": "catalog/",
+      "category": "index",
+      "purpose": "Machine-readable and human-readable index-card catalog for the repository.",
+      "owner": "architecture",
+      "read_first": true,
+      "allowed_contents": [
+        "INDEX.md",
+        "README.md",
+        "card-template.md",
+        "registry.json"
+      ],
+      "forbidden_contents": [
+        "runtime code",
+        "generated outputs",
+        "secrets"
+      ],
+      "validation": "python3 scripts/catalog_guard.py",
+      "approved": true
+    },
+    {
+      "name": ".claude",
+      "path": ".claude/",
+      "category": "operator-config",
+      "purpose": "Local agent skills, commands, settings, and packaging wrappers.",
+      "owner": "operator",
+      "read_first": false,
+      "allowed_contents": [
+        "skills/",
+        "commands/",
+        "settings.json",
+        "plugins/"
+      ],
+      "forbidden_contents": [
+        "source canon",
+        "runtime products"
+      ],
+      "validation": "confirm local plugin discovery",
+      "approved": true
+    },
+    {
+      "name": ".github",
+      "path": ".github/",
+      "category": "automation",
+      "purpose": "Repository automation, workflows, and issue/PR configuration.",
+      "owner": "engineering",
+      "read_first": false,
+      "allowed_contents": [
+        "workflows/",
+        "issue templates",
+        "PR templates"
+      ],
+      "forbidden_contents": [
+        "canonical prose",
+        "runtime state"
+      ],
+      "validation": "GitHub Actions",
+      "approved": true
+    },
+    {
+      "name": ".vercel",
+      "path": ".vercel/",
+      "category": "deployment-metadata",
+      "purpose": "Vercel deployment metadata and linkage.",
+      "owner": "release",
+      "read_first": false,
+      "allowed_contents": [
+        "project.json"
+      ],
+      "forbidden_contents": [
+        "source code",
+        "canonical docs"
+      ],
+      "validation": "Vercel deploy",
+      "approved": true
+    },
+    {
+      "name": "canon",
+      "path": "canon/",
+      "category": "doctrine",
+      "purpose": "Immutable system doctrine, constitutions, and non-negotiable policy.",
+      "owner": "architecture",
+      "read_first": true,
+      "allowed_contents": [
+        "constitutional markdown",
+        "governance doctrine"
+      ],
+      "forbidden_contents": [
+        "implementation code",
+        "ephemeral logs",
+        "draft artifacts"
+      ],
+      "validation": "cross-reference consistency",
+      "approved": true
+    },
+    {
+      "name": "specs",
+      "path": "specs/",
+      "category": "contracts",
+      "purpose": "Machine-readable and human-readable system contracts, schemas, and mappings.",
+      "owner": "architecture/runtime",
+      "read_first": true,
+      "allowed_contents": [
+        "markdown specs",
+        "JSON schemas"
+      ],
+      "forbidden_contents": [
+        "product prose",
+        "generated outputs"
+      ],
+      "validation": "schema and traceability checks",
+      "approved": true
+    },
+    {
+      "name": "omega",
+      "path": "omega/",
+      "category": "core-runtime",
+      "purpose": "Python core runtime package for OmegA behavior and policy enforcement.",
+      "owner": "runtime",
+      "read_first": true,
+      "allowed_contents": [
+        "Python modules",
+        "package initialization"
+      ],
+      "forbidden_contents": [
+        "papers",
+        "reports",
+        "ad hoc docs"
+      ],
+      "validation": "unit and integration tests",
+      "approved": true
+    },
+    {
+      "name": "runtime",
+      "path": "runtime/",
+      "category": "execution-layer",
+      "purpose": "Rust CLI, service assets, and runtime bridging for production execution.",
+      "owner": "runtime",
+      "read_first": true,
+      "allowed_contents": [
+        "Rust crates",
+        "service units",
+        "build assets",
+        "release manifests"
+      ],
+      "forbidden_contents": [
+        "research drafts",
+        "product docs"
+      ],
+      "validation": "cargo build and service smoke tests",
+      "approved": true
+    },
+    {
+      "name": "web",
+      "path": "web/",
+      "category": "product-surface",
+      "purpose": "Next.js frontend, API routes, and deployment-ready UI for OmegA.",
+      "owner": "web",
+      "read_first": true,
+      "allowed_contents": [
+        "app routes",
+        "components",
+        "styles",
+        "public assets"
+      ],
+      "forbidden_contents": [
+        "canon prose",
+        "eval outputs"
+      ],
+      "validation": "lint, typecheck, build, smoke",
+      "approved": true
+    },
+    {
+      "name": "mcp",
+      "path": "mcp/",
+      "category": "integration",
+      "purpose": "MCP server implementation and packaging for tool integrations.",
+      "owner": "integration",
+      "read_first": true,
+      "allowed_contents": [
+        "TypeScript sources",
+        "package metadata",
+        "build config"
+      ],
+      "forbidden_contents": [
+        "runtime results",
+        "papers"
+      ],
+      "validation": "npm build and tool registration",
+      "approved": true
+    },
+    {
+      "name": "tools",
+      "path": "tools/",
+      "category": "utilities",
+      "purpose": "Reusable internal utilities, analysis tools, and orchestration helpers.",
+      "owner": "platform",
+      "read_first": true,
+      "allowed_contents": [
+        "Python scripts",
+        "utility helpers"
+      ],
+      "forbidden_contents": [
+        "generated reports",
+        "source canon"
+      ],
+      "validation": "script-specific smoke tests",
+      "approved": true
+    },
+    {
+      "name": "scripts",
+      "path": "scripts/",
+      "category": "operations",
+      "purpose": "One-off maintenance, migration, and operational scripts.",
+      "owner": "platform",
+      "read_first": false,
+      "allowed_contents": [
+        "migration scripts",
+        "ops helpers"
+      ],
+      "forbidden_contents": [
+        "core library code",
+        "documentation chapters"
+      ],
+      "validation": "run-once verification",
+      "approved": true
+    },
+    {
+      "name": "evals",
+      "path": "evals/",
+      "category": "validation",
+      "purpose": "Regression suites, harnesses, evidence indexes, and evaluation outputs.",
+      "owner": "validation",
+      "read_first": true,
+      "allowed_contents": [
+        "tests",
+        "harnesses",
+        "evidence indexes",
+        "reports"
+      ],
+      "forbidden_contents": [
+        "product code",
+        "secrets"
+      ],
+      "validation": "eval runner and smoke suite",
+      "approved": true
+    },
+    {
+      "name": "reports",
+      "path": "reports/",
+      "category": "analysis",
+      "purpose": "Benchmark summaries, comparisons, and post-run analysis.",
+      "owner": "validation",
+      "read_first": false,
+      "allowed_contents": [
+        "markdown reports",
+        "comparison summaries"
+      ],
+      "forbidden_contents": [
+        "source code",
+        "live configuration"
+      ],
+      "validation": "review against eval results",
+      "approved": true
+    },
+    {
+      "name": "docs",
+      "path": "docs/",
+      "category": "operator-docs",
+      "purpose": "How-to guides, build briefs, and operational documentation.",
+      "owner": "docs",
+      "read_first": false,
+      "allowed_contents": [
+        "guides",
+        "briefs",
+        "reference docs"
+      ],
+      "forbidden_contents": [
+        "source code",
+        "generated reports"
+      ],
+      "validation": "documentation review",
+      "approved": true
+    },
+    {
+      "name": "papers",
+      "path": "papers/",
+      "category": "research",
+      "purpose": "Technical papers, drafts, critiques, and formal architecture writing.",
+      "owner": "research",
+      "read_first": false,
+      "allowed_contents": [
+        "papers",
+        "drafts",
+        "symbolic addenda"
+      ],
+      "forbidden_contents": [
+        "runtime code",
+        "eval outputs"
+      ],
+      "validation": "citation and consistency review",
+      "approved": true
+    },
+    {
+      "name": "publication",
+      "path": "publication/",
+      "category": "release-writing",
+      "purpose": "Publication-ready prose, bundles, and redaction reports.",
+      "owner": "publication",
+      "read_first": false,
+      "allowed_contents": [
+        "release drafts",
+        "appendix guides",
+        "redaction reports"
+      ],
+      "forbidden_contents": [
+        "runtime code",
+        "working notes"
+      ],
+      "validation": "publication QA",
+      "approved": true
+    },
+    {
+      "name": "history",
+      "path": "history/",
+      "category": "append-only-log",
+      "purpose": "Chronological narrative, origin notes, and historical context.",
+      "owner": "records",
+      "read_first": false,
+      "allowed_contents": [
+        "chronological narrative",
+        "origin notes"
+      ],
+      "forbidden_contents": [
+        "mutable source",
+        "temporary scratch"
+      ],
+      "validation": "append-only audit",
+      "approved": true
+    },
+    {
+      "name": "assets",
+      "path": "assets/",
+      "category": "media",
+      "purpose": "Images, diagrams, and visual artifacts used by the project.",
+      "owner": "design",
+      "read_first": false,
+      "allowed_contents": [
+        "PNG",
+        "SVG",
+        "other media"
+      ],
+      "forbidden_contents": [
+        "source code",
+        "policy docs"
+      ],
+      "validation": "asset reference check",
+      "approved": true
+    },
+    {
+      "name": "distilled",
+      "path": "distilled/",
+      "category": "derived-data",
+      "purpose": "Derived structured datasets and distilled knowledge artifacts.",
+      "owner": "data",
+      "read_first": false,
+      "allowed_contents": [
+        "jsonl",
+        "derived datasets"
+      ],
+      "forbidden_contents": [
+        "raw transcripts",
+        "source code"
+      ],
+      "validation": "dataset schema check",
+      "approved": true
+    },
+    {
+      "name": "output",
+      "path": "output/",
+      "category": "generated-output",
+      "purpose": "Generated transcripts and task outputs.",
+      "owner": "runtime",
+      "read_first": false,
+      "allowed_contents": [
+        "transcripts",
+        "generated artifacts"
+      ],
+      "forbidden_contents": [
+        "source code",
+        "canonical docs"
+      ],
+      "validation": "output provenance check",
+      "approved": true
+    },
+    {
+      "name": "voice",
+      "path": "voice/",
+      "category": "voice-surface",
+      "purpose": "Voice app assets, installers, and runtime helpers.",
+      "owner": "voice",
+      "read_first": false,
+      "allowed_contents": [
+        "Python helpers",
+        "shell installers",
+        "requirements"
+      ],
+      "forbidden_contents": [
+        "canon prose",
+        "eval data"
+      ],
+      "validation": "voice app smoke test",
+      "approved": true
+    },
+    {
+      "name": "alexa",
+      "path": "alexa/",
+      "category": "voice-integration",
+      "purpose": "Alexa skill assets and interaction model.",
+      "owner": "voice",
+      "read_first": false,
+      "allowed_contents": [
+        "skill JSON",
+        "interaction models",
+        "skill runtime"
+      ],
+      "forbidden_contents": [
+        "core docs",
+        "runtime source"
+      ],
+      "validation": "skill schema validation",
+      "approved": true
+    },
+    {
+      "name": "roadmap",
+      "path": "roadmap/",
+      "category": "planning",
+      "purpose": "Planned work, sequencing, and future-state milestones.",
+      "owner": "architecture",
+      "read_first": false,
+      "allowed_contents": [
+        "roadmaps",
+        "milestones",
+        "sequencing docs"
+      ],
+      "forbidden_contents": [
+        "implementation code",
+        "finalized specs"
+      ],
+      "validation": "roadmap review",
+      "approved": true
+    },
+    {
+      "name": "schemas",
+      "path": "schemas/",
+      "category": "schema",
+      "purpose": "JSON schemas and validation contracts for runtime artifacts.",
+      "owner": "architecture/runtime",
+      "read_first": false,
+      "allowed_contents": [
+        "JSON schema",
+        "validation contracts"
+      ],
+      "forbidden_contents": [
+        "prose docs",
+        "runtime code"
+      ],
+      "validation": "schema validation",
+      "approved": true
+    },
+    {
+      "name": "policies",
+      "path": "policies/",
+      "category": "policy",
+      "purpose": "Local policy profiles for runs, permissions, and checks.",
+      "owner": "governance",
+      "read_first": false,
+      "allowed_contents": [
+        "yaml policies",
+        "environment profiles"
+      ],
+      "forbidden_contents": [
+        "secret values",
+        "runtime code"
+      ],
+      "validation": "policy linting",
+      "approved": true
+    }
+  ]
+}

@@ -115,6 +115,8 @@ pub async fn upsert_handler(
         key: None,
         raw_artifact: None,
         tier: None,
+        retrieval_count: 0,
+        last_retrieved_at: None,
     };
 
     match state.memory_store.write(entry).await {
@@ -386,6 +388,8 @@ pub async fn consolidate_handler(
             key: None,
             raw_artifact: None,
             tier: None,
+            retrieval_count: 0,
+            last_retrieved_at: None,
         };
 
         let consolidated_id = match state.memory_store.write(consolidated_entry).await {

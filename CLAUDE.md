@@ -29,6 +29,9 @@ Each layer has a corresponding final paper in `papers/`.
 - `README.md` — full architecture overview with equations and layer descriptions
 - `ORIGIN.md` — canonical origin document (the DeepSeek Challenge, Dec 31 2025)
 - `CITATION.cff` — citation metadata for academic use
+- `catalog/INDEX.md` — canonical folder policy and card-catalog index
+- `catalog/registry.json` — machine-readable directory registry
+- `scripts/catalog_sync.py` — regenerate or validate the registry from the repo tree
 - `papers/OmegA_Unified_Architecture_Paper.md` — the master unified paper
 - `papers/MYELIN_Final_Paper.md`, `ADCCL_Final_Paper.md`, `AEON_Final_Paper.md`, `AEGIS_Final_Paper.md` — per-layer papers
 - `papers/Canonical_Symbolic_Addendum.md` — canonical symbol table and equation reference
@@ -48,10 +51,20 @@ python3 omega_kg_explorer.py --layer MYELIN     # filter by layer (MYELIN|ADCCL|
 ## Default Work Mode
 
 All normal work starts in this repo. Priority tasks:
+- Read `catalog/INDEX.md` first when deciding where new artifacts belong.
+- Use `scripts/catalog_sync.py --write` to regenerate `catalog/registry.json` from the repo tree before creating a new top-level folder.
+- Update the catalog and `scripts/catalog_guard.py` whenever a new structural folder is added.
 - Editing and improving papers (publication quality: precise, formal, cross-referenced)
 - Maintaining cross-references between papers and the knowledge graph
 - Updating `CITATION.cff` and `README.md` for accuracy
 - Adding or revising `assets/` for figures and diagrams
+
+## Folder Policy
+
+- Every persistent artifact has one canonical home.
+- New top-level folders are not created ad hoc; they must be registered first.
+- Scratch work goes in `INBOX/` or a temporary workspace, never in source roots.
+- Generated outputs stay isolated in `output/`, `distilled/`, `evals/`, or `reports/` as appropriate.
 
 ## Archive
 

@@ -22,6 +22,10 @@ fn default_version() -> u32 {
     1
 }
 
+fn default_retrieval_count() -> u64 {
+    0
+}
+
 /// Opaque identifier for a memory entry.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct MemoryId(pub String);
@@ -73,6 +77,12 @@ pub struct MemoryEntry {
     /// Version counter — incremented on supersession. Default: 1.
     #[serde(default = "default_version")]
     pub version: u32,
+    /// Successful retrieval count persisted by the memory store. Default: 0.
+    #[serde(default = "default_retrieval_count")]
+    pub retrieval_count: u64,
+    /// Unix timestamp of the most recent successful retrieval.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_retrieved_at: Option<i64>,
     /// ID of the entry this supersedes (if updating an existing key). Optional.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub superseded_by: Option<String>,

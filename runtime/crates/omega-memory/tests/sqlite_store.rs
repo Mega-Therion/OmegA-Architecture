@@ -33,6 +33,8 @@ fn entry(content: &str, source: &str, importance: f64) -> MemoryEntry {
         key: None,
         raw_artifact: None,
         tier: None,
+        retrieval_count: 0,
+        last_retrieved_at: None,
     }
 }
 
@@ -59,6 +61,32 @@ async fn write_read_roundtrip() {
     assert_eq!(retrieved.source, "chat");
     // The stored id should match the returned id.
     assert_eq!(retrieved.id, Some(id));
+}
+
+// ---------------------------------------------------------------------------
+// Test 1b — read increments retrieval telemetry
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn read_increments_retrieval_telemetry() {
+    let store = make_store().await;
+
+    let e = entry("telemetry check", "chat", 0.6);
+    let id = store.write(e).await.unwrap().into_id();
+
+    let first = store.read(&id).await.unwrap().unwrap();
+    assert_eq!(first.retrieval_count, 1);
+    let first_ts = first.last_retrieved_at.expect("expected timestamp");
+
+    tokio::time::sleep(Duration::from_millis(5)).await;
+
+    let second = store.read(&id).await.unwrap().unwrap();
+    assert_eq!(second.retrieval_count, 2);
+    let second_ts = second.last_retrieved_at.expect("expected timestamp");
+    assert!(
+        second_ts >= first_ts,
+        "expected non-decreasing retrieval timestamps"
+    );
 }
 
 // ---------------------------------------------------------------------------

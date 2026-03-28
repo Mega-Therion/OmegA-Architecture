@@ -8,7 +8,16 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tools.pub_packager import main_logic, aegis_check, emit_trace
+from tools.pub_packager import main_logic, aegis_check, emit_trace, INVARIANTS, get_env
+
+class TestInvariants:
+    def test_invariants_declared(self):
+        assert isinstance(INVARIANTS, list)
+        assert len(INVARIANTS) > 0
+        assert all(isinstance(item, str) and item.strip() for item in INVARIANTS)
+
+    def test_env_helper_default(self):
+        assert get_env("OMEGA_TEST_ENV", default="ok") == "ok"
 
 class TestAEGIS:
     def test_capability_gate_blocks_unknown(self):

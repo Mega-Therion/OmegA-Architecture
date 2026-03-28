@@ -14,6 +14,16 @@
 
 ---
 
+## Repository Atlas
+
+Use the catalog before creating or moving anything.
+
+- `catalog/INDEX.md` — canonical folder policy and read order
+- `catalog/registry.json` — machine-readable card catalog for top-level homes
+- `scripts/catalog_sync.py` — regenerates or validates the registry from the repo tree
+- `scripts/catalog_guard.py` — validates that new top-level folders are registered
+- `CLAUDE.md` — agent-facing repo guidance and default work mode
+
 ## What Is Ωmegα?
 
 Contemporary AI agent frameworks treat **memory**, **cognition**, **identity**, and **governance** as loosely coupled concerns — implemented in separate tools, prompt layers, or fine-tuning regimes — with no unified formal model of how these layers interact, constrain each other, or degrade together under failure.

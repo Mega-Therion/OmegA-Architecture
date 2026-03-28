@@ -325,8 +325,9 @@ impl MemoryStore for SqliteMemoryStore {
             r#"
             INSERT INTO memory_entries
                 (id, content, source, importance, created_at, namespace, embedding,
-                 domain, confidence, version, superseded_by, key, raw_artifact, tier)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+                 domain, confidence, version, superseded_by, key, raw_artifact, tier,
+                 retrieval_count, last_retrieved_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
             ON CONFLICT(id) DO UPDATE SET
                 content       = excluded.content,
                 source        = excluded.source,
@@ -357,6 +358,8 @@ impl MemoryStore for SqliteMemoryStore {
         .bind(&entry.key)
         .bind(&entry.raw_artifact)
         .bind(&entry.tier)
+        .bind(0_i64)
+        .bind(None::<i64>)
         .execute(&self.pool)
         .await
         .map_err(MemoryStoreError::Sqlx)?;
@@ -377,9 +380,22 @@ impl MemoryStore for SqliteMemoryStore {
 
     /// Retrieve a single entry by its [`MemoryId`].
     async fn read(&self, id: &MemoryId) -> Result<Option<MemoryEntry>, MemoryError> {
+        let now_ts = Utc::now().timestamp();
+        let _ = sqlx::query(
+            "UPDATE memory_entries \
+             SET retrieval_count = retrieval_count + 1, last_retrieved_at = ?1 \
+             WHERE id = ?2",
+        )
+        .bind(now_ts)
+        .bind(&id.0)
+        .execute(&self.pool)
+        .await
+        .map_err(MemoryStoreError::Sqlx)?;
+
         let row = sqlx::query(
             "SELECT id, content, source, importance, created_at, namespace, \
-             domain, confidence, version, superseded_by, key, raw_artifact, tier \
+             domain, confidence, version, superseded_by, key, raw_artifact, tier, \
+             retrieval_count, last_retrieved_at \
              FROM memory_entries WHERE id = ?1",
         )
         .bind(&id.0)
@@ -482,6 +498,13 @@ impl MemoryStore for SqliteMemoryStore {
                 .collect();
 
             results.truncate(limit);
+            let ids: Vec<String> = results
+                .iter()
+                .filter_map(|e| e.id.as_ref().map(|i| i.0.clone()))
+                .collect();
+            let now_ts = Utc::now().timestamp();
+            bump_retrievals(&self.pool, &ids).await?;
+            apply_retrieval_telemetry(&mut results, now_ts);
             return Ok(results);
         }
 
@@ -505,47 +528,39 @@ impl MemoryStore for SqliteMemoryStore {
         .await
         .map_err(MemoryStoreError::Sqlx)?;
 
-        Ok(rows.iter().map(row_to_entry).collect())
+        let mut entries: Vec<MemoryEntry> = rows.iter().map(row_to_entry).collect();
+        let ids: Vec<String> = entries
+            .iter()
+            .filter_map(|e| e.id.as_ref().map(|i| i.0.clone()))
+            .collect();
+        let now_ts = Utc::now().timestamp();
+        bump_retrievals(&self.pool, &ids).await?;
+        apply_retrieval_telemetry(&mut entries, now_ts);
+        Ok(entries)
     }
 
     /// Fetch random memories (used for background Dream State reflection).
     async fn get_random(&self, limit: usize) -> Result<Vec<MemoryEntry>, MemoryError> {
         let limit_i64 = limit as i64;
         let rows = sqlx::query(
-            "SELECT id, content, source, importance, created_at, namespace \
-             FROM omega_memory_entries ORDER BY RANDOM() LIMIT $1",
+            "SELECT id, content, source, importance, created_at, namespace, \
+             domain, confidence, version, superseded_by, key, raw_artifact, tier, \
+             retrieval_count, last_retrieved_at \
+             FROM memory_entries ORDER BY RANDOM() LIMIT ?1",
         )
         .bind(limit_i64)
         .fetch_all(&self.pool)
         .await
         .map_err(MemoryStoreError::Sqlx)?;
 
-        let entries = rows
-            .into_iter()
-            .map(|r| MemoryEntry {
-                id: Some(MemoryId::new(
-                    r.try_get::<String, _>("id").unwrap_or_default(),
-                )),
-                content: r.try_get("content").unwrap_or_default(),
-                source: r
-                    .try_get::<String, _>("source")
-                    .unwrap_or_else(|_| "chat".to_string()),
-                importance: r.try_get::<f64, _>("importance").unwrap_or(0.5),
-                created_at: r.try_get::<Option<String>, _>("created_at").unwrap_or(None),
-                namespace: r
-                    .try_get::<String, _>("namespace")
-                    .unwrap_or_else(|_| "default".to_string()),
-                tags: vec![],
-                domain: Default::default(),
-                confidence: 1.0,
-                version: 1,
-                superseded_by: None,
-                key: None,
-                raw_artifact: None,
-                tier: None,
-            })
+        let mut entries: Vec<MemoryEntry> = rows.iter().map(row_to_entry).collect();
+        let ids: Vec<String> = entries
+            .iter()
+            .filter_map(|e| e.id.as_ref().map(|i| i.0.clone()))
             .collect();
-
+        let now_ts = Utc::now().timestamp();
+        bump_retrievals(&self.pool, &ids).await?;
+        apply_retrieval_telemetry(&mut entries, now_ts);
         Ok(entries)
     }
 }
@@ -730,6 +745,45 @@ fn row_to_entry(r: &sqlx::sqlite::SqliteRow) -> MemoryEntry {
             .try_get::<Option<String>, _>("raw_artifact")
             .unwrap_or(None),
         tier: r.try_get::<Option<String>, _>("tier").unwrap_or(None),
+        retrieval_count: r
+            .try_get::<i64, _>("retrieval_count")
+            .unwrap_or(0)
+            .max(0) as u64,
+        last_retrieved_at: r
+            .try_get::<Option<i64>, _>("last_retrieved_at")
+            .unwrap_or(None),
+    }
+}
+
+async fn bump_retrievals(pool: &SqlitePool, ids: &[String]) -> Result<(), MemoryStoreError> {
+    if ids.is_empty() {
+        return Ok(());
+    }
+    let now_ts = Utc::now().timestamp();
+    let mut sql = String::from(
+        "UPDATE memory_entries SET retrieval_count = retrieval_count + 1, \
+         last_retrieved_at = ?1 WHERE id IN (",
+    );
+    for idx in 0..ids.len() {
+        if idx > 0 {
+            sql.push(',');
+        }
+        sql.push_str(&format!("?{}", idx + 2));
+    }
+    sql.push(')');
+
+    let mut query = sqlx::query(&sql).bind(now_ts);
+    for id in ids {
+        query = query.bind(id);
+    }
+    query.execute(pool).await.map_err(MemoryStoreError::Sqlx)?;
+    Ok(())
+}
+
+fn apply_retrieval_telemetry(entries: &mut [MemoryEntry], now_ts: i64) {
+    for entry in entries {
+        entry.retrieval_count = entry.retrieval_count.saturating_add(1);
+        entry.last_retrieved_at = Some(now_ts);
     }
 }
 

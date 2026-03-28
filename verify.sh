@@ -5,7 +5,13 @@ ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 1. Python Syntax Check
 echo ">> Checking Python syntax..."
-mapfile -t PY_FILES < <(rg --files "$ROOT_DIR/omega" "$ROOT_DIR/tools" "$ROOT_DIR/evals" "$ROOT_DIR/voice" "$ROOT_DIR/runtime/voice" -g '*.py')
+PY_SCAN_PATHS=()
+for candidate in "$ROOT_DIR/omega" "$ROOT_DIR/tools" "$ROOT_DIR/evals" "$ROOT_DIR/voice" "$ROOT_DIR/runtime/voice"; do
+    if [ -e "$candidate" ]; then
+        PY_SCAN_PATHS+=("$candidate")
+    fi
+done
+mapfile -t PY_FILES < <(rg --files "${PY_SCAN_PATHS[@]}" -g '*.py')
 if [ "${#PY_FILES[@]}" -gt 0 ]; then
     python3 -m py_compile "${PY_FILES[@]}"
 fi
@@ -20,6 +26,26 @@ fi
 
 # 3. Polyglot runtime validation
 echo ">> Running polyglot runtime validation..."
-python3 "$ROOT_DIR/tools/polyglot_runtime.py" --build --test --json
+POLYGLOT_ARGS=(--build --test --json)
+if [ -n "${OMEGA_GATEWAY_URL:-}" ]; then
+    POLYGLOT_ARGS+=(--gateway-url "$OMEGA_GATEWAY_URL")
+fi
+python3 "$ROOT_DIR/tools/polyglot_runtime.py" "${POLYGLOT_ARGS[@]}"
+
+# 4. Live route smoke validation when a deployed base URL is available
+if [ -n "${OMEGA_BASE_URL:-}" ] || [ -n "${VERCEL_URL:-}" ]; then
+    BASE_URL="${OMEGA_BASE_URL:-${VERCEL_URL}}"
+    case "$BASE_URL" in
+        http://*|https://*)
+            ;;
+        *)
+            BASE_URL="https://${BASE_URL}"
+            ;;
+    esac
+    echo ">> Running live route smoke validation against ${BASE_URL}..."
+    node "$ROOT_DIR/web/scripts/omega-smoke.mjs" --base "$BASE_URL"
+else
+    echo ">> Skipping live route smoke validation (set OMEGA_BASE_URL or VERCEL_URL to enable)."
+fi
 
 echo ">> Verification Complete: PASS"

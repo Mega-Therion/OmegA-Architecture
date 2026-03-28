@@ -93,6 +93,36 @@ class IngestResult:
         return self.status in (IngestStatus.SUCCESS, IngestStatus.DUPLICATE, IngestStatus.UPDATED)
 
 
+@dataclass
+class IngestCheckpoint:
+    """Canonical checkpoint entry for ingest journaling."""
+    version: int
+    timestamp: float
+    job: dict
+    result: dict
+
+    def to_dict(self) -> dict:
+        return {
+            "version": self.version,
+            "timestamp": self.timestamp,
+            "job": self.job,
+            "result": self.result,
+        }
+
+
+CHECKPOINT_VERSION = 1
+
+
+def build_checkpoint(job: IngestJob, result: IngestResult) -> IngestCheckpoint:
+    """Build the canonical checkpoint record."""
+    return IngestCheckpoint(
+        version=CHECKPOINT_VERSION,
+        timestamp=time.time(),
+        job=job.to_dict(),
+        result=result.to_dict(),
+    )
+
+
 class IngestPlane:
     """
     Structured ingestion engine over the canonical DocumentStore.
@@ -181,7 +211,7 @@ class IngestPlane:
             # Re-create a job from the failed result's provenance
             job = IngestJob(
                 source_type=IngestSource(failed.provenance.get("source_type", "text")),
-                source_uri=failed.source_id,
+                source_uri=failed.provenance.get("source_uri", failed.source_id),
                 title=failed.provenance.get("title", ""),
                 metadata=failed.provenance.get("metadata", {}),
             )
@@ -268,7 +298,13 @@ class IngestPlane:
             version=doc.version,
             parent_doc_id=doc.parent_doc_id,
             elapsed_ms=(time.time() - start) * 1000,
-            provenance=doc.to_provenance(),
+            provenance={
+                **doc.to_provenance(),
+                "source_type": job.source_type.value,
+                "source_uri": job.source_uri,
+                "title": job.title or doc.title,
+                "metadata": job.metadata,
+            },
         )
         self._journal(result, job)
         return result
@@ -282,6 +318,7 @@ class IngestPlane:
             elapsed_ms=(time.time() - start) * 1000,
             provenance={
                 "source_type": job.source_type.value,
+                "source_uri": job.source_uri,
                 "title": job.title,
                 "metadata": job.metadata,
             },
@@ -294,11 +331,7 @@ class IngestPlane:
         if not self._journal_path:
             return
         self._journal_path.mkdir(parents=True, exist_ok=True)
-        entry = {
-            "timestamp": time.time(),
-            "job": job.to_dict(),
-            "result": result.to_dict(),
-        }
+        entry = build_checkpoint(job, result).to_dict()
         journal_file = self._journal_path / "ingest_journal.jsonl"
         with journal_file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
