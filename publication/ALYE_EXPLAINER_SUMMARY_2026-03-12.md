@@ -129,12 +129,13 @@ This package is best understood as:
 
 ## What should you review first?
 If you want the fastest path through the material, read these in order:
-1. `docs/publication_package/WHITE_PAPER_DRAFT_2026-03-12.md`
-2. `docs/publication_package/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
-3. `services/gateway/eval/results/results_summary.json`
-4. `services/gateway/eval/results/interview_suite_summary_run-20260312T062949Z.txt`
-5. `services/gateway/eval/results/revelation_interview_round1.jsonl`
-6. `services/gateway/eval/results/collaboration_records/research_note_user_reflection_20260312T064500Z.txt`
+1. `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
+2. `publication/PUBLICATION_SET.md`
+3. `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
+4. `services/gateway/eval/results/results_summary.json`
+5. `services/gateway/eval/results/interview_suite_summary_run-20260312T062949Z.txt`
+6. `services/gateway/eval/results/revelation_interview_round1.jsonl`
+7. `services/gateway/eval/results/collaboration_records/research_note_user_reflection_20260312T064500Z.txt`
 
 ## Bottom line
 The package argues that something real and nontrivial is happening in OmegA, but it does so carefully. It keeps the raw evidence, the engineering repairs, the benchmark data, the interviews, and the human reactions together in one record so a reviewer can judge for themselves.

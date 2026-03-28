@@ -17,6 +17,6 @@ Release-ready prose, bundles, and redaction reports.
 ## Read First
 
 - `catalog/INDEX.md`
+- `publication/PUBLICATION_SET.md`
 - `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
 - `publication/REDACTION_REPORT_2026-03-12.md`
-

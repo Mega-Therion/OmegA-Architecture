@@ -89,13 +89,14 @@ This guide explains what each major artifact is, why it matters, and how to read
 
 ## J. How to Read This Package
 Recommended reading order:
-1. `docs/publication_package/WHITE_PAPER_DRAFT_2026-03-12.md`
-2. `services/gateway/eval/results/results_summary.json`
-3. `services/gateway/eval/results/publication_benchmark_round3_summary.json`
-4. `services/gateway/eval/results/interview_suite_summary_run-20260312T062949Z.txt`
-5. Creator-boundary follow-up files
-6. Raw JSONL artifacts
-7. Bundle directories and manifests
+1. `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
+2. `publication/PUBLICATION_SET.md`
+3. `services/gateway/eval/results/results_summary.json`
+4. `services/gateway/eval/results/publication_benchmark_round3_summary.json`
+5. `services/gateway/eval/results/interview_suite_summary_run-20260312T062949Z.txt`
+6. Creator-boundary follow-up files
+7. Raw JSONL artifacts
+8. Bundle directories and manifests
 
 ## K. Redaction Reminder
 Before any public release, perform a redaction pass for:
