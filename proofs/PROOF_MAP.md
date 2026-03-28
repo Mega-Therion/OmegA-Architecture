@@ -87,6 +87,8 @@ For each theorem/invariant in `specs/THEOREM_LEDGER.md`, this document traces:
 | Claim | V <= tau_verify blocks action regardless of rho and R |
 | Formal statement | `specs/THEOREM_LEDGER.md` T-6 |
 | Code path | `omega/risk_gate.py::RiskGate.multi_gate()` |
+| Lean4 proof | `proofs/OmegaProofs/VerifierNonBypass.lean` — verifier/bridge/risk non-bypass, no compensation, universal non-bypass |
+| Correspondence | `proofs/correspondence.py::TestT6Correspondence` — 7 tests bridging Lean model to runtime |
 | State machine | `proofs/state_machines.py::TestVerifierNonBypass` — verifier, bridge, conjunction invariants across randomized gate evaluations |
 | Test | `proofs/invariants.py::test_verifier_non_bypass` |
 | Runtime artifact | multi_gate result dict |
@@ -129,6 +131,8 @@ For each theorem/invariant in `specs/THEOREM_LEDGER.md`, this document traces:
 | Claim | S_t is append-only; historical entries immutable |
 | Formal statement | `specs/THEOREM_LEDGER.md` T-9 |
 | Code path | `omega/phylactery.py::Phylactery.commit()`, `Phylactery.verify_chain()` |
+| Lean4 proof | `proofs/OmegaProofs/SelfTagImmutability.lean` — prefix preservation, genesis immutability, historical entry immutability, length monotonicity, log prefix at earlier time |
+| Correspondence | `proofs/correspondence.py::TestT9Correspondence` — 6 tests bridging Lean model to runtime |
 | State machine | `proofs/state_machines.py::TestSelfTagImmutability` — append-only, prefix preservation, genesis immutability across randomized commits |
 | Test | `proofs/invariants.py::test_self_tag_immutability` |
 | Runtime artifact | Phylactery chain (append-only by construction) |
@@ -158,8 +162,8 @@ For each theorem/invariant in `specs/THEOREM_LEDGER.md`, this document traces:
 | T-3 | Yes | -- | Yes (5 tests) | Yes | Yes (conformance) | -- |
 | T-4 | Yes | -- | -- | -- | Yes (conformance) | -- |
 | T-5 | Yes | -- | Yes (5 tests) | Yes | Yes (memory growth) | Yes |
-| T-6 | Yes | Yes | -- | -- | -- | -- |
+| T-6 | Yes | Yes | Yes (7 tests) | Yes | -- | -- |
 | T-7 | Yes | -- | Yes (7 tests) | Yes | Yes (conformance) | -- |
 | T-8 | -- | -- | -- | -- | Yes (aegis identity) | Conditional |
-| T-9 | Yes | Yes | -- | -- | Yes (cross-session) | -- |
+| T-9 | Yes | Yes | Yes (6 tests) | Yes | Yes (cross-session) | -- |
 | T-10 | Yes | Yes | -- | -- | Yes (deterministic) | -- |

@@ -13,6 +13,11 @@ proofs/
   invariants.py          -- 36 property-based tests (hypothesis) for all 10 theorems
   correspondence.py      -- 29 proof-to-implementation correspondence tests
   state_machines.py      -- 4 stateful state machine tests (T-1, T-6, T-9, T-10)
+  fuzz_envelope.py       -- fuzz harness for RunEnvelope and EnvelopeClock
+  fuzz_phylactery.py     -- fuzz harness for Phylactery corruption detection
+  fuzz_memory.py         -- fuzz harness for MemoryGraph integrity
+  fuzz_drift.py          -- fuzz harness for ClaimBudget and DriftController
+  STATUS.md              -- single proof-status truth page
   PROOF_MAP.md           -- claim-to-evidence traceability matrix
   lakefile.toml          -- Lean4 Lake project config
   lean-toolchain         -- pinned Lean4 version
@@ -30,9 +35,10 @@ tools/proof_auditor.py   -- drift check for theorem/claim/proof correspondence
 
 | Type | Method | Location | Status |
 |---|---|---|---|
-| Machine-checked proofs | Lean4 | `proofs/OmegaProofs/*.lean` | T-2, T-3, T-5, T-7 |
-| Proof-to-impl correspondence | Python hypothesis | `proofs/correspondence.py` | T-2, T-3, T-5, T-7 (29 tests) |
+| Machine-checked proofs | Lean4 | `proofs/OmegaProofs/*.lean` | T-2, T-3, T-5, T-6, T-7, T-9 (6 files) |
+| Proof-to-impl correspondence | Python hypothesis | `proofs/correspondence.py` | T-2, T-3, T-5, T-6, T-7, T-9 (42 tests) |
 | Stateful state machines | Python hypothesis | `proofs/state_machines.py` | T-1, T-6, T-9, T-10 (4 machines) |
+| Fuzz harnesses | Python hypothesis | `proofs/fuzz_*.py` | envelope, phylactery, memory, drift (75 tests) |
 | Property-based tests | Python hypothesis | `proofs/invariants.py` | T-1 through T-10 (36 tests) |
 | Deterministic assertions | pytest | `evals/test_conformance.py` | 59 assertions |
 | Empirical evidence | Evaluation reports | `evals/*.json` | recorded |
@@ -75,10 +81,12 @@ curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh 
 | T-2 | `IdentityContinuity.lean` | Chain integrity, tamper detection, chain determinism |
 | T-3 | `GovernanceFailClosed.lean` | Fail-closed gate, monotonic denial, default denial |
 | T-5 | `MemoryHardening.lean` | Monotonicity, boundedness, fixed point |
+| T-6 | `VerifierNonBypass.lean` | Verifier/bridge/risk non-bypass, no compensation, universal non-bypass |
 | T-7 | `UnifiedGating.lean` | Conjunction required, single-gate blocking, order invariance, only-all-true permits |
+| T-9 | `SelfTagImmutability.lean` | Prefix preservation, genesis immutability, entry immutability, length monotonicity |
 
 ## Remaining Phase 3 Work
 
-- TLA+ model checking for T-1, T-6, T-9 — requires Java (Python stateful machines provide equivalent coverage)
-- Symbolic execution of risk gate score bounds
+- TLA+ model checking for T-1 — requires Java (Python stateful machines provide equivalent coverage)
 - Mathlib integration for full real-number T-5 proofs
+- Reproducibility container for outside testers

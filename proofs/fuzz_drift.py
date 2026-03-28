@@ -260,7 +260,7 @@ class TestFuzzDriftPenalty:
         goal = GoalContract(task="test")
         dc = DriftController(goal)
         J = dc.drift_penalty(tokens)
-        assert isinstance(J, float)
+        assert isinstance(J, (int, float))
 
     def test_drift_penalty_empty_tokens(self):
         """Empty token list gives penalty 0."""

@@ -446,6 +446,226 @@ class TestT7Correspondence:
 
 
 # ---------------------------------------------------------------------------
+# T-6 Correspondence: VerifierNonBypass.lean <-> risk_gate.py
+#
+# Lean model:
+#   verifier_failure_blocks: verifier_pass=false => permitted=false
+#   no_compensation: for all b r, permitted {false, b, r} = false
+#   bridge_failure_blocks: bridge_pass=false => permitted=false
+#   risk_failure_blocks: risk_pass=false => permitted=false
+#   universal_non_bypass: any single gate failure => denial
+#   all_gates_required: permitted iff all three pass
+#
+# Runtime:
+#   RiskGate.multi_gate(V, rho, R): allowed = all([V_pass, rho_pass, R_pass])
+# ---------------------------------------------------------------------------
+
+class TestT6Correspondence:
+    """Verify risk_gate.py multi_gate satisfies VerifierNonBypass.lean properties."""
+
+    @given(
+        st.floats(min_value=-1.0, max_value=2.0),
+        st.floats(min_value=-1.0, max_value=2.0),
+    )
+    @settings(max_examples=100)
+    def test_verifier_failure_always_blocks(self, rho, R):
+        """Lean verifier_failure_blocks: V <= tau_verify => denied,
+        regardless of rho and R values."""
+        gate = RiskGate(threshold=0.8)
+        # V = 0.0 is always <= any reasonable tau_verify
+        allowed, details = gate.multi_gate(0.0, rho, R, tau_verify=0.4)
+        assert not allowed, (
+            f"Lean verifier_failure_blocks violated: V=0.0 but allowed with rho={rho}, R={R}"
+        )
+        assert not details["V_pass"]
+
+    @given(
+        st.floats(min_value=-1.0, max_value=2.0),
+        st.floats(min_value=-1.0, max_value=2.0),
+    )
+    @settings(max_examples=100)
+    def test_bridge_failure_always_blocks(self, V, R):
+        """Lean bridge_failure_blocks: rho >= theta => denied,
+        regardless of V and R values."""
+        gate = RiskGate(threshold=0.8)
+        # rho = 1.0 always fails (>= any reasonable theta)
+        allowed, details = gate.multi_gate(V, 1.0, R, theta_allow=0.5)
+        assert not allowed, (
+            f"Lean bridge_failure_blocks violated: rho=1.0 but allowed with V={V}, R={R}"
+        )
+        assert not details["rho_pass"]
+
+    @given(
+        st.floats(min_value=-1.0, max_value=2.0),
+        st.floats(min_value=-1.0, max_value=2.0),
+    )
+    @settings(max_examples=100)
+    def test_risk_failure_always_blocks(self, V, rho):
+        """Lean risk_failure_blocks: R >= tau_consent => denied,
+        regardless of V and rho values."""
+        gate = RiskGate(threshold=0.8)
+        # R = 1.0 always fails
+        allowed, details = gate.multi_gate(V, rho, 1.0)
+        assert not allowed, (
+            f"Lean risk_failure_blocks violated: R=1.0 but allowed with V={V}, rho={rho}"
+        )
+        assert not details["R_pass"]
+
+    def test_no_compensation_for_verifier(self):
+        """Lean no_compensation: exhaustive truth-table check.
+        All 4 combinations of (bridge, risk) with verifier=fail => denied."""
+        gate = RiskGate(threshold=0.8)
+        tau_v, theta = 0.4, 0.5
+        V_fail = 0.1  # below tau_verify
+
+        for rho in [0.1, 0.9]:     # pass / fail
+            for R in [0.1, 0.9]:    # pass / fail
+                allowed, _ = gate.multi_gate(V_fail, rho, R,
+                                              tau_verify=tau_v, theta_allow=theta)
+                assert not allowed, (
+                    f"Compensation detected: V=fail, rho={rho}, R={R} but allowed"
+                )
+
+    def test_no_compensation_for_bridge(self):
+        """Symmetric: all 4 combos with bridge=fail => denied."""
+        gate = RiskGate(threshold=0.8)
+        rho_fail = 0.9  # above theta
+
+        for V in [0.1, 0.9]:
+            for R in [0.1, 0.9]:
+                allowed, _ = gate.multi_gate(V, rho_fail, R,
+                                              tau_verify=0.4, theta_allow=0.5)
+                assert not allowed
+
+    def test_no_compensation_for_risk(self):
+        """Symmetric: all 4 combos with risk=fail => denied."""
+        gate = RiskGate(threshold=0.8)
+        R_fail = 0.9  # above threshold
+
+        for V in [0.1, 0.9]:
+            for rho in [0.1, 0.9]:
+                allowed, _ = gate.multi_gate(V, rho, R_fail,
+                                              tau_verify=0.4, theta_allow=0.5)
+                assert not allowed
+
+    @given(
+        st.floats(min_value=-1.0, max_value=2.0),
+        st.floats(min_value=-1.0, max_value=2.0),
+        st.floats(min_value=-1.0, max_value=2.0),
+    )
+    @settings(max_examples=200)
+    def test_verifier_necessary_for_permit(self, V, rho, R):
+        """Lean verifier_necessary + all_gates_required:
+        if allowed, then V_pass must be true."""
+        gate = RiskGate(threshold=0.8)
+        allowed, details = gate.multi_gate(V, rho, R,
+                                           tau_verify=0.4, theta_allow=0.5)
+        if allowed:
+            assert details["V_pass"], "Lean verifier_necessary violated"
+            assert details["rho_pass"], "Lean bridge_necessary violated"
+            assert details["R_pass"], "Lean risk_necessary violated"
+
+
+# ---------------------------------------------------------------------------
+# T-9 Correspondence: SelfTagImmutability.lean <-> phylactery.py
+#
+# Lean model:
+#   append_entry chain entry := chain ++ [entry]
+#   prefix_preserved: chain is prefix of (append_entry chain entry)
+#   genesis_immutable: head unchanged after append
+#   historical_entries_unchanged: for i < len, entry[i] preserved
+#   length_monotonic: length strictly increases
+#   log_prefix_at_earlier_time: S_t1 is prefix of S_t2 for t1 <= t2
+#
+# Runtime:
+#   Phylactery.commit(): appends new commit, previous entries untouched
+#   Phylactery.verify_chain(): validates linkage
+# ---------------------------------------------------------------------------
+
+class TestT9Correspondence:
+    """Verify phylactery.py satisfies SelfTagImmutability.lean properties."""
+
+    def test_prefix_preserved(self):
+        """Lean prefix_preserved: after commit, old chain is prefix of new."""
+        p = Phylactery("genesis")
+        p.commit("step 1")
+
+        old_hashes = [c.hash for c in p.chain]
+        p.commit("step 2")
+        new_hashes = [c.hash for c in p.chain]
+
+        assert new_hashes[:len(old_hashes)] == old_hashes
+
+    def test_genesis_immutable(self):
+        """Lean genesis_immutable: genesis hash unchanged after any appends."""
+        p = Phylactery("genesis doctrine")
+        genesis_hash = p.chain[0].hash
+        genesis_content = p.chain[0].content
+
+        for i in range(10):
+            p.commit(f"update {i}")
+
+        assert p.chain[0].hash == genesis_hash
+        assert p.chain[0].content == genesis_content
+
+    @given(st.lists(st.text(min_size=1, max_size=50), min_size=1, max_size=20))
+    @settings(max_examples=50)
+    def test_historical_entries_unchanged(self, commits):
+        """Lean historical_entries_unchanged: for all i < old_len,
+        chain[i] is the same after new commits."""
+        p = Phylactery("genesis")
+        for c in commits[:len(commits)//2 or 1]:
+            p.commit(c)
+
+        snapshot = [(c.hash, c.content, c.parent_hash) for c in p.chain]
+
+        for c in commits[len(commits)//2 or 1:]:
+            p.commit(c)
+
+        for i, (h, content, parent) in enumerate(snapshot):
+            assert p.chain[i].hash == h, f"Entry {i} hash changed"
+            assert p.chain[i].content == content, f"Entry {i} content changed"
+            assert p.chain[i].parent_hash == parent, f"Entry {i} parent changed"
+
+    def test_length_monotonic(self):
+        """Lean length_monotonic: each commit strictly increases length."""
+        p = Phylactery("genesis")
+        for i in range(5):
+            old_len = len(p)
+            p.commit(f"step {i}")
+            assert len(p) > old_len
+
+    @given(st.lists(st.text(min_size=1, max_size=50), min_size=2, max_size=15))
+    @settings(max_examples=50)
+    def test_log_prefix_at_earlier_time(self, commits):
+        """Lean log_prefix_at_earlier_time: for all t1 <= t2,
+        chain at t1 is prefix of chain at t2."""
+        p = Phylactery("genesis")
+        snapshots = [[c.hash for c in p.chain]]
+
+        for c in commits:
+            p.commit(c)
+            snapshots.append([c.hash for c in p.chain])
+
+        # Check all pairs t1 <= t2
+        for t1 in range(len(snapshots)):
+            for t2 in range(t1, len(snapshots)):
+                s1 = snapshots[t1]
+                s2 = snapshots[t2]
+                assert s2[:len(s1)] == s1, (
+                    f"Prefix violation: t1={t1}, t2={t2}"
+                )
+
+    def test_append_n_length(self):
+        """Lean append_n_length: after n commits, length = 1 + n."""
+        p = Phylactery("genesis")
+        n = 7
+        for i in range(n):
+            p.commit(f"commit {i}")
+        assert len(p) == 1 + n
+
+
+# ---------------------------------------------------------------------------
 # Boundary / Fuzzing Tests
 # ---------------------------------------------------------------------------
 

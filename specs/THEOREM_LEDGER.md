@@ -148,7 +148,7 @@ If r > 0 and repeated, q_ij converges monotonically toward r from below.
 
 ## T-6: Verifier Non-Bypass
 
-**Classification:** Executable Invariant
+**Classification:** Theorem
 
 **Formal Statement:**
 The unified 3-gate composition requires all three gates to pass. The verifier (V) cannot be silently bypassed:
@@ -160,10 +160,12 @@ multi_gate(V, rho, R) == True  <=>  (V > tau_verify) AND (rho < theta_allow) AND
 If V <= tau_verify, the action is blocked regardless of rho and R values.
 
 **Code path:** `omega/risk_gate.py::RiskGate.multi_gate()`
+**Lean4 proof:** `proofs/OmegaProofs/VerifierNonBypass.lean` — verifier/bridge/risk non-bypass, no compensation, universal non-bypass, all gates required
+**Correspondence:** `proofs/correspondence.py::TestT6Correspondence` — 7 tests bridging Lean model to runtime
 **State machine:** `proofs/state_machines.py::TestVerifierNonBypass` — verifier, bridge, conjunction invariants across randomized gate evaluations
 **Test:** `proofs/invariants.py::TestVerifierNonBypass`
 **Paper:** `papers/OmegA_Unified_Architecture_Paper.md` -- Unified Action Gating
-**Evidence status:** Tested (property-based + stateful state machine)
+**Evidence status:** Machine-checked (Lean4) + runtime correspondence + stateful state machine
 
 ---
 
@@ -212,7 +214,7 @@ forall provider p in {Claude, Gemini, GPT, DeepSeek, Qwen, Local}:
 
 ## T-9: Self-Tag Immutability (S_t Append-Only)
 
-**Classification:** Executable Invariant
+**Classification:** Theorem
 
 **Formal Statement:**
 The self-tag log S_t is append-only. For all t1 < t2:
@@ -224,10 +226,12 @@ S_t1 is a prefix of S_t2
 No entry in S_t can be modified or deleted after creation. New entries are only appended.
 
 **Code path:** `omega/phylactery.py::Phylactery.commit()` (chain is append-only by construction)
+**Lean4 proof:** `proofs/OmegaProofs/SelfTagImmutability.lean` — prefix preservation, genesis immutability, historical entry immutability, length monotonicity, multi-append prefix, log prefix at earlier time
+**Correspondence:** `proofs/correspondence.py::TestT9Correspondence` — 6 tests bridging Lean model to runtime
 **State machine:** `proofs/state_machines.py::TestSelfTagImmutability` — append-only, prefix preservation, genesis immutability across randomized commits
 **Test:** `proofs/invariants.py::TestSelfTagImmutability`
 **Paper:** `papers/ADCCL_Final_Paper.md`, `papers/AEON_Final_Paper.md`
-**Evidence status:** Tested (property-based + stateful state machine)
+**Evidence status:** Machine-checked (Lean4) + runtime correspondence + stateful state machine
 
 **Note:** The Phylactery chain serves as both identity log and self-tag record. Append-only is enforced by the hash chain: modifying any historical entry invalidates all subsequent hashes.
 

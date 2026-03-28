@@ -103,6 +103,9 @@ python3 "$ROOT_DIR/omegactl.py" eval
 echo ">> Running Proof Audit..."
 python3 "$ROOT_DIR/tools/proof_auditor.py"
 
+echo ">> Running Claim Audit..."
+python3 "$ROOT_DIR/tools/claim_auditor.py"
+
 # 3. Polyglot runtime validation
 echo ">> Running polyglot runtime validation..."
 if is_memory_only_change_set; then
@@ -176,7 +179,7 @@ echo ">> Formal Invariant Suite: PASS (36/36 property tests)"
 # 5b. Proof-to-Implementation Correspondence (T-2, T-3, T-5, T-7)
 echo ">> Running Proof-to-Implementation Correspondence Tests..."
 if "$PROOF_PYTHON" -m pytest "$ROOT_DIR/proofs/correspondence.py" -v --tb=short -q 2>&1 | tail -1 | grep -q "passed"; then
-    echo ">> Correspondence Tests: PASS (29/29)"
+    echo ">> Correspondence Tests: PASS (42/42)"
 else
     echo ">> Correspondence Tests: FAIL"
     exit 1
@@ -191,10 +194,27 @@ else
     exit 1
 fi
 
-# 6. Lean4 Machine-Checked Proofs (T-2, T-3, T-5, T-7)
+# 5d. Fuzz Harnesses
+echo ">> Running Fuzz Harnesses..."
+FUZZ_FAIL=0
+for fuzz_file in "$ROOT_DIR/proofs/fuzz_envelope.py" "$ROOT_DIR/proofs/fuzz_phylactery.py" "$ROOT_DIR/proofs/fuzz_memory.py" "$ROOT_DIR/proofs/fuzz_drift.py"; do
+    if [ -f "$fuzz_file" ]; then
+        if ! "$PROOF_PYTHON" -m pytest "$fuzz_file" -q --tb=line 2>&1 | tail -1 | grep -q "passed"; then
+            echo "   FAIL: $(basename "$fuzz_file")"
+            FUZZ_FAIL=1
+        fi
+    fi
+done
+if [ "$FUZZ_FAIL" -eq 1 ]; then
+    echo ">> Fuzz Harnesses: FAIL"
+    exit 1
+fi
+echo ">> Fuzz Harnesses: PASS"
+
+# 6. Lean4 Machine-Checked Proofs (T-2, T-3, T-5, T-6, T-7, T-9)
 LEAN_BIN="$HOME/.elan/bin/lean"
 if [ -x "$LEAN_BIN" ] && [ -f "$ROOT_DIR/proofs/lakefile.toml" ]; then
-    echo ">> Building Lean4 proof package (T-2, T-3, T-5, T-7)..."
+    echo ">> Building Lean4 proof package (T-2, T-3, T-5, T-6, T-7, T-9)..."
     export PATH="$HOME/.elan/bin:$PATH"
     if (cd "$ROOT_DIR/proofs" && lake build 2>&1 | tail -5); then
         echo ">> Lean4 Proofs: PASS"

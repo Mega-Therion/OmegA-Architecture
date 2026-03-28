@@ -17,10 +17,10 @@ Each proven or demonstrable claim maps to a formal theorem in [`specs/THEOREM_LE
 | T-3 | Governance gate fails closed (AEGIS) | Machine-checked | Lean4: `proofs/OmegaProofs/GovernanceFailClosed.lean` + `proofs/correspondence.py::TestT3Correspondence` |
 | T-4 | Claim budget validity and grounding ratio bounds | Tested | `proofs/invariants.py::TestClaimBudgetBounds` |
 | T-5 | Memory hardening is monotonic under positive reward | Machine-checked | Lean4: `proofs/OmegaProofs/MemoryHardening.lean` + `proofs/correspondence.py::TestT5Correspondence` |
-| T-6 | Verifier cannot be silently bypassed | Tested | `proofs/invariants.py::TestVerifierNonBypass` + `proofs/state_machines.py::TestVerifierNonBypass` |
+| T-6 | Verifier cannot be silently bypassed | Machine-checked | Lean4: `proofs/OmegaProofs/VerifierNonBypass.lean` + `proofs/correspondence.py::TestT6Correspondence` |
 | T-7 | Unified 3-gate composition is conjunctive | Machine-checked | Lean4: `proofs/OmegaProofs/UnifiedGating.lean` + `proofs/correspondence.py::TestT7Correspondence` |
 | T-8 | Provider non-collapse (sovereign identity) | Conditional | `evals/test_aegis_identity.py` (single-provider; multi requires live Ollama) |
-| T-9 | Self-tag log is append-only / immutable | Tested | `proofs/invariants.py::TestSelfTagImmutability` + `proofs/state_machines.py::TestSelfTagImmutability` |
+| T-9 | Self-tag log is append-only / immutable | Machine-checked | Lean4: `proofs/OmegaProofs/SelfTagImmutability.lean` + `proofs/correspondence.py::TestT9Correspondence` |
 | T-10 | Run envelope completeness, identity check, and monotonic versioning | Tested | `proofs/invariants.py::TestEnvelopeCompleteness` + `proofs/state_machines.py::TestEnvelopeClockMonotonic` |
 
 ---

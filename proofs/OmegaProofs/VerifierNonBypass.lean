@@ -80,8 +80,8 @@ theorem no_compensation_tt : permitted ⟨false, true, true⟩   = false := by n
 
 theorem bridge_failure_blocks (g : GateResult) (h : g.bridge_pass = false) :
     permitted g = false := by
-  unfold permitted; simp [h]
-  cases g.verifier_pass <;> simp
+  unfold permitted
+  cases g.verifier_pass <;> simp [h]
 
 theorem bridge_necessary (g : GateResult) (h : permitted g = true) :
     g.bridge_pass = true := by
@@ -100,8 +100,8 @@ theorem no_compensation_bridge (v r : Bool) :
 
 theorem risk_failure_blocks (g : GateResult) (h : g.risk_pass = false) :
     permitted g = false := by
-  unfold permitted; simp [h]
-  cases g.verifier_pass <;> cases g.bridge_pass <;> simp
+  unfold permitted
+  cases g.verifier_pass <;> cases g.bridge_pass <;> simp [h]
 
 theorem risk_necessary (g : GateResult) (h : permitted g = true) :
     g.risk_pass = true := by

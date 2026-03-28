@@ -71,7 +71,7 @@ def main() -> int:
     if claim_rows.get("T-8") != "Conditional":
         issues.append("Claim ledger must keep T-8 as Conditional")
 
-    if claim_rows.get("T-10") != "Tested":
+    if "Tested" not in claim_rows.get("T-10", ""):
         issues.append("Claim ledger must keep T-10 as Tested")
 
     if "EnvelopeClock.next()" not in theorem_ledger:

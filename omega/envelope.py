@@ -47,6 +47,8 @@ class RunEnvelope:
         return isinstance(self.version, int) and self.version > 0
 
     def has_identity(self) -> bool:
+        if not isinstance(self.identity_kernel, dict):
+            return False
         return bool(self.identity_kernel and self.identity_kernel.get("name"))
 
     def to_system_prompt(self) -> str:

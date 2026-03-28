@@ -34,14 +34,18 @@ theorem prefix_preserved (chain : List α) (entry : α) :
   T-9b: Genesis immutable.
   The first element of the chain is unchanged after appending.
 -/
+theorem append_entry_ne_nil (chain : List α) (entry : α) :
+    append_entry chain entry ≠ [] := by
+  unfold append_entry
+  simp
+
 theorem genesis_immutable (chain : List α) (entry : α) (h : chain ≠ []) :
-    (append_entry chain entry).head (by
-      unfold append_entry
-      simp [List.append_eq_nil_iff]
-      exact h) =
+    (append_entry chain entry).head (append_entry_ne_nil chain entry) =
     chain.head h := by
   unfold append_entry
-  simp [List.head_append_of_ne_nil]
+  cases chain with
+  | nil => exact absurd rfl h
+  | cons x xs => simp
 
 /-
   T-9c: Historical entries unchanged (core immutability theorem).

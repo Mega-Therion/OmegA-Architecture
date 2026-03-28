@@ -19,19 +19,22 @@ Install ripgrep: `sudo apt install ripgrep` (Debian/Ubuntu) or `brew install rip
 
 ---
 
-## One-Command Setup
+## One-Command Setup and Full Verification
 
 ```bash
 git clone https://github.com/Mega-Therion/OmegA-Architecture.git && cd OmegA-Architecture
+bash scripts/alye_verification.sh
 ```
+
+This single script runs ALL verification steps and prints a structured PASS/FAIL report. It covers: master eval, knowledge graph, proof audit, claim audit, property tests (36), correspondence tests (42), state machines (4), fuzz harnesses (75), Lean4 proofs (if installed), and the full release gate.
 
 No pip install is required for the blind verification path. The `omega/` package and test files run with Python stdlib + whatever is already importable.
 
 ---
 
-## Test Sequence
+## Manual Test Sequence (alternative)
 
-Run these in order. Each step is independent.
+If you prefer to run steps individually:
 
 ### Step 1 — Master eval (the core blind gate)
 
