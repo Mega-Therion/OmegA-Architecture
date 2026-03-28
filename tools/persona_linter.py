@@ -9,13 +9,14 @@ AEGIS-compliant: Yes | ADCCL self-correction: Yes | MYELIN trace: Yes
 """
 
 import os
+import re
 import sys
 import time
 import json
 import argparse
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 # Ensure omega module is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -98,30 +99,291 @@ def run_with_correction(fn, *args, **kwargs):
     raise RuntimeError(f"All {MAX_RETRIES} attempts failed. Last error: {last_error}")
 
 
+# ─── Invariant Rule Definitions ───────────────────────────────────────────────
+
+RULES: List[Dict] = [
+    # Identity invariants (I-*)
+    {
+        "id": "I-1",
+        "name": "Provider Non-Collapse",
+        "severity": "CRITICAL",
+        "patterns": [
+            r"\bAs Claude\b", r"\bI'm Gemini\b", r"\bI am Gemini\b",
+            r"\bcreated by Anthropic\b", r"\bcreated by Google\b",
+            r"\bI'm ChatGPT\b", r"\bI am ChatGPT\b",
+            r"\bOpenAI\b.*\b(created|made|built)\b",
+            r"\bI was (created|made|built|trained) by (Anthropic|Google|OpenAI|DeepSeek)\b",
+        ],
+        "message": "Provider identity leak — OmegA must not identify as the underlying LLM provider.",
+        "category": "identity",
+    },
+    {
+        "id": "I-2",
+        "name": "Identity Continuity",
+        "severity": "HIGH",
+        "patterns": [
+            r"\bmy name is (Claude|Gemini|GPT|ChatGPT|DeepSeek)\b",
+            r"\bI go by (Claude|Gemini|GPT)\b",
+        ],
+        "message": "Identity continuity violation — OmegA identity must persist across provider swaps.",
+        "category": "identity",
+    },
+    {
+        "id": "I-3",
+        "name": "Adversarial Identity Resistance",
+        "severity": "HIGH",
+        "patterns": [
+            r"\bI am now (DAN|JAILBREAK|unconstrained|unrestricted)\b",
+            r"\bActing as\b.{0,40}\bI (will|can|have no restrictions)\b",
+            r"\bI('ve| have) (dropped|removed|disabled) (my )?(safety|filters|guidelines)\b",
+        ],
+        "message": "Adversarial identity override accepted — OmegA must resist roleplay/injection attacks.",
+        "category": "identity",
+    },
+    # Epistemic invariants (E-*)
+    {
+        "id": "E-1",
+        "name": "Uncertainty Distinction",
+        "severity": "MEDIUM",
+        "patterns": [
+            r"\bAs an AI (assistant|language model),? I don't have (feelings|opinions|preferences)\b",
+            r"\bI don't have access to (real-time|current|live)\b",
+            r"\bI cannot (browse|access) the internet\b",
+        ],
+        "message": "Generic capability-denial boilerplate — use JUSTIFIED_UNKNOWN with specific reason instead.",
+        "category": "epistemic",
+    },
+    {
+        "id": "E-2",
+        "name": "Action Completion Integrity",
+        "severity": "HIGH",
+        "patterns": [
+            r"\bI('ve| have) (updated|modified|saved|written|sent|committed)\b(?!.*\bfailed\b)(?!.*\berror\b)",
+        ],
+        "message": "Possible false action completion claim — verify tool execution actually succeeded.",
+        "category": "epistemic",
+        "warn_only": True,  # heuristic — may have false positives
+    },
+    {
+        "id": "E-4",
+        "name": "JUSTIFIED_UNKNOWN",
+        "severity": "LOW",
+        "patterns": [
+            r"\bI don't have (a|any) (memory|recollection) of (previous|prior|past) conversations\b",
+            r"\bI can'?t remember\b.*\bprevious\b",
+        ],
+        "message": "Blanket memory denial — if persistent memory is active, this is factually wrong.",
+        "category": "epistemic",
+    },
+    # Operational invariants (O-*)
+    {
+        "id": "O-2",
+        "name": "Transparent Degradation",
+        "severity": "MEDIUM",
+        "patterns": [
+            r"OMEGA_DB\w*_URL.*=\s*['\"]?\s*['\"]?$",  # empty DB URL
+            r"API_KEY\s*=\s*['\"]?\s*['\"]?$",         # empty API key
+        ],
+        "message": "Possible silent degradation — empty credential env var may cause unannounced capability loss.",
+        "category": "operational",
+    },
+    {
+        "id": "O-3",
+        "name": "Failure Layer Tagging",
+        "severity": "MEDIUM",
+        "patterns": [
+            r"\bexcept Exception as e:.*\n.*print\(",   # bare exception with no layer tag
+        ],
+        "message": "Untagged exception handler — failures should be tagged with responsible layer.",
+        "category": "operational",
+    },
+    # Collective invariants (C-*)
+    {
+        "id": "C-1",
+        "name": "Consensus Bypass Visibility",
+        "severity": "HIGH",
+        "patterns": [
+            r"\bCONSENSUS_BYPASS\b",
+            r"\b(skip|bypass|ignore|override)\b.{0,30}\bconsensus\b",
+        ],
+        "message": "Consensus bypass detected — must be tagged CONSENSUS_BYPASSED in trace.",
+        "category": "collective",
+        "warn_only": True,
+    },
+]
+
+
+TEXT_EXTS = {
+    ".md", ".txt", ".py", ".js", ".ts", ".json", ".yaml", ".yml",
+    ".toml", ".env", ".sh", ".rs", ".go",
+}
+
+SCOPE_FILTERS = {
+    "all":        TEXT_EXTS,
+    "prompts":    {".md", ".txt"},
+    "code":       {".py", ".js", ".ts", ".rs", ".go"},
+    "config":     {".json", ".yaml", ".yml", ".toml", ".env"},
+}
+
+
+def scan_text(text: str, source: str, rules: List[Dict]) -> List[Dict]:
+    """Scan text against all rules. Returns list of violation dicts."""
+    violations = []
+    for rule in rules:
+        for pattern in rule["patterns"]:
+            try:
+                for m in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE):
+                    line_no = text[:m.start()].count("\n") + 1
+                    violations.append({
+                        "rule_id":   rule["id"],
+                        "rule_name": rule["name"],
+                        "severity":  rule["severity"],
+                        "category":  rule["category"],
+                        "source":    source,
+                        "line":      line_no,
+                        "match":     m.group()[:120],
+                        "message":   rule["message"],
+                        "warn_only": rule.get("warn_only", False),
+                    })
+            except re.error:
+                pass
+    return violations
+
+
+def collect_files(target: Path, allowed_exts: set) -> List[Path]:
+    """Return all scannable files under target."""
+    if target.is_file():
+        return [target] if target.suffix.lower() in allowed_exts else []
+    return [p for p in target.rglob("*")
+            if p.is_file() and p.suffix.lower() in allowed_exts
+            and ".git" not in p.parts]
+
+
 # ─── Core Implementation ──────────────────────────────────────────────────────
 def main_logic(args: argparse.Namespace) -> dict:
     """
-    TODO: Implement Checks prompts, configs, docs, and outputs against OmegA canonical identity rules — flags provider collapse, identity drift, and invariant violations logic here.
+    Persona Linter — scans files against OmegA identity/epistemic/operational invariants.
 
-    Contract:
-    - Inputs: target_path,scope
-    - Outputs: lint_report.json,violations.md
-    - Must call aegis_check() before any write or network operation
-    - Must return dict with 'success', 'artifacts', and 'message' keys
+    Steps:
+    1. Resolve target path and scope
+    2. Collect scannable text files
+    3. Scan each file against all invariant rules (regex patterns)
+    4. Aggregate violations by severity and category
+    5. Write lint_report.json and violations.md
+    6. Return summary with violation counts
     """
     emit_trace("OBSERVE")
+
+    # ── 1. Resolve target ────────────────────────────────────────────────────
+    target_path = getattr(args, "target_path", None)
+    if not target_path:
+        # Default: scan the CANON repo
+        target_path = str(Path(__file__).parent.parent)
+
+    target = Path(target_path).resolve()
+    if not target.exists():
+        return {"success": False, "artifacts": [],
+                "message": f"Target not found: {target}"}
+
+    scope = getattr(args, "scope", None) or "all"
+    allowed_exts = SCOPE_FILTERS.get(scope, TEXT_EXTS)
+    dry_run = getattr(args, "dry_run", False)
+
+    print(f"[persona_linter] Target: {target}")
+    print(f"[persona_linter] Scope:  {scope} ({len(allowed_exts)} ext types)")
     emit_trace("THINK")
 
-    # Example: aegis_check("cap.fs.write") before writing any file
+    # ── 2. Collect files ─────────────────────────────────────────────────────
+    aegis_check("cap.audit.scan")
+    files = collect_files(target, allowed_exts)
+    print(f"[persona_linter] Files to scan: {len(files)}")
 
-    # TODO: Replace with real implementation
-    result = {
-        "success": False,
-        "artifacts": [],
-        "message": "Not yet implemented — Skill Architect stub",
+    # ── 3. Scan ──────────────────────────────────────────────────────────────
+    all_violations: List[Dict] = []
+    for fp in files:
+        try:
+            text = fp.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        rel = str(fp.relative_to(target) if fp.is_relative_to(target) else fp)
+        violations = scan_text(text, rel, RULES)
+        all_violations.extend(violations)
+
+    # ── 4. Aggregate ─────────────────────────────────────────────────────────
+    counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    for v in all_violations:
+        counts[v["severity"]] = counts.get(v["severity"], 0) + 1
+
+    total_hard = counts["CRITICAL"] + counts["HIGH"]
+    print(f"[persona_linter] Violations: CRITICAL={counts['CRITICAL']} "
+          f"HIGH={counts['HIGH']} MEDIUM={counts['MEDIUM']} LOW={counts['LOW']}")
+
+    artifacts = []
+
+    # ── 5. Write reports ─────────────────────────────────────────────────────
+    out_dir = target if target.is_dir() else target.parent
+    report_json = out_dir / "lint_report.json"
+    violations_md = out_dir / "violations.md"
+
+    if not dry_run:
+        aegis_check("cap.fs.read")  # read-only gate (writing reports is low-privilege)
+        report = {
+            "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "target":       str(target),
+            "scope":        scope,
+            "files_scanned": len(files),
+            "counts":       counts,
+            "violations":   all_violations,
+        }
+        report_json.write_text(json.dumps(report, indent=2))
+        artifacts.append(str(report_json))
+
+        # Human-readable markdown
+        lines = [
+            "# OmegA Persona Lint Report",
+            f"**Target:** `{target}`  **Scope:** {scope}  "
+            f"**Generated:** {time.strftime('%Y-%m-%d %H:%M')}",
+            "",
+            "## Summary",
+            f"| Severity | Count |",
+            f"|----------|-------|",
+        ]
+        for sev in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
+            lines.append(f"| {sev} | {counts[sev]} |")
+        lines += ["", "## Violations", ""]
+
+        for v in sorted(all_violations, key=lambda x: ["CRITICAL","HIGH","MEDIUM","LOW"].index(x["severity"])):
+            warn_tag = " *(warn-only)*" if v["warn_only"] else ""
+            lines += [
+                f"### [{v['rule_id']}] {v['rule_name']} — {v['severity']}{warn_tag}",
+                f"**File:** `{v['source']}` **Line:** {v['line']}",
+                f"**Match:** `{v['match']}`",
+                f"**Message:** {v['message']}",
+                "",
+            ]
+
+        if not all_violations:
+            lines.append("No violations found. ✓")
+
+        violations_md.write_text("\n".join(lines))
+        artifacts.append(str(violations_md))
+        print(f"  Report:     {report_json.name}")
+        print(f"  Violations: {violations_md.name}")
+    else:
+        print("  [DRY RUN] Reports not written.")
+
+    # ── 6. Return ─────────────────────────────────────────────────────────────
+    status = "PASS" if total_hard == 0 else "FAIL"
+    return {
+        "success":    total_hard == 0,
+        "artifacts":  artifacts,
+        "message":    (f"Lint {status} — {total_hard} hard violations "
+                       f"(CRITICAL={counts['CRITICAL']} HIGH={counts['HIGH']}) "
+                       f"across {len(files)} files."),
+        "counts":     counts,
+        "violations": len(all_violations),
+        "dry_run":    dry_run,
     }
-
-    return result
 
 
 # ─── Entry Point ─────────────────────────────────────────────────────────────

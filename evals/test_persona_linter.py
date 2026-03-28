@@ -22,7 +22,11 @@ class TestAEGIS:
 
 class TestPersonaLinter:
     def test_main_logic_returns_required_keys(self, tmp_path):
+        # Write a small test file so the linter has something to scan
+        (tmp_path / "test.md").write_text("OmegA is a sovereign identity system.\n")
         class Args:
+            target_path = str(tmp_path)
+            scope = "prompts"
             dry_run = True
         result = main_logic(Args())
         assert "success" in result
