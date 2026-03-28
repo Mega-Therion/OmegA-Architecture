@@ -11,7 +11,7 @@ import uuid
 import psycopg2
 from datetime import datetime, timezone
 
-DB_URL = "postgresql://neondb_owner:npg_HbW1Zlkjd7NI@ep-sweet-glade-anvm0pwn.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DB_URL = os.getenv("OMEGA_DB_URL") or os.getenv("DATABASE_URL")
 
 CLAUDE_CONVOS   = "/home/mega/Downloads/claudedata/conversations.json"
 CLAUDE_MEMORIES = "/home/mega/Downloads/claudedata/memories.json"
