@@ -26,3 +26,4 @@ The export artifacts above are derived from, but do not replace, the canonical s
 
 - Use the source bundles when editing content.
 - Use the export artifacts when handing off, publishing, or converting the corpus into PDF or another presentation format.
+- Use `python3 scripts/render_publication_exports.py --all` to emit the PDF bundles into `output/publication/`.

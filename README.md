@@ -28,6 +28,7 @@ Use the catalog before creating or moving anything.
 - `publication/RELEASE.md` — publication front door for choosing public vs reviewer-gated bundles
 - `publication/PUBLICATION_SET.md` — master index for the publication corpus
 - `publication/exports/INDEX.md` — export-ready handoff artifacts
+- `scripts/render_publication_exports.py` — render the publication export tracks to PDF
 - `publication/PUBLIC_RELEASE_BUNDLE.md` — redaction-safe public release bundle
 - `publication/PRIVATE_REVIEW_BUNDLE.md` — reviewer-gated bundle with supporting material
 
@@ -196,6 +197,7 @@ Use these documents to choose the right publication track:
 - `publication/RELEASE.md` — start here if you need to decide which bundle to use
 - `publication/PUBLICATION_SET.md` — master map of the corpus
 - `publication/exports/INDEX.md` — export-ready handoff artifacts
+- `scripts/render_publication_exports.py` — render the publication export tracks to PDF
 - `publication/PUBLIC_RELEASE_BUNDLE.md` — public / redaction-safe track
 - `publication/PRIVATE_REVIEW_BUNDLE.md` — trusted review / internal track
 
