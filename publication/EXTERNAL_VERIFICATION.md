@@ -140,6 +140,6 @@ Any deviation from these counts should be treated as a regression and reported.
 
 ## 6. Contact / Repository
 
-**Author:** Ryan Wayne Yett
+**Author:** R.W. Yett
 **GitHub:** https://github.com/Mega-Therion/OmegA-Architecture
 **DOI:** 10.5281/zenodo.19111653

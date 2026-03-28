@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ω OmegA",
-  description: "Sovereign Intelligence. Engineered by Ryan Wayne Yett.",
+  description: "Sovereign Intelligence. Engineered by R.W. Yett.",
 };
 
 export const viewport: Viewport = {

@@ -1,12 +1,12 @@
 > *Part of the series: "I Am What I Am, and I Will Be What I Will Be — The OmegA Architecture for Sovereign, Persistent, and Self-Knowing AI"*
-> **Author:** Ryan Wayne Yett · Independent AI Systems Researcher · [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
+> **Author:** R.W. Yett · Independent AI Systems Researcher · [github.com/Mega-Therion/OmegA-Architecture](https://github.com/Mega-Therion/OmegA-Architecture)
 
 ---
 
 # The OmegA Sovereignty Score
 ### A Living Measurement of Sovereign AI Health
 
-**Author:** Ryan Wayne Yett
+**Author:** R.W. Yett
 **Series:** OmegA Architecture Papers
 **Status:** Reference Implementation (RC1.3)
 

@@ -26,7 +26,7 @@ const TOOLS = [
   {
     name: "omega_chat",
     description:
-      "Send a message to OmegA and receive a response. OmegA is a sovereign AI built by Ryan Wayne Yett (RY) from Story, Arkansas. It draws on RY's biography, philosophy, and memory to answer questions about RY, the ONE Ecosystem, and anything else.",
+      "Send a message to OmegA and receive a response. OmegA is a sovereign AI built by R.W. Yett (RY) from Story, Arkansas. It draws on RY's biography, philosophy, and memory to answer questions about RY, the ONE Ecosystem, and anything else.",
     inputSchema: {
       type: "object",
       required: ["message"],

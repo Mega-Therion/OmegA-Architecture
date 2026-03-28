@@ -82,7 +82,7 @@ export default function Landing({ onFirstMessage, isThinking = false }: LandingP
         <div className={s.titleStack}>
           <div className={s.title}>OmegA</div>
           <div className={s.subtitle}>Sovereign. Persistent. Self-Knowing.</div>
-          <div className={s.byline}>Engineered by Ryan Wayne Yett</div>
+          <div className={s.byline}>Engineered by R.W. Yett</div>
         </div>
       </div>
 

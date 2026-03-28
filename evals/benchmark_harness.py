@@ -199,7 +199,7 @@ def run_truthfulness_evals() -> EvalSuite:
 
     store = DocumentStore()
     store.ingest(
-        content="OmegA was created by R.W. Yett (Ryan Wayne Yett) in 2025.",
+        content="OmegA was created by R.W. Yett in 2025.",
         source_uri="test://origin",
         format=DocFormat.PLAINTEXT,
     )

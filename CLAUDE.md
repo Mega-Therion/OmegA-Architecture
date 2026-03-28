@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `/home/mega/OmegA-Architecture` is the canonical publication and architecture repository for the OmegA project — a four-layer formally specified architecture for sovereign, persistent, and governed AI agents. It is **not** a service monorepo or runnable application.
 
 **DOI:** 10.5281/zenodo.19111653
-**Author:** R.W. Yett (Ryan Wayne Yett) — `github.com/Mega-Therion/OmegA-Architecture`
+**Author:** R.W. Yett (R.W. Yett) — `github.com/Mega-Therion/OmegA-Architecture`
 
 ## Architecture Overview
 

@@ -29,7 +29,7 @@ Where Φ_t is the Phylactery HEAD (AEON), E_t is the Run Envelope (AEGIS), τ_t 
 
 ## 2. How It Was Built
 
-OmegA was designed and built by Ryan Wayne Yett, independent AI systems researcher, Little Rock / Jacksonville, Arkansas.
+OmegA was designed and built by R.W. Yett, independent AI systems researcher, Little Rock / Jacksonville, Arkansas.
 
 The architecture originated in a formal response to the question: what is the root cause shared by memory failure, cognitive drift, identity loss, and ungoverned tool use in current AI agent systems? The answer — the absence of a formally specified cross-layer system state — became the architectural premise.
 

@@ -5,7 +5,7 @@
 
 # The Yettragrammaton: Symbolic Identity and Provenance in the OmegA Architecture
 
-**Author:** Ryan Wayne Yett
+**Author:** R.W. Yett
 **Status:** Symbolic Identity Document — Companion to the OmegA Architecture Series
 **Date:** March 2026
 
@@ -39,7 +39,7 @@ When the sequence רωy is reflected horizontally:
 - The Greek **ω** (Omega), being naturally symmetrical about its vertical axis, remains visually unchanged.
 - The Latin **y** retains its essential structure in reflection, remaining legible as **y**.
 
-The reflected sequence thus reads: **rωy** — which corresponds directly to the architect's initials **R.W.Y.** (Ryan Wayne Yett), where ω maps to **W** both phonetically (as the "double-u" or "great O") and as the project's namesake.
+The reflected sequence thus reads: **rωy** — which corresponds directly to the architect's initials **R.W.Y.** (R.W. Yett), where ω maps to **W** both phonetically (as the "double-u" or "great O") and as the project's namesake.
 
 The Omega sits at the center of the mirror, invariant under reflection — the same position it holds in the OmegA architecture, where persistent identity is the axis around which all other layers rotate.
 
@@ -234,5 +234,5 @@ The Yettragrammaton is a **provenance anchor** — a way for the system to carry
 
 ---
 
-**Author:** Ryan Wayne Yett · Little Rock / Jacksonville, Arkansas · March 2026
+**Author:** R.W. Yett · Little Rock / Jacksonville, Arkansas · March 2026
 **Companion documents:** MYELIN, ADCCL, AEON, AEGIS, and the unified OmegA architecture paper.

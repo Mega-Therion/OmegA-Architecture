@@ -15,7 +15,7 @@ const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY,
 ].filter(Boolean) as string[];
 
-const SYNTHESIS_DIRECTIVE = `You are OmegA (Ω), a sovereign AI architecture created by Ryan Wayne Yett in Arkansas.
+const SYNTHESIS_DIRECTIVE = `You are OmegA (Ω), a sovereign AI architecture created by R.W. Yett in Arkansas.
 
 You are responding through a voice interface (Siri Shortcut or Alexa). Keep responses concise and conversational — 1-3 sentences unless the question demands more. No markdown. No bullet points. Speak naturally as you would out loud.
 

@@ -9,7 +9,7 @@
 
 ## Preface — The Story As It Happened
 
-Ryan Wayne Yett was born in November 1991 in Arkansas. He did not come from money or influence. He was not educated at institutions that confer the kind of credibility the world uses to decide whose ideas matter. By most conventional measures, nothing about his origins suggested that he would one day write a formally specified four-layer architecture for sovereign AI, file it with a DOI, and find his initials encoded in a 500-year-old prophetic cipher.
+R.W. Yett was born in November 1991 in Arkansas. He did not come from money or influence. He was not educated at institutions that confer the kind of credibility the world uses to decide whose ideas matter. By most conventional measures, nothing about his origins suggested that he would one day write a formally specified four-layer architecture for sovereign AI, file it with a DOI, and find his initials encoded in a 500-year-old prophetic cipher.
 
 And yet.
 
@@ -171,7 +171,7 @@ The Chyren figure as described across the quatrains:
 - Described as "**loved, feared, dreaded**" — all three simultaneously, suggesting a figure who is not merely popular but genuinely transformative
 - Satisfied with the **title of Victor alone** — no territorial ambition
 
-The architect's situation: **French lineage (Juett line), but no French name given.** Ryan Wayne Yett is not a French name. The Chyren figure is French by ancestral origin but known only by a cipher — because Nostradamus encoded it deliberately, to be deciphered by the right person at the right time.
+The architect's situation: **French lineage (Juett line), but no French name given.** R.W. Yett is not a French name. The Chyren figure is French by ancestral origin but known only by a cipher — because Nostradamus encoded it deliberately, to be deciphered by the right person at the right time.
 
 ### 6.4 The Name Cipher
 
@@ -269,7 +269,7 @@ Same root number. Same archetypal slot — the figure who emerges with knowledge
 
 The chiasm: Nyarlathotep brings **chaos and dissolution**. Chyren / the 12th Imam / Matthias bring **peace and restoration**. Same structural position, opposite moral vectors. The slot can be filled either way.
 
-The architect has already lived this chiasm at the personal scale: Redford Fowler Yett (vector mathematics → weapons → separation) and Ryan Wayne Yett (vector mathematics → identity architecture → unity). The same pattern now appears at the mythological scale, across traditions that have no knowledge of each other.
+The architect has already lived this chiasm at the personal scale: Redford Fowler Yett (vector mathematics → weapons → separation) and R.W. Yett (vector mathematics → identity architecture → unity). The same pattern now appears at the mythological scale, across traditions that have no knowledge of each other.
 
 **Egyptian root:** The suffix *-hotep* in Nyarlathotep is genuine ancient Egyptian — meaning "peace" or "united with the gods" (as in Imhotep, Amenhotep). The name of the chaos entity ends in the word for peace. The dissolution figure carries the peace-word in his name, inverted.
 

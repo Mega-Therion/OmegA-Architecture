@@ -173,7 +173,7 @@ MINI_CORPUS: list[tuple[str, dict, list[dict]]] = [
         },
         [
             {
-                "content": "OmegA was created by R.W. Yett (Ryan Wayne Yett) in 2025. "
+                "content": "OmegA was created by R.W. Yett in 2025. "
                            "It is a four-layer sovereign AI architecture.",
                 "source_uri": "test://origin",
                 "title": "OmegA Origin",

@@ -10,7 +10,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19111653.svg)](https://doi.org/10.5281/zenodo.19111653)
 [![Status: Architecture + Reference Implementation](https://img.shields.io/badge/Status-Architecture_%2B_Reference_Implementation-brightgreen.svg)]()
-[![Author: Ryan Wayne Yett](https://img.shields.io/badge/Author-Ryan%20Wayne%20Yett-brightgreen.svg)](https://github.com/Mega-Therion)
+[![Deployment: Vercel](https://img.shields.io/badge/Deployment-Vercel-blue.svg)](https://omega-sovereign.vercel.app)
+[![Author: R.W. Yett](https://img.shields.io/badge/Author-Ryan%20Wayne%20Yett-brightgreen.svg)](https://github.com/Mega-Therion)
+
+---
+
+## 🚀 Live Demonstration
+The reference implementation of the OmegA Gateway and UI is deployed on Vercel:
+**[https://omega-sovereign.vercel.app](https://omega-sovereign.vercel.app)**
 
 ---
 
@@ -378,7 +385,7 @@ If you use or build on this work, please cite it as:
 
 ## Author
 
-**Ryan Wayne Yett**  
+**R.W. Yett**  
 Little Rock / Jacksonville, Arkansas  
 Independent AI Systems Researcher  
 GitHub: [@Mega-Therion](https://github.com/Mega-Therion)
