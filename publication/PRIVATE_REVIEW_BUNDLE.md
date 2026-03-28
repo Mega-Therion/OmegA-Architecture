@@ -9,6 +9,7 @@ It is broader than the public release bundle and is intended for trusted review,
 
 - `publication/PUBLICATION_SET.md`
 - `publication/PUBLIC_RELEASE_BUNDLE.md`
+- `publication/OMEGA_MASTER_SYNTHESIS.md`
 - `papers/THE_OMEGA_ARCHITECTURE_CRITIQUE.md`
 - `papers/THE_OMEGA_ARCHITECTURE_SPLIT_PLAN.md`
 
@@ -17,6 +18,7 @@ It is broader than the public release bundle and is intended for trusted review,
 ### Public release artifacts
 
 - `publication/PUBLIC_RELEASE_BUNDLE.md`
+- `publication/OMEGA_MASTER_SYNTHESIS.md`
 - `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
 - `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
 - `publication/REDACTION_REPORT_2026-03-12.md`
@@ -63,4 +65,3 @@ It is broader than the public release bundle and is intended for trusted review,
 ## Review Rule
 
 This bundle may include material that is too detailed for public release, but it should still be redaction-aware and provenance-safe.
-

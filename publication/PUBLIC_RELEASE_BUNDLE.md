@@ -8,6 +8,7 @@ It keeps the strongest technical and evaluative artifacts while excluding review
 ## Read First
 
 - `publication/PUBLICATION_SET.md`
+- `publication/OMEGA_MASTER_SYNTHESIS.md`
 - `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
 - `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
 - `publication/REDACTION_REPORT_2026-03-12.md`
@@ -16,6 +17,7 @@ It keeps the strongest technical and evaluative artifacts while excluding review
 
 ### Core publication papers
 
+- `publication/OMEGA_MASTER_SYNTHESIS.md`
 - `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
 - `papers/OmegA_Unified_Architecture_Paper.md`
 - `papers/AEGIS_Final_Paper.md`
@@ -60,4 +62,3 @@ It keeps the strongest technical and evaluative artifacts while excluding review
 ## Release Rule
 
 If an artifact is not redaction-safe, it does not belong in this bundle.
-

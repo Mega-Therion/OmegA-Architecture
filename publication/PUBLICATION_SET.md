@@ -9,6 +9,7 @@ It separates the release-ready set, supporting technical papers, private addenda
 
 - `catalog/INDEX.md`
 - `publication/RELEASE.md`
+- `publication/OMEGA_MASTER_SYNTHESIS.md`
 - `publication/INDEX.md`
 - `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
 - `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
@@ -21,7 +22,12 @@ It separates the release-ready set, supporting technical papers, private addenda
 - `publication/PRIVATE_REVIEW_BUNDLE.md`
   - Reviewer-gated bundle for the broader corpus.
 
-## 2. Canonical Release Set
+## 2. Single-Paper Umbrella
+
+- `publication/OMEGA_MASTER_SYNTHESIS.md`
+  - One-paper summary with the core state equation and control loop.
+
+## 3. Canonical Release Set
 
 These are the primary artifacts that define the public or near-public publication package.
 
@@ -42,7 +48,7 @@ These are the primary artifacts that define the public or near-public publicatio
 - `papers/Sovereignty_Score.md`
   - Scoring and framing document for sovereign-system evaluation.
 
-## 3. Supporting Technical Papers
+## 4. Supporting Technical Papers
 
 These are important for reviewers, but they are best read as supporting material around the canonical release set rather than as the main release package.
 
@@ -53,13 +59,13 @@ These are important for reviewers, but they are best read as supporting material
 - `papers/hsca_paper_draft.md`
 - `papers/The_Yettragrammaton.md`
 
-## 4. Private Addenda
+## 5. Private Addenda
 
 These files should remain private or reviewer-gated unless the release policy explicitly changes.
 
 - `papers/Yettragrammaton_Private_Addendum.md`
 
-## 5. Publication Support and Appendix Material
+## 6. Publication Support and Appendix Material
 
 These artifacts support reproducibility, review, and redaction.
 
@@ -70,23 +76,24 @@ These artifacts support reproducibility, review, and redaction.
 - `publication/ALYE_EXPLAINER_SUMMARY_2026-03-12.md`
   - Plain-English explainer for non-specialist review.
 
-## 6. Recommended Release Order
+## 7. Recommended Release Order
 
 Use this order when preparing a publication packet or reviewer bundle.
 
-1. `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
-2. `publication/PUBLICATION_SET.md`
-3. `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
-4. `publication/REDACTION_REPORT_2026-03-12.md`
-5. `publication/ALYE_EXPLAINER_SUMMARY_2026-03-12.md`
-6. `papers/OmegA_Unified_Architecture_Paper.md`
-7. `papers/AEGIS_Final_Paper.md`
-8. `papers/AEON_Final_Paper.md`
-9. `papers/ADCCL_Final_Paper.md`
-10. `papers/MYELIN_Final_Paper.md`
-11. Supporting technical papers and private addenda as required by the audience
+1. `publication/OMEGA_MASTER_SYNTHESIS.md`
+2. `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
+3. `publication/PUBLICATION_SET.md`
+4. `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
+5. `publication/REDACTION_REPORT_2026-03-12.md`
+6. `publication/ALYE_EXPLAINER_SUMMARY_2026-03-12.md`
+7. `papers/OmegA_Unified_Architecture_Paper.md`
+8. `papers/AEGIS_Final_Paper.md`
+9. `papers/AEON_Final_Paper.md`
+10. `papers/ADCCL_Final_Paper.md`
+11. `papers/MYELIN_Final_Paper.md`
+12. Supporting technical papers and private addenda as required by the audience
 
-## 7. Release Rules
+## 8. Release Rules
 
 - Keep the canonical release set in `publication/` and the technical paper corpus in `papers/`.
 - Do not duplicate the same artifact into multiple publication homes.

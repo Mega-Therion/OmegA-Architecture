@@ -25,6 +25,10 @@ Use the catalog before creating or moving anything.
 - `scripts/memory_gate.py` — fast memory-only gate for telemetry and store regressions
 - `verify.sh` — canonical release gate; auto-routes memory-only diffs to the fast memory gate
 - `CLAUDE.md` — agent-facing repo guidance and default work mode
+- `publication/RELEASE.md` — publication front door for choosing public vs reviewer-gated bundles
+- `publication/PUBLICATION_SET.md` — master index for the publication corpus
+- `publication/PUBLIC_RELEASE_BUNDLE.md` — redaction-safe public release bundle
+- `publication/PRIVATE_REVIEW_BUNDLE.md` — reviewer-gated bundle with supporting material
 
 ## What Is Ωmegα?
 
@@ -183,6 +187,15 @@ The Rust gateway (RC1.3) has been evaluated against the architecture's own forma
 | MYELIN: Path-Dependent Graph Memory | Layer 4 | [MYELIN_Final_Paper.md](papers/MYELIN_Final_Paper.md) |
 | The OmegA Sovereignty Score | Measurement Layer | [Sovereignty_Score.md](papers/Sovereignty_Score.md) |
 | The Yettragrammaton | Symbolic Identity | [The_Yettragrammaton.md](papers/The_Yettragrammaton.md) |
+
+## Publication Front Door
+
+Use these documents to choose the right publication track:
+
+- `publication/RELEASE.md` — start here if you need to decide which bundle to use
+- `publication/PUBLICATION_SET.md` — master map of the corpus
+- `publication/PUBLIC_RELEASE_BUNDLE.md` — public / redaction-safe track
+- `publication/PRIVATE_REVIEW_BUNDLE.md` — trusted review / internal track
 
 ---
 

@@ -7,6 +7,7 @@ Use this page to choose the correct publication bundle.
 
 Use:
 - `publication/PUBLIC_RELEASE_BUNDLE.md`
+- `publication/OMEGA_MASTER_SYNTHESIS.md` if you need a single umbrella paper
 
 This is the redaction-safe bundle. It is the default choice when:
 - you are sharing with the general public
@@ -27,6 +28,7 @@ This is the broader reviewer-gated bundle. It is the default choice when:
 
 Start with:
 - `publication/PUBLICATION_SET.md`
+- `publication/OMEGA_MASTER_SYNTHESIS.md`
 
 That file is the master map of the corpus and will point you to the right track.
 
@@ -35,4 +37,4 @@ That file is the master map of the corpus and will point you to the right track.
 - public audience -> `PUBLIC_RELEASE_BUNDLE.md`
 - reviewer or internal audience -> `PRIVATE_REVIEW_BUNDLE.md`
 - uncertain -> `PUBLICATION_SET.md`
-
+- single-paper summary -> `OMEGA_MASTER_SYNTHESIS.md`

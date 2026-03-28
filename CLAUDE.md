@@ -31,6 +31,10 @@ Each layer has a corresponding final paper in `papers/`.
 - `CITATION.cff` — citation metadata for academic use
 - `catalog/INDEX.md` — canonical folder policy and card-catalog index
 - `catalog/registry.json` — machine-readable directory registry
+- `publication/RELEASE.md` — publication front door for public vs reviewer-gated bundles
+- `publication/PUBLICATION_SET.md` — canonical publication map across the corpus
+- `publication/PUBLIC_RELEASE_BUNDLE.md` — redaction-safe bundle for public release
+- `publication/PRIVATE_REVIEW_BUNDLE.md` — broader reviewer-gated bundle
 - `scripts/catalog_sync.py` — regenerate or validate the registry from the repo tree
 - `scripts/memory_gate.py` — fast memory-only gate for retrieval and store regressions
 - `verify.sh` — canonical release gate; auto-switches to `scripts/memory_gate.py` for memory-only diffs
@@ -60,6 +64,7 @@ All normal work starts in this repo. Priority tasks:
 - Editing and improving papers (publication quality: precise, formal, cross-referenced)
 - Maintaining cross-references between papers and the knowledge graph
 - Updating `CITATION.cff` and `README.md` for accuracy
+- Maintaining `publication/RELEASE.md` and the publication bundles as the front door for new agents
 - Adding or revising `assets/` for figures and diagrams
 
 ## Folder Policy
