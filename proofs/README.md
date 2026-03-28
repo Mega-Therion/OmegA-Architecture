@@ -1,6 +1,6 @@
 # OmegA Proof System
 
-**Phase:** 1 (Foundation)
+**Phase:** 2 (Machine-Checked Core)
 **Created:** 2026-03-28
 
 This directory contains the formal proof infrastructure for the OmegA architecture.
@@ -9,41 +9,73 @@ This directory contains the formal proof infrastructure for the OmegA architectu
 
 ```
 proofs/
-  README.md          -- this file
-  invariants.py      -- property-based tests (hypothesis) for core invariants
-  PROOF_MAP.md       -- claim-to-evidence traceability matrix
+  README.md              -- this file
+  invariants.py          -- 36 property-based tests (hypothesis) for all 10 theorems
+  PROOF_MAP.md           -- claim-to-evidence traceability matrix
+  lakefile.toml          -- Lean4 Lake project config
+  lean-toolchain         -- pinned Lean4 version
+  OmegaProofs.lean       -- root import
+  OmegaProofs/
+    Basic.lean           -- (generated stub)
+    IdentityContinuity.lean  -- T-2: Phylactery hash chain (machine-checked)
+    MemoryHardening.lean     -- T-5: MYELIN monotonicity (machine-checked)
+    UnifiedGating.lean       -- T-7: 3-gate conjunction (machine-checked)
+    GovernanceFailClosed.lean -- T-3: AEGIS fail-closed (machine-checked)
+tools/proof_auditor.py   -- drift check for theorem/claim/proof correspondence
 ```
 
 ## Proof Types
 
-| Type | Method | Location |
-|---|---|---|
-| Property-based tests | Python hypothesis library | `proofs/invariants.py` |
-| Deterministic assertions | pytest assertions | `evals/test_conformance.py` |
-| Empirical evidence | Evaluation reports | `evals/*.json` |
-| Formal statements | Theorem Ledger | `specs/THEOREM_LEDGER.md` |
+| Type | Method | Location | Status |
+|---|---|---|---|
+| Machine-checked proofs | Lean4 | `proofs/OmegaProofs/*.lean` | T-2, T-3, T-5, T-7 |
+| Property-based tests | Python hypothesis | `proofs/invariants.py` | T-1 through T-10 |
+| Deterministic assertions | pytest | `evals/test_conformance.py` | 59 assertions |
+| Empirical evidence | Evaluation reports | `evals/*.json` | recorded |
+| Formal statements | Theorem Ledger | `specs/THEOREM_LEDGER.md` | 10 theorems |
 
 ## How to Run
 
+### Property-based tests (requires Python + hypothesis)
 ```bash
 python3 -m pytest proofs/invariants.py -v
 ```
 
-If hypothesis is not installed:
+### Machine-checked proofs (requires Lean4)
 ```bash
-pip install hypothesis pytest
+cd proofs && lake build
+```
+
+### Full release gate (runs both)
+```bash
+bash verify.sh
+```
+
+### Install Lean4 (if not present)
+```bash
+curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
 ```
 
 ## Relationship to Other Artifacts
 
 - `specs/THEOREM_LEDGER.md` -- formal statement of every claim, classified by type
 - `proofs/PROOF_MAP.md` -- maps each claim through: formal statement -> code -> test -> runtime artifact -> log
+- `tools/proof_auditor.py` -- executable drift check that keeps the proof surface synchronized
 - `evals/test_conformance.py` -- 59-assertion conformance suite (deterministic)
 - `publication/CLAIM_LEDGER.md` -- human-readable claim status table (predecessor to THEOREM_LEDGER)
 
-## Phase 2 Plan
+## What is Machine-Checked
 
-- Lean4 / Coq formalization of T-2 (hash chain integrity) and T-7 (gate composition)
+| Theorem | Lean4 Proofs | What is Proven |
+|---|---|---|
+| T-2 | `IdentityContinuity.lean` | Chain integrity, tamper detection, chain determinism |
+| T-3 | `GovernanceFailClosed.lean` | Fail-closed gate, monotonic denial, default denial |
+| T-5 | `MemoryHardening.lean` | Monotonicity, boundedness, fixed point |
+| T-7 | `UnifiedGating.lean` | Conjunction required, single-gate blocking, order invariance, only-all-true permits |
+
+## Remaining Phase 3 Work
+
+- TLA+ model checking for T-1 (state vector), T-6 (verifier), T-9 (self-tag) — requires Java
 - Symbolic execution of risk gate score bounds
 - Fuzzing harness for envelope completeness
-- Monotonic version counter for RunEnvelope (closes T-10-GAP)
+- Mathlib integration for full real-number T-5 proofs

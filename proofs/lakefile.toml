@@ -1,0 +1,6 @@
+name = "OmegaProofs"
+version = "0.1.0"
+defaultTargets = ["OmegaProofs"]
+
+[[lean_lib]]
+name = "OmegaProofs"

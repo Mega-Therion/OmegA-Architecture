@@ -100,6 +100,9 @@ fi
 echo ">> Running OmegA master evaluation..."
 python3 "$ROOT_DIR/omegactl.py" eval
 
+echo ">> Running Proof Audit..."
+python3 "$ROOT_DIR/tools/proof_auditor.py"
+
 # 3. Polyglot runtime validation
 echo ">> Running polyglot runtime validation..."
 if is_memory_only_change_set; then
@@ -169,5 +172,20 @@ if [ "$PROOF_FAIL" -eq 1 ]; then
     exit 1
 fi
 echo ">> Formal Invariant Suite: PASS (36/36 property tests)"
+
+# 6. Lean4 Machine-Checked Proofs (T-2, T-3, T-5, T-7)
+LEAN_BIN="$HOME/.elan/bin/lean"
+if [ -x "$LEAN_BIN" ] && [ -f "$ROOT_DIR/proofs/lakefile.toml" ]; then
+    echo ">> Building Lean4 proof package (T-2, T-3, T-5, T-7)..."
+    export PATH="$HOME/.elan/bin:$PATH"
+    if (cd "$ROOT_DIR/proofs" && lake build 2>&1 | tail -5); then
+        echo ">> Lean4 Proofs: PASS"
+    else
+        echo ">> Lean4 Proofs: FAIL"
+        exit 1
+    fi
+else
+    echo ">> Lean4 Proofs: SKIPPED (lean4 not installed — install via elan)"
+fi
 
 echo ">> Verification Complete: PASS"
