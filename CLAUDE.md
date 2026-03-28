@@ -32,6 +32,7 @@ Each layer has a corresponding final paper in `papers/`.
 - `catalog/INDEX.md` — canonical folder policy and card-catalog index
 - `catalog/registry.json` — machine-readable directory registry
 - `scripts/catalog_sync.py` — regenerate or validate the registry from the repo tree
+- `scripts/memory_gate.py` — fast memory-only gate for retrieval and store regressions
 - `papers/OmegA_Unified_Architecture_Paper.md` — the master unified paper
 - `papers/MYELIN_Final_Paper.md`, `ADCCL_Final_Paper.md`, `AEON_Final_Paper.md`, `AEGIS_Final_Paper.md` — per-layer papers
 - `papers/Canonical_Symbolic_Addendum.md` — canonical symbol table and equation reference
@@ -54,6 +55,7 @@ All normal work starts in this repo. Priority tasks:
 - Read `catalog/INDEX.md` first when deciding where new artifacts belong.
 - Use `scripts/catalog_sync.py --write` to regenerate `catalog/registry.json` from the repo tree before creating a new top-level folder.
 - Update the catalog and `scripts/catalog_guard.py` whenever a new structural folder is added.
+- Use `python3 scripts/memory_gate.py` when you only need the memory-store regression gate.
 - Editing and improving papers (publication quality: precise, formal, cross-referenced)
 - Maintaining cross-references between papers and the knowledge graph
 - Updating `CITATION.cff` and `README.md` for accuracy

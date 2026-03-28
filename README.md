@@ -22,6 +22,7 @@ Use the catalog before creating or moving anything.
 - `catalog/registry.json` — machine-readable card catalog for top-level homes
 - `scripts/catalog_sync.py` — regenerates or validates the registry from the repo tree
 - `scripts/catalog_guard.py` — validates that new top-level folders are registered
+- `scripts/memory_gate.py` — fast memory-only gate for telemetry and store regressions
 - `CLAUDE.md` — agent-facing repo guidance and default work mode
 
 ## What Is Ωmegα?

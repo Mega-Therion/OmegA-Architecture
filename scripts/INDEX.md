@@ -18,5 +18,6 @@ One-off operational and migration scripts.
 
 - `catalog/INDEX.md`
 - `scripts/catalog_sync.py`
+- `scripts/memory_gate.py`
 - `scripts/migrate_exports_to_neon.py`
 - `scripts/catalog_guard.py`
