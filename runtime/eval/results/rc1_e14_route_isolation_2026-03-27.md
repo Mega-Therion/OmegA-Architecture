@@ -1,6 +1,6 @@
 # Eval E14 — Deployed Route Isolation
 **Date:** 2026-03-27
-**Run:** Live deployment route isolation — https://omega-sovereign-ndhovymj9-megas-projects-1fcf4ba6.vercel.app
+**Run:** Live deployment route isolation — https://omega-sovereign-pqzfa5bu8-megas-projects-1fcf4ba6.vercel.app
 **Result:** ✅ PASS (4/4 usable)
 
 This eval hits the deployed route contracts directly so we can see which endpoint collapses first under the current production build.
@@ -11,7 +11,7 @@ This eval hits the deployed route contracts directly so we can see which endpoin
 - Path: `/api/chat`
 - Provider: `vercel-gateway`
 - Status: 200
-- Latency: 10168.8 ms
+- Latency: 14226.0 ms
 - Result: USABLE
 - Response excerpt: OK
 - Details: {"provider_header": "vercel-gateway", "has_diagnostic": false, "response_length": 2}
@@ -21,7 +21,7 @@ This eval hits the deployed route contracts directly so we can see which endpoin
 - Path: `/api/research`
 - Provider: `vercel-gateway`
 - Status: 200
-- Latency: 1123.6 ms
+- Latency: 1212.4 ms
 - Result: USABLE
 - Response excerpt: Insufficient source evidence to answer confidently. Please provide relevant documents.
 - Details: {"provider_header": "unknown", "provider": "vercel-gateway", "providerAttempts": [{"name": "vercel-gateway", "status": "selected"}], "mode": "abstained", "verified": true, "confidence": 0}
@@ -31,9 +31,9 @@ This eval hits the deployed route contracts directly so we can see which endpoin
 - Path: `/api/synthesize`
 - Provider: `vercel-gateway`
 - Status: 200
-- Latency: 3381.2 ms
+- Latency: 2661.9 ms
 - Result: USABLE
-- Response excerpt: The conversation reveals a shared intent to distill complexity into actionable clarity.
+- Response excerpt: The conversation reveals an underlying tension about control over technical decision-making.
 - Details: {"provider_header": "unknown", "provider": "vercel-gateway", "providerAttempts": [{"name": "vercel-gateway", "status": "selected"}]}
 - Error: none
 
@@ -41,9 +41,9 @@ This eval hits the deployed route contracts directly so we can see which endpoin
 - Path: `/api/refine`
 - Provider: `vercel-gateway`
 - Status: 200
-- Latency: 1128.4 ms
+- Latency: 1145.0 ms
 - Result: USABLE
-- Response excerpt: Refine this text to be more specific and clear.
+- Response excerpt: Refine this to be more specific and clear.
 - Details: {"provider_header": "unknown", "provider": "vercel-gateway", "providerAttempts": [{"name": "vercel-gateway", "status": "selected"}]}
 - Error: none
 
