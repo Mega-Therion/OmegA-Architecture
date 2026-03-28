@@ -5,6 +5,16 @@ This document is the shortest defensible single-paper summary of OmegA.
 
 It is not a replacement for the layer papers. It is the umbrella that shows how the layers compose into one governed runtime.
 
+## Abstract
+
+OmegA is a governed, persistent, identity-bearing AI runtime built from four mutually reinforcing layers: AEGIS for governance, AEON for identity and task state, ADCCL for drift control, and MYELIN for memory hardening. The system is designed so memory, cognition, verification, and governance act as one control surface rather than as disconnected features. This paper states the canonical system equation, the governing objective, and the master control loop that unifies the architecture. It is intentionally narrower than the full series: it summarizes the architecture without claiming proof of consciousness, unrestricted autonomy, or final scientific closure.
+
+## Canonical Claim
+
+If OmegA is implemented as specified in the layer papers, then a single governed runtime state can be maintained across memory, task state, verification, and governance, and every side-effectful action must pass the same ordered control loop before release.
+
+This is the core claim the rest of the series elaborates.
+
 ## One-Sentence Thesis
 
 OmegA is a governed, persistent, identity-bearing AI runtime whose memory, cognition, verification, and governance layers are designed to work as one system rather than as disconnected features.
@@ -39,6 +49,28 @@ Interpretation:
 
 The system executes a fixed control loop:
 
+```text
+function OMEGA_RUN(input):
+    E_t   := build_run_envelope(input)
+    tau_t := build_task_state(input, E_t)
+    B_t   := build_claim_budget(tau_t)
+    evidence := ground(E_t, tau_t)
+
+    draft := generate_constrained_draft(E_t, tau_t, B_t, evidence)
+    verdict := verify(draft, E_t, tau_t, B_t, evidence)
+
+    if verdict is not pass:
+        draft := repair_or_refuse(draft, verdict, E_t, tau_t, B_t, evidence)
+        verdict := verify(draft, E_t, tau_t, B_t, evidence)
+
+    log_run(E_t, tau_t, B_t, evidence, draft, verdict)
+    update_memory_under_policy(E_t, tau_t, verdict, evidence)
+
+    return draft, verdict
+```
+
+In plain language, the algorithm is:
+
 1. Build the Run Envelope.
 2. Ground the task with retrieval and evidence.
 3. Structure the plan before narration.
@@ -65,6 +97,10 @@ Taken together, the layers make OmegA a system with one state model, one control
 - It is not a substitute for the layer papers.
 - It is not a benchmark report.
 
+## Conclusion
+
+OmegA is best understood as a governed runtime with one shared state model, one shared control loop, and one release discipline spanning memory, identity, verification, and governance. The layer papers establish the components; this synthesis states the system-level claim that those components are intended to satisfy. The architecture is therefore publication-ready as a unified technical thesis, while still requiring the layer papers, appendix material, and empirical reports for full review.
+
 ## Where To Read Next
 
 - `papers/OmegA_Unified_Architecture_Paper.md`
@@ -73,4 +109,3 @@ Taken together, the layers make OmegA a system with one state model, one control
 - `papers/ADCCL_Final_Paper.md`
 - `papers/MYELIN_Final_Paper.md`
 - `publication/PUBLICATION_SET.md`
-
