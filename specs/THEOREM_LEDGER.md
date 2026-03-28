@@ -1,6 +1,6 @@
 # OmegA Theorem Ledger
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Status:** CANONICAL
 **Last Updated:** 2026-03-28
 
@@ -45,9 +45,10 @@ where:
 - G_t^mem is a MemoryGraph instance
 
 **Code path:** `omega/phylactery.py`, `omega/envelope.py`, `omega/drift.py`, `omega/memory.py`
-**Test:** `proofs/invariants.py::test_state_vector_well_formed`
+**Test:** `proofs/invariants.py::TestStateVectorWellFormed`
+**State machine:** `proofs/state_machines.py::TestStateVectorStateMachine` — 7 invariants checked across randomized transitions
 **Paper:** `papers/OmegA_Unified_Architecture_Paper.md` -- Core Equation
-**Evidence status:** Tested
+**Evidence status:** Tested (property-based + stateful state machine)
 
 ---
 
@@ -67,9 +68,11 @@ Specifically: for all commits i > 0 in the chain, `commit[i].hash == SHA256(comm
 **Corollary:** Any single-bit mutation in any commit is detectable by `verify_chain()`.
 
 **Code path:** `omega/phylactery.py::Phylactery.commit()`, `Phylactery.verify_chain()`
-**Test:** `proofs/invariants.py::test_identity_continuity`, `evals/test_cross_session_identity.py`
+**Lean4 proof:** `proofs/OmegaProofs/IdentityContinuity.lean` — chain integrity, tamper detection, chain determinism
+**Correspondence:** `proofs/correspondence.py::TestT2Correspondence` — 7 tests bridging Lean model to runtime
+**Test:** `proofs/invariants.py::TestIdentityContinuity`, `evals/test_cross_session_identity.py`
 **Paper:** `papers/AEON_Final_Paper.md`
-**Evidence status:** Tested (property-based + deterministic)
+**Evidence status:** Machine-checked (Lean4) + runtime correspondence + property-based tests
 
 ---
 
@@ -87,9 +90,11 @@ R(a) >= tau_consent => gate(a) returns (False, R(a))
 Additionally, any action matching a BLOCKED_PATTERN is denied regardless of score (hard block).
 
 **Code path:** `omega/risk_gate.py::RiskGate.gate()`
-**Test:** `proofs/invariants.py::test_governance_fail_closed`
+**Lean4 proof:** `proofs/OmegaProofs/GovernanceFailClosed.lean` — fail-closed, default denial, monotonic denial
+**Correspondence:** `proofs/correspondence.py::TestT3Correspondence` — 5 tests bridging Lean model to runtime
+**Test:** `proofs/invariants.py::TestGovernanceFailClosed`
 **Paper:** `papers/AEGIS_Final_Paper.md`
-**Evidence status:** Tested
+**Evidence status:** Machine-checked (Lean4) + runtime correspondence + property-based tests
 
 ---
 
@@ -133,9 +138,11 @@ If r > 0 and repeated, q_ij converges monotonically toward r from below.
 **Lemma T-5b:** Staleness resets to 0 on any positive reward.
 
 **Code path:** `omega/memory.py::EdgeBundle.harden()`
-**Test:** `proofs/invariants.py::test_memory_hardening_monotonic`, `evals/test_memory_utility_growth.py`
+**Lean4 proof:** `proofs/OmegaProofs/MemoryHardening.lean` — monotonicity, boundedness, fixed point (milliscale Nat model)
+**Correspondence:** `proofs/correspondence.py::TestT5Correspondence` — 5 tests bridging Lean milliscale model to runtime floats
+**Test:** `proofs/invariants.py::TestMemoryHardeningMonotonic`, `evals/test_memory_utility_growth.py`
 **Paper:** `papers/MYELIN_Final_Paper.md`
-**Evidence status:** Tested (property-based)
+**Evidence status:** Machine-checked (Lean4) + runtime correspondence + property-based tests
 
 ---
 
@@ -153,9 +160,10 @@ multi_gate(V, rho, R) == True  <=>  (V > tau_verify) AND (rho < theta_allow) AND
 If V <= tau_verify, the action is blocked regardless of rho and R values.
 
 **Code path:** `omega/risk_gate.py::RiskGate.multi_gate()`
-**Test:** `proofs/invariants.py::test_verifier_non_bypass`
+**State machine:** `proofs/state_machines.py::TestVerifierNonBypass` — verifier, bridge, conjunction invariants across randomized gate evaluations
+**Test:** `proofs/invariants.py::TestVerifierNonBypass`
 **Paper:** `papers/OmegA_Unified_Architecture_Paper.md` -- Unified Action Gating
-**Evidence status:** Tested
+**Evidence status:** Tested (property-based + stateful state machine)
 
 ---
 
@@ -173,9 +181,11 @@ V_t > tau_verify  AND  rho(A) < theta_allow  AND  R(a) < tau_consent
 No single gate failure can be compensated by another gate's success. The composition is conjunctive (AND), not disjunctive or weighted.
 
 **Code path:** `omega/risk_gate.py::RiskGate.multi_gate()`
-**Test:** `proofs/invariants.py::test_unified_action_gating`, `evals/test_conformance.py`
+**Lean4 proof:** `proofs/OmegaProofs/UnifiedGating.lean` — conjunction, single-gate blocking, order invariance, only-all-true permits
+**Correspondence:** `proofs/correspondence.py::TestT7Correspondence` — 7 tests bridging Lean model to runtime
+**Test:** `proofs/invariants.py::TestUnifiedActionGating`, `evals/test_conformance.py`
 **Paper:** `papers/OmegA_Unified_Architecture_Paper.md` -- Unified Action Gating
-**Evidence status:** Tested (property-based)
+**Evidence status:** Machine-checked (Lean4) + runtime correspondence + property-based tests
 
 ---
 
@@ -214,9 +224,10 @@ S_t1 is a prefix of S_t2
 No entry in S_t can be modified or deleted after creation. New entries are only appended.
 
 **Code path:** `omega/phylactery.py::Phylactery.commit()` (chain is append-only by construction)
-**Test:** `proofs/invariants.py::test_self_tag_immutability`
+**State machine:** `proofs/state_machines.py::TestSelfTagImmutability` — append-only, prefix preservation, genesis immutability across randomized commits
+**Test:** `proofs/invariants.py::TestSelfTagImmutability`
 **Paper:** `papers/ADCCL_Final_Paper.md`, `papers/AEON_Final_Paper.md`
-**Evidence status:** Tested
+**Evidence status:** Tested (property-based + stateful state machine)
 
 **Note:** The Phylactery chain serves as both identity log and self-tag record. Append-only is enforced by the hash chain: modifying any historical entry invalidates all subsequent hashes.
 
@@ -233,14 +244,13 @@ Each Run Envelope E_t must be complete before execution. Completeness is defined
 E_t.is_complete() == True  <=>  all REQUIRED_FIELDS are non-None
 ```
 
-The envelope must carry identity (`has_identity() == True`). An incomplete or identity-less envelope blocks execution.
+The envelope must carry identity (`has_identity() == True`) and a positive monotonic version counter. An incomplete, identity-less, or non-positive versioned envelope blocks execution.
 
-**Code path:** `omega/envelope.py::RunEnvelope.is_complete()`, `RunEnvelope.has_identity()`
-**Test:** `proofs/invariants.py::test_envelope_completeness`
+**Code path:** `omega/envelope.py::EnvelopeClock.next()`, `RunEnvelope.is_complete()`, `RunEnvelope.has_identity()`
+**State machine:** `proofs/state_machines.py::TestEnvelopeClockMonotonic` — strictly increasing, no-gap, always-positive invariants
+**Test:** `proofs/invariants.py::TestEnvelopeCompleteness`, `proofs/invariants.py::TestEnvelopeCompleteness::test_version_increments_monotonically`
 **Paper:** `papers/AEGIS_Final_Paper.md`
-**Evidence status:** Tested
-
-**Gap:** Monotonic versioning (E_t.version < E_{t+1}.version) is specified in the paper but the current implementation does not carry an explicit version counter. The envelope is recompiled per-call. This is a structural gap to close in Phase 2.
+**Evidence status:** Tested (property-based + stateful state machine)
 
 ---
 
@@ -260,11 +270,11 @@ The envelope must carry identity (`has_identity() == True`). An incomplete or id
 
 | ID | Gap | Severity | Remediation |
 |---|---|---|---|
-| T-10-GAP | Envelope lacks explicit monotonic version counter | Medium | Add version field to RunEnvelope, enforce v_{t+1} > v_t |
 | T-8-GAP | Multi-provider identity test requires live providers | Low | Conditional claim; automated single-provider test exists |
 
 ---
 
 ## Changelog
 
+- 1.1.0 (2026-03-28): Updated evidence status for T-2, T-3, T-5, T-7 to Machine-checked; added Lean4 proof and correspondence references. Added state machine references for T-1, T-6, T-9, T-10.
 - 1.0.0 (2026-03-28): Initial theorem ledger. 10 claims formalized from CLAIM_LEDGER.md and specs/invariants.md.

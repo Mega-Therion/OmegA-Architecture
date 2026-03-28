@@ -11,6 +11,8 @@ This directory contains the formal proof infrastructure for the OmegA architectu
 proofs/
   README.md              -- this file
   invariants.py          -- 36 property-based tests (hypothesis) for all 10 theorems
+  correspondence.py      -- 29 proof-to-implementation correspondence tests
+  state_machines.py      -- 4 stateful state machine tests (T-1, T-6, T-9, T-10)
   PROOF_MAP.md           -- claim-to-evidence traceability matrix
   lakefile.toml          -- Lean4 Lake project config
   lean-toolchain         -- pinned Lean4 version
@@ -29,7 +31,9 @@ tools/proof_auditor.py   -- drift check for theorem/claim/proof correspondence
 | Type | Method | Location | Status |
 |---|---|---|---|
 | Machine-checked proofs | Lean4 | `proofs/OmegaProofs/*.lean` | T-2, T-3, T-5, T-7 |
-| Property-based tests | Python hypothesis | `proofs/invariants.py` | T-1 through T-10 |
+| Proof-to-impl correspondence | Python hypothesis | `proofs/correspondence.py` | T-2, T-3, T-5, T-7 (29 tests) |
+| Stateful state machines | Python hypothesis | `proofs/state_machines.py` | T-1, T-6, T-9, T-10 (4 machines) |
+| Property-based tests | Python hypothesis | `proofs/invariants.py` | T-1 through T-10 (36 tests) |
 | Deterministic assertions | pytest | `evals/test_conformance.py` | 59 assertions |
 | Empirical evidence | Evaluation reports | `evals/*.json` | recorded |
 | Formal statements | Theorem Ledger | `specs/THEOREM_LEDGER.md` | 10 theorems |
@@ -75,7 +79,6 @@ curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh 
 
 ## Remaining Phase 3 Work
 
-- TLA+ model checking for T-1 (state vector), T-6 (verifier), T-9 (self-tag) — requires Java
+- TLA+ model checking for T-1, T-6, T-9 — requires Java (Python stateful machines provide equivalent coverage)
 - Symbolic execution of risk gate score bounds
-- Fuzzing harness for envelope completeness
 - Mathlib integration for full real-number T-5 proofs

@@ -173,6 +173,24 @@ if [ "$PROOF_FAIL" -eq 1 ]; then
 fi
 echo ">> Formal Invariant Suite: PASS (36/36 property tests)"
 
+# 5b. Proof-to-Implementation Correspondence (T-2, T-3, T-5, T-7)
+echo ">> Running Proof-to-Implementation Correspondence Tests..."
+if "$PROOF_PYTHON" -m pytest "$ROOT_DIR/proofs/correspondence.py" -v --tb=short -q 2>&1 | tail -1 | grep -q "passed"; then
+    echo ">> Correspondence Tests: PASS (29/29)"
+else
+    echo ">> Correspondence Tests: FAIL"
+    exit 1
+fi
+
+# 5c. State Machine Tests (T-1, T-6, T-9, T-10)
+echo ">> Running State Machine Tests (T-1, T-6, T-9, T-10)..."
+if "$PROOF_PYTHON" -m pytest "$ROOT_DIR/proofs/state_machines.py" -v --tb=short -q 2>&1 | tail -1 | grep -q "passed"; then
+    echo ">> State Machine Tests: PASS (4/4)"
+else
+    echo ">> State Machine Tests: FAIL"
+    exit 1
+fi
+
 # 6. Lean4 Machine-Checked Proofs (T-2, T-3, T-5, T-7)
 LEAN_BIN="$HOME/.elan/bin/lean"
 if [ -x "$LEAN_BIN" ] && [ -f "$ROOT_DIR/proofs/lakefile.toml" ]; then

@@ -12,16 +12,16 @@ Each proven or demonstrable claim maps to a formal theorem in [`specs/THEOREM_LE
 
 | Theorem | Claim | Status | Evidence |
 |---|---|---|---|
-| T-1 | State vector is a well-typed 6-tuple | Tested | `proofs/invariants.py::TestStateVectorWellFormed` |
-| T-2 | Phylactery hash chain is tamper-evident | Tested | `proofs/invariants.py::TestIdentityContinuity` |
-| T-3 | Governance gate fails closed (AEGIS) | Tested | `proofs/invariants.py::TestGovernanceFailClosed` |
+| T-1 | State vector is a well-typed 6-tuple | Tested | `proofs/invariants.py::TestStateVectorWellFormed` + `proofs/state_machines.py::TestStateVectorStateMachine` |
+| T-2 | Phylactery hash chain is tamper-evident | Machine-checked | Lean4: `proofs/OmegaProofs/IdentityContinuity.lean` + `proofs/correspondence.py::TestT2Correspondence` |
+| T-3 | Governance gate fails closed (AEGIS) | Machine-checked | Lean4: `proofs/OmegaProofs/GovernanceFailClosed.lean` + `proofs/correspondence.py::TestT3Correspondence` |
 | T-4 | Claim budget validity and grounding ratio bounds | Tested | `proofs/invariants.py::TestClaimBudgetBounds` |
-| T-5 | Memory hardening is monotonic under positive reward | Tested | `proofs/invariants.py::TestMemoryHardeningMonotonic` |
-| T-6 | Verifier cannot be silently bypassed | Tested | `proofs/invariants.py::TestVerifierNonBypass` |
-| T-7 | Unified 3-gate composition is conjunctive | Tested | `proofs/invariants.py::TestUnifiedActionGating` |
+| T-5 | Memory hardening is monotonic under positive reward | Machine-checked | Lean4: `proofs/OmegaProofs/MemoryHardening.lean` + `proofs/correspondence.py::TestT5Correspondence` |
+| T-6 | Verifier cannot be silently bypassed | Tested | `proofs/invariants.py::TestVerifierNonBypass` + `proofs/state_machines.py::TestVerifierNonBypass` |
+| T-7 | Unified 3-gate composition is conjunctive | Machine-checked | Lean4: `proofs/OmegaProofs/UnifiedGating.lean` + `proofs/correspondence.py::TestT7Correspondence` |
 | T-8 | Provider non-collapse (sovereign identity) | Conditional | `evals/test_aegis_identity.py` (single-provider; multi requires live Ollama) |
-| T-9 | Self-tag log is append-only / immutable | Tested | `proofs/invariants.py::TestSelfTagImmutability` |
-| T-10 | Run envelope completeness and identity check | Tested (gap: monotonic versioning) | `proofs/invariants.py::TestEnvelopeCompleteness` |
+| T-9 | Self-tag log is append-only / immutable | Tested | `proofs/invariants.py::TestSelfTagImmutability` + `proofs/state_machines.py::TestSelfTagImmutability` |
+| T-10 | Run envelope completeness, identity check, and monotonic versioning | Tested | `proofs/invariants.py::TestEnvelopeCompleteness` + `proofs/state_machines.py::TestEnvelopeClockMonotonic` |
 
 ---
 

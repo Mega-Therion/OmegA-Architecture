@@ -20,6 +20,7 @@ from hypothesis import strategies as st
 
 from omega.phylactery import Phylactery, PhylacteryCommit
 from omega.envelope import RunEnvelope
+from omega.agent import OmegaAgent
 from omega.drift import ClaimBudget, SupportStatus, GoalContract, DriftController
 from omega.memory import MemoryGraph, EdgeBundle, Stratum
 from omega.risk_gate import RiskGate
@@ -434,3 +435,15 @@ class TestEnvelopeCompleteness:
         prompt = env.to_system_prompt()
         assert "OmegA" in prompt
         assert "sovereign" in prompt.lower()
+
+    def test_version_increments_monotonically(self, monkeypatch):
+        agent = OmegaAgent()
+        monkeypatch.setattr(agent.risk_gate, "gate", lambda action: (True, 0.1))
+        monkeypatch.setattr(agent, "_generate", lambda *args, **kwargs: "ok")
+
+        first = agent.run("task one")
+        second = agent.run("task two")
+
+        assert first.envelope_version == 1
+        assert second.envelope_version == 2
+        assert second.envelope_version > first.envelope_version
