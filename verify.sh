@@ -1,25 +1,33 @@
 #!/bin/bash
 set -e
-echo ">> Running OmegA Verification Suite..."
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+EXPLAIN_ONLY=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --explain)
+            EXPLAIN_ONLY=true
+            ;;
+        *)
+            echo "Unknown argument: $arg" >&2
+            exit 2
+            ;;
+    esac
+done
+
+get_changed_paths() {
+    {
+        git -C "$ROOT_DIR" diff --name-only --diff-filter=ACMRTUXB HEAD --;
+        git -C "$ROOT_DIR" diff --name-only --cached --diff-filter=ACMRTUXB --;
+        git -C "$ROOT_DIR" ls-files --others --exclude-standard --;
+    } | sort -u
+}
 
 is_memory_only_change_set() {
-    local changed_paths=()
     local path
 
     while IFS= read -r path; do
-        [ -n "$path" ] && changed_paths+=("$path")
-    done < <(
-        {
-            git -C "$ROOT_DIR" diff --name-only --diff-filter=ACMRTUXB HEAD --;
-            git -C "$ROOT_DIR" diff --name-only --cached --diff-filter=ACMRTUXB --;
-            git -C "$ROOT_DIR" ls-files --others --exclude-standard --;
-        } | sort -u
-    )
-
-    [ "${#changed_paths[@]}" -eq 0 ] && return 1
-
-    for path in "${changed_paths[@]}"; do
+        [ -n "$path" ] || continue
         case "$path" in
             runtime/crates/omega-memory/*)
                 ;;
@@ -43,10 +51,29 @@ is_memory_only_change_set() {
                 return 1
                 ;;
         esac
-    done
+    done < <(get_changed_paths)
 
     return 0
 }
+
+print_explain_mode() {
+    if is_memory_only_change_set; then
+        echo "memory-only change set detected"
+        echo "selected gate: scripts/memory_gate.py"
+        echo "reason: all changed paths are in memory telemetry or directly coupled runtime surfaces"
+    else
+        echo "mixed or non-memory change set detected"
+        echo "selected gate: full verify.sh"
+        echo "reason: at least one changed path is outside the memory-only allowlist"
+    fi
+}
+
+if [ "$EXPLAIN_ONLY" = true ]; then
+    print_explain_mode
+    exit 0
+fi
+
+echo ">> Running OmegA Verification Suite..."
 
 # 1. Python Syntax Check
 echo ">> Checking Python syntax..."
