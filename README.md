@@ -14,6 +14,19 @@
 
 ---
 
+## External Verification Package
+
+For skeptical outside reviewers and blind testers, start here:
+
+- [`publication/EXTERNAL_VERIFICATION.md`](publication/EXTERNAL_VERIFICATION.md) — what OmegA claims, how to verify it, what it does not claim, and where all evidence lives
+- [`publication/ALYE_ONBOARDING.md`](publication/ALYE_ONBOARDING.md) — numbered test sequence for blind external testers; no prior context assumed
+- [`publication/SELF_DESCRIPTION_CONTRACT.md`](publication/SELF_DESCRIPTION_CONTRACT.md) — canonical self-description with evidence pointers and honest limits
+- [`publication/CLAIM_LEDGER.md`](publication/CLAIM_LEDGER.md) — every claim classified as Proven / Demonstrable / Conditional / Not Claimed
+- [`publication/VERIFICATION_RUBRIC.md`](publication/VERIFICATION_RUBRIC.md) — pass/fail rubric for each claim type
+- [`publication/GAP_REPORT.md`](publication/GAP_REPORT.md) — claims that cannot be fully backed and tests that would close each gap
+
+---
+
 ## Repository Atlas
 
 Use the catalog before creating or moving anything.

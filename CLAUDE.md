@@ -24,6 +24,16 @@ The unified system state is: `Ω_t = ⟨Φ_t, E_t, τ_t, B_t, S_t, G_t^mem⟩`
 
 Each layer has a corresponding final paper in `papers/`.
 
+## External Verification Package
+
+For blind testers and outside reviewers:
+- `publication/EXTERNAL_VERIFICATION.md` — what OmegA claims, how to verify it end-to-end
+- `publication/ALYE_ONBOARDING.md` — numbered test sequence, no prior context assumed
+- `publication/SELF_DESCRIPTION_CONTRACT.md` — canonical self-description with honest limits
+- `publication/CLAIM_LEDGER.md` — Proven / Demonstrable / Conditional / Not Claimed table
+- `publication/VERIFICATION_RUBRIC.md` — pass/fail rubric for each claim
+- `publication/GAP_REPORT.md` — unbacked claims and tests that would close each gap
+
 ## Key Files
 
 - `README.md` — full architecture overview with equations and layer descriptions
