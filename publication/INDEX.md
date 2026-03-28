@@ -17,6 +17,7 @@ Release-ready prose, bundles, and redaction reports.
 ## Read First
 
 - `catalog/INDEX.md`
+- `publication/RELEASE.md`
 - `publication/PUBLICATION_SET.md`
 - `publication/PUBLIC_RELEASE_BUNDLE.md`
 - `publication/PRIVATE_REVIEW_BUNDLE.md`

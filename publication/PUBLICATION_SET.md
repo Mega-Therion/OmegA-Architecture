@@ -8,6 +8,7 @@ It separates the release-ready set, supporting technical papers, private addenda
 ## Read First
 
 - `catalog/INDEX.md`
+- `publication/RELEASE.md`
 - `publication/INDEX.md`
 - `publication/WHITE_PAPER_DRAFT_2026-03-12.md`
 - `publication/ARTIFACT_INDEX_AND_APPENDIX_GUIDE_2026-03-12.md`
