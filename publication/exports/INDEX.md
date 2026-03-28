@@ -13,6 +13,8 @@ The files here are intentionally short, stable, and conversion-friendly so a new
   - Trusted-review export front page for the broader reviewer bundle.
 - `publication/exports/OMEGA_MASTER_ONE_PAGER.md`
   - Condensed one-page synthesis of the core state equation, control loop, and publication claim.
+- `publication/exports/README.md`
+  - Handoff guide for regenerating the export PDFs.
 
 ## Source Bundles
 
